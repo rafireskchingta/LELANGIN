@@ -15,11 +15,37 @@ export default function AkunSayaPage() {
   useEffect(() => {
     async function fetchUser() {
       if (typeof window === 'undefined') return;
-      
+
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error || !session) {
+          // Fallback: cek localStorage sebelum redirect
+          const localUser = localStorage.getItem('lelangin_user');
+          const isLoggedIn = localStorage.getItem('isLoggedIn');
+
+          if (isLoggedIn === 'true' && localUser) {
+            try {
+              const parsed = JSON.parse(localUser);
+              setUser({
+                id: parsed.id || '',
+                email: parsed.email || '',
+                username: parsed.username || '',
+                nama: parsed.nama || '',
+                jenisKelamin: parsed.jenisKelamin || '',
+                noTelp: parsed.noTelp || '',
+                tglLahirTgl: parsed.tglLahirTgl || '',
+                tglLahirBulan: parsed.tglLahirBulan || '',
+                tglLahirTahun: parsed.tglLahirTahun || '',
+                avatar: parsed.avatar || (parsed.nama || 'U').charAt(0).toUpperCase()
+              });
+              return; // Jangan redirect, data dari localStorage sudah cukup
+            } catch (parseErr) {
+              console.error('Failed to parse local user data:', parseErr);
+            }
+          }
+
+          // Tidak ada session DAN tidak ada data localStorage -> redirect
           router.push('/');
           return;
         }
@@ -60,7 +86,11 @@ export default function AkunSayaPage() {
         setUser(userObj);
       } catch (err) {
         console.error('Failed to fetch user:', err);
-        router.push('/');
+        // Fallback: cek localStorage sebelum redirect
+        const isLoggedIn = localStorage.getItem('isLoggedIn');
+        if (isLoggedIn !== 'true') {
+          router.push('/');
+        }
       }
     }
 
@@ -72,14 +102,14 @@ export default function AkunSayaPage() {
     localStorage.removeItem('lelangin_user');
     localStorage.removeItem('isLoggedIn');
     window.dispatchEvent(new Event('auth-change'));
-    
+
     await supabase.auth.signOut();
-    
+
     // Gunakan fungsi showToast dari script.js jika ada
     if (typeof window !== 'undefined' && window.showToast) {
       window.showToast('Berhasil keluar!', 'info');
     }
-    
+
     router.push('/');
   };
 
@@ -142,7 +172,7 @@ export default function AkunSayaPage() {
                 <div className="input-wrapper">
                   <select disabled value={user.tglLahirTgl || ''}>
                     <option value="">Tgl</option>
-                    {Array.from({length: 31}, (_, i) => <option key={i} value={i+1}>{i+1}</option>)}
+                    {Array.from({ length: 31 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
                   </select>
                   <select disabled value={user.tglLahirBulan || ''}>
                     <option value="">Bulan</option>
@@ -150,7 +180,7 @@ export default function AkunSayaPage() {
                   </select>
                   <select disabled value={user.tglLahirTahun || ''}>
                     <option value="">Tahun</option>
-                    {Array.from({length: 30}, (_, i) => <option key={i} value={1995+i}>{1995+i}</option>)}
+                    {Array.from({ length: 30 }, (_, i) => <option key={i} value={1995 + i}>{1995 + i}</option>)}
                   </select>
                 </div>
               </div>
