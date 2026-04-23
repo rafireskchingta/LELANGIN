@@ -1,6 +1,42 @@
 'use client';
 
-export default function JelajahiPage() {
+import { useState, Suspense, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+
+function JelajahiContent() {
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get('kategori') || 'Semua';
+
+  const [isFilterOpen, setIsFilterOpen] = useState(true);
+  const [activeCategory, setActiveCategory] = useState(initialCategory);
+  const [favorites, setFavorites] = useState([]);
+
+  useEffect(() => {
+    const fetchFavs = () => {
+      setFavorites(JSON.parse(localStorage.getItem('lelangin_favorites') || '[]'));
+    };
+    fetchFavs();
+    window.addEventListener('favorites-updated', fetchFavs);
+    return () => window.removeEventListener('favorites-updated', fetchFavs);
+  }, []);
+
+  const toggleFavorite = (id, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    let newFavs = [...favorites];
+    if (newFavs.includes(id)) {
+      newFavs = newFavs.filter(f => f !== id);
+    } else {
+      newFavs.push(id);
+    }
+    setFavorites(newFavs);
+    localStorage.setItem('lelangin_favorites', JSON.stringify(newFavs));
+    window.dispatchEvent(new Event('favorites-updated'));
+  };
+
   return (
     <main className="page-container">
       <div className="page-header mt-2">
@@ -9,16 +45,31 @@ export default function JelajahiPage() {
 
       {/* Tabs */}
       <div className="tabs-container">
-        <div className="tab-item active">Semua</div>
-        <div className="tab-item">Seni</div>
-        <div className="tab-item">Elektronik</div>
-        <div className="tab-item">Hobi</div>
+        {['Semua', 'Seni', 'Elektronik', 'Hobi'].map((cat) => (
+          <div 
+            key={cat} 
+            className={`tab-item ${activeCategory === cat ? 'active' : ''}`}
+            onClick={() => setActiveCategory(cat)}
+          >
+            {cat}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ marginBottom: '1.5rem', display: 'flex' }}>
+        <button className="sidebar-toggle-btn"
+          onClick={() => setIsFilterOpen(!isFilterOpen)}
+          title={isFilterOpen ? 'Sembunyikan Filter' : 'Tampilkan Filter'}
+        >
+          <i className={`ph-bold ${isFilterOpen ? 'ph-caret-left' : 'ph-caret-right'}`}></i>
+        </button>
       </div>
 
       <div className="jelajahi-layout">
         {/* Sidebar / Filter */}
-        <aside className="sidebar-filter">
-          <h3>Pencarian lebih detail</h3>
+        <aside className={`sidebar-filter ${isFilterOpen ? '' : 'closed'}`}>
+          <h2 style={{ fontSize: '1.4rem', color: 'inherit', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, marginBottom: '1.5rem' }}><i className="ph ph-funnel"></i> Filter</h2>
+          <h3 style={{ marginTop: '0.5rem' }}><i className="ph-fill ph-funnel" style={{ fontSize: '1.25rem' }}></i> Pencarian Detail</h3>
 
           <div className="filter-section">
             <label>Harga</label>
@@ -76,14 +127,18 @@ export default function JelajahiPage() {
             </select>
           </div>
 
-          <div className="jelajahi-grid">
+          <div className="jelajahi-grid smooth-fade" key={activeCategory}>
             {[1,2,3,4,5,6,7,8].map((i) => (
-              <div key={i} className="auction-card card-jelajahi">
+              <Link key={i} href="/jelajahi/detail" className="auction-card card-jelajahi" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
                 <div className="badge-time"><i className="ph ph-clock"></i> 12 Hari</div>
                 <img src="/assets/washer.png" alt="Washing Machine" />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
                   <div className="auction-price" style={{ marginBottom: 0, fontSize: '1.25rem' }}>Rp 7.000.000</div>
-                  <i className="ph ph-heart" style={{ color: 'var(--text-muted)', cursor: 'pointer' }}></i>
+                  <i 
+                    className={`${favorites.includes(i) ? 'ph-fill' : 'ph'} ph-heart`} 
+                    style={{ color: favorites.includes(i) ? 'var(--danger)' : 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s', fontSize: '1.25rem' }}
+                    onClick={(e) => toggleFavorite(i, e)}
+                  ></i>
                 </div>
                 <div className="auction-title" style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>Toshiba Front Loading Washing
                   Machine TW-BK115G4F(SK) 10.5kg</div>
@@ -92,7 +147,7 @@ export default function JelajahiPage() {
                   <div><i className="ph ph-calendar"></i> 12 Maret 2026</div>
                   <div><i className="ph ph-map-pin"></i> Sukajadi, Bandung</div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
@@ -161,5 +216,13 @@ export default function JelajahiPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function JelajahiPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '4rem', textAlign: 'center' }}>Memuat...</div>}>
+      <JelajahiContent />
+    </Suspense>
   );
 }

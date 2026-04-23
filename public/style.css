@@ -8,6 +8,7 @@
   --text-muted: #6B7280;
   --bg-color: #FAFAFA;
   --white: #FFFFFF;
+  --danger: #EF4444;
 }
 
 * {
@@ -65,6 +66,7 @@ body {
   display: flex;
   gap: 2.5rem;
   align-items: center;
+  position: relative;
 }
 
 .nav-links a {
@@ -73,13 +75,47 @@ body {
   color: var(--text-main);
   transition: color 0.2s;
   font-size: 0.95rem;
+  padding-bottom: 4px;
 }
 
 .nav-links a.active,
 .nav-links a:hover {
   color: var(--primary);
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 4px;
+}
+
+.nav-indicator {
+  position: absolute;
+  bottom: 0px;
+  height: 2px;
+  background-color: var(--primary);
+  transition: left 0.4s ease-in-out, width 0.4s ease-in-out, opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.smooth-fade {
+  opacity: 0;
+  animation: smoothFade 0.4s ease-in-out forwards;
+}
+
+@keyframes smoothFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Page Transitions */
+.page-transition-enter {
+  animation: pageFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .nav-links .btn-akun {
@@ -370,7 +406,7 @@ body {
 
 /* FAQ */
 .faq-section {
-  padding: 1rem 4rem 5rem 4rem;
+  padding: 1rem 4rem 1.5rem 4rem;
 }
 
 .faq-section h2 {
@@ -403,6 +439,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 380px; /* Menjaga agar footer tidak bergerak, disesuaikan agar jaraknya pas */
 }
 
 .accordion-item {
@@ -429,17 +466,36 @@ body {
 }
 
 .accordion-body {
-  padding: 1.5rem;
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
   background-color: var(--secondary);
   color: var(--primary);
   font-size: 0.95rem;
   line-height: 1.6;
-  display: none;
   font-weight: 500;
+  transition: grid-template-rows 0.4s ease-out, opacity 0.4s ease-out;
 }
 
 .accordion-item.active .accordion-body {
-  display: block;
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.accordion-content {
+  overflow: hidden;
+}
+
+.accordion-text {
+  padding: 1.5rem;
+}
+
+.accordion-icon {
+  transition: transform 0.4s ease-out;
+}
+
+.accordion-item.active .accordion-icon {
+  transform: rotate(180deg);
 }
 
 /* Footer */
@@ -657,9 +713,11 @@ body {
   cursor: pointer;
   border: 1px solid var(--primary-light);
   font-size: 0.95rem;
+  transition: all 0.3s ease;
 }
 
-.tab-item.active {
+.tab-item.active,
+.tab-item:hover {
   background-color: var(--primary);
   color: white;
   border-color: var(--primary);
@@ -678,11 +736,50 @@ body {
   border-radius: 12px;
   flex-shrink: 0;
   border: 1px solid #E5E7EB;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar-filter.closed {
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  opacity: 0;
+  border: none;
+  margin-right: -3rem; /* Menghilangkan efek gap dari parent */
+}
+
+.sidebar-toggle-btn {
+  background-color: #EAF0FE;
+  color: var(--primary);
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  background-color: var(--primary);
+  color: white;
 }
 
 .sidebar-filter h3 {
   font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
   margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px dashed #E5E7EB;
 }
 
 .filter-section {
@@ -1279,14 +1376,13 @@ body {
   color: var(--primary);
 }
 
-.cara-tab.active::after {
-  content: '';
+.cara-indicator {
   position: absolute;
   bottom: -2px;
-  left: 0;
-  right: 0;
   height: 2px;
   background-color: var(--primary);
+  transition: left 0.4s ease-out, width 0.4s ease-out, opacity 0.3s;
+  pointer-events: none;
 }
 
 .grid-steps {
@@ -1336,6 +1432,7 @@ body {
   align-items: flex-start;
   padding: 1rem 0;
   border-bottom: 1px solid #E5E7EB;
+  height: 100%;
 }
 
 .benefit-num {

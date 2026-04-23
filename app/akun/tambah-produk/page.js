@@ -19,7 +19,7 @@ export default function TambahProdukPage() {
               <li><Link href="/akun/titip-lelang" className="active"><i className="ph ph-envelope-simple-open"></i> Titip Lelang</Link></li>
             </ul>
           </aside>
-          <div className="akun-content">
+          <div className="akun-content smooth-fade">
             <h2 className="akun-section-title">Tambah Produk Jual</h2>
             <p className="akun-section-desc">Yuk, mulai titipkan produkmu dan ikuti proses lelang dengan mudah!</p>
             <form action="#" method="POST" id="formTambahProduk">

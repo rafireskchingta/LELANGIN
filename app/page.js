@@ -1,6 +1,13 @@
+"use client";
 import Link from 'next/link';
+import { useState } from 'react';
 
 export default function HomePage() {
+  const [activeFaq, setActiveFaq] = useState(0);
+
+  const toggleFaq = (index) => {
+    setActiveFaq(activeFaq === index ? -1 : index);
+  };
   return (
     <main>
       {/* Hero Banner */}
@@ -25,24 +32,24 @@ export default function HomePage() {
       <section className="categories-section">
         <h2>Kategori Lelang</h2>
         <div className="categories-grid">
-          <div className="category-wrap">
+          <Link href="/jelajahi?kategori=Seni" className="category-wrap" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="category-card">
               <i className="ph ph-palette category-icon"></i>
             </div>
             <div className="category-name">Seni</div>
-          </div>
-          <div className="category-wrap">
+          </Link>
+          <Link href="/jelajahi?kategori=Elektronik" className="category-wrap" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="category-card">
               <i className="ph ph-television category-icon"></i>
             </div>
             <div className="category-name">Elektronik</div>
-          </div>
-          <div className="category-wrap">
+          </Link>
+          <Link href="/jelajahi?kategori=Hobi" className="category-wrap" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="category-card">
               <i className="ph ph-game-controller category-icon"></i>
             </div>
             <div className="category-name">Hobi</div>
-          </div>
+          </Link>
         </div>
       </section>
 
@@ -119,36 +126,46 @@ export default function HomePage() {
 
           {/* Accordion Items */}
           <div className="faq-content">
-            <div className="accordion-item active">
-              <div className="accordion-header">
+            <div className={`accordion-item ${activeFaq === 0 ? 'active' : ''}`}>
+              <div className="accordion-header" onClick={() => toggleFaq(0)} style={{ cursor: 'pointer' }}>
                 Informasi apa sajakah yang disajikan dalam website lelang ini?
-                <i className="ph ph-caret-up"></i>
+                <i className="ph ph-caret-down accordion-icon"></i>
               </div>
               <div className="accordion-body">
-                Website ini menyajikan informasi aset-aset yang dijual, baik melalui mekanisme lelang maupun jual damai.
-                Aset-aset yang diinformasikan pada website info lelang ini merupakan aset yang terpercaya.
+                <div className="accordion-content">
+                  <div className="accordion-text">
+                    Website ini menyajikan informasi aset-aset yang dijual, baik melalui mekanisme lelang maupun jual damai.
+                    Aset-aset yang diinformasikan pada website info lelang ini merupakan aset yang terpercaya.
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="accordion-item">
-              <div className="accordion-header">
+            <div className={`accordion-item ${activeFaq === 1 ? 'active' : ''}`}>
+              <div className="accordion-header" onClick={() => toggleFaq(1)} style={{ cursor: 'pointer' }}>
                 Siapakah pihak penjual dalam penjualan dengan mekanisme lelang?
-                <i className="ph ph-caret-down"></i>
+                <i className="ph ph-caret-down accordion-icon"></i>
               </div>
               <div className="accordion-body">
-                Beragam pihak penjual terverifikasi mulai dari pelelang pribadi hingga lembaga resmi sesuai regulasi yang
-                berlaku.
+                <div className="accordion-content">
+                  <div className="accordion-text">
+                    Pihak penjual di platform Lelangin dapat berupa perorangan, perusahaan swasta, kurator, maupun institusi pemerintah atau perbankan yang telah melewati proses verifikasi ketat dari tim internal kami. Hal ini dirancang untuk menjamin legalitas barang dan memberikan keamanan serta kepercayaan maksimal bagi Anda selaku peserta lelang.
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="accordion-item">
-              <div className="accordion-header">
+            <div className={`accordion-item ${activeFaq === 2 ? 'active' : ''}`}>
+              <div className="accordion-header" onClick={() => toggleFaq(2)} style={{ cursor: 'pointer' }}>
                 Apa yang dimaksud barang dengan status &quot;lelang&quot;?
-                <i className="ph ph-caret-down"></i>
+                <i className="ph ph-caret-down accordion-icon"></i>
               </div>
               <div className="accordion-body">
-                Barang lelang adalah barang yang siap untuk ditawarkan kepada publik, dan pihak yang menawarkan harga
-                tertinggi akan memenangkan barang tersebut setelah rentang waktu tertentu.
+                <div className="accordion-content">
+                  <div className="accordion-text">
+                    Status &quot;lelang&quot; menandakan bahwa sebuah aset sedang ditawarkan secara eksklusif kepada publik dan akan terjual kepada peserta yang mengajukan harga penawaran (bid) tertinggi pada saat batas waktu lelang berakhir. Sistem kami mencatat setiap penawaran secara real-time dan transparan untuk memastikan kompetisi berjalan adil.
+                  </div>
+                </div>
               </div>
             </div>
           </div>

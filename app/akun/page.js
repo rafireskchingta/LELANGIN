@@ -7,6 +7,7 @@ import { supabase } from '../../src/lib/supabase';
 
 export default function AkunSayaPage() {
   const router = useRouter();
+  const [isEditMode, setIsEditMode] = useState(false);
   const [user, setUser] = useState({
     username: '', nama: '', email: '', jenisKelamin: '',
     noTelp: '', tglLahirTgl: '', tglLahirBulan: '', tglLahirTahun: '', avatar: 'U'
@@ -135,17 +136,17 @@ export default function AkunSayaPage() {
               <li><a href="#" onClick={handleLogout} style={{ color: 'var(--danger)', cursor: 'pointer' }}><i className="ph ph-sign-out"></i> Keluar</a></li>
             </ul>
           </aside>
-          <div className="akun-content">
+          <div className="akun-content smooth-fade">
             <h2 className="akun-section-title">Profil Saya</h2>
             <p className="akun-section-desc">Kelola informasi pribadi Anda untuk mengontrol, melindungi, dan mengamankan akun</p>
             <form action="#" method="POST" id="formProfile">
               <div className="form-horizontal-group">
                 <label>Username</label>
-                <div className="input-wrapper"><input type="text" name="username" value={user.username || ''} disabled /></div>
+                <div className="input-wrapper"><input type="text" name="username" value={user.username || ''} disabled={!isEditMode} onChange={(e) => setUser({...user, username: e.target.value})} /></div>
               </div>
               <div className="form-horizontal-group">
                 <label>Nama Lengkap</label>
-                <div className="input-wrapper"><input type="text" name="nama" value={user.nama || ''} disabled /></div>
+                <div className="input-wrapper"><input type="text" name="nama" value={user.nama || ''} disabled={!isEditMode} onChange={(e) => setUser({...user, nama: e.target.value})} /></div>
               </div>
               <div className="form-horizontal-group">
                 <label>Email</label>
@@ -154,7 +155,7 @@ export default function AkunSayaPage() {
               <div className="form-horizontal-group">
                 <label>Jenis Kelamin</label>
                 <div className="input-wrapper">
-                  <select disabled value={user.jenisKelamin || ''}>
+                  <select disabled={!isEditMode} value={user.jenisKelamin || ''} onChange={(e) => setUser({...user, jenisKelamin: e.target.value})}>
                     <option value="" disabled>Pilih Jenis Kelamin</option>
                     <option value="Pria">Pria</option>
                     <option value="Wanita">Wanita</option>
@@ -165,20 +166,20 @@ export default function AkunSayaPage() {
               </div>
               <div className="form-horizontal-group">
                 <label>No Telp</label>
-                <div className="input-wrapper"><input type="tel" name="noTelp" inputMode="numeric" value={user.noTelp || ''} disabled /></div>
+                <div className="input-wrapper"><input type="tel" name="noTelp" inputMode="numeric" value={user.noTelp || ''} disabled={!isEditMode} onChange={(e) => setUser({...user, noTelp: e.target.value})} /></div>
               </div>
               <div className="form-horizontal-group">
                 <label>Tanggal Lahir</label>
                 <div className="input-wrapper">
-                  <select disabled value={user.tglLahirTgl || ''}>
+                  <select disabled={!isEditMode} value={user.tglLahirTgl || ''} onChange={(e) => setUser({...user, tglLahirTgl: e.target.value})}>
                     <option value="">Tgl</option>
                     {Array.from({ length: 31 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
                   </select>
-                  <select disabled value={user.tglLahirBulan || ''}>
+                  <select disabled={!isEditMode} value={user.tglLahirBulan || ''} onChange={(e) => setUser({...user, tglLahirBulan: e.target.value})}>
                     <option value="">Bulan</option>
                     {['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].map(b => <option key={b} value={b}>{b}</option>)}
                   </select>
-                  <select disabled value={user.tglLahirTahun || ''}>
+                  <select disabled={!isEditMode} value={user.tglLahirTahun || ''} onChange={(e) => setUser({...user, tglLahirTahun: e.target.value})}>
                     <option value="">Tahun</option>
                     {Array.from({ length: 30 }, (_, i) => <option key={i} value={1995 + i}>{1995 + i}</option>)}
                   </select>
@@ -186,7 +187,11 @@ export default function AkunSayaPage() {
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem', marginTop: '3rem' }}>
-                <a href="#" style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 500 }}>Edit</a>
+                {isEditMode ? (
+                  <button onClick={(e) => { e.preventDefault(); setIsEditMode(false); }} className="btn-primary-full" style={{ width: 'auto', padding: '0.6rem 2rem', margin: 0, fontSize: '0.9rem', borderRadius: '6px' }}>Simpan Profil</button>
+                ) : (
+                  <a href="#" onClick={(e) => { e.preventDefault(); setIsEditMode(true); }} style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 500 }}>Edit</a>
+                )}
               </div>
               <div style={{ textAlign: 'right', marginTop: '1rem', fontSize: '0.85rem' }}>
                 Ingin mendaftar menjadi penjual? <Link href="/akun/penjual" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>Daftar Sekarang</Link>

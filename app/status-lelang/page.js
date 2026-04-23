@@ -1,10 +1,60 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
-export default function StatusLelangPage() {
-  const [activeRole, setActiveRole] = useState('pembeli');
+function StatusLelangContent() {
+  const searchParams = useSearchParams();
+  const initRole = searchParams.get('role') || 'pembeli';
+
+  const [activeRole, setActiveRole] = useState(initRole);
+  const [activeSubTab, setActiveSubTab] = useState('All');
+  const [favorites, setFavorites] = useState([]);
+  const tabsRef = useRef(null);
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
+
+  useEffect(() => {
+    const fetchFavs = () => {
+      setFavorites(JSON.parse(localStorage.getItem('lelangin_favorites') || '[]'));
+    };
+    fetchFavs();
+    window.addEventListener('favorites-updated', fetchFavs);
+    return () => window.removeEventListener('favorites-updated', fetchFavs);
+  }, []);
+
+  const toggleFavorite = (id, e) => {
+    if (e) e.preventDefault();
+    let newFavs = [...favorites];
+    if (newFavs.includes(id)) {
+      newFavs = newFavs.filter(f => f !== id);
+    } else {
+      newFavs.push(id);
+    }
+    setFavorites(newFavs);
+    localStorage.setItem('lelangin_favorites', JSON.stringify(newFavs));
+    window.dispatchEvent(new Event('favorites-updated'));
+  };
+
+  useEffect(() => {
+    const updateIndicator = () => {
+      const activeEl = tabsRef.current?.querySelector('.cara-tab.active');
+      if (activeEl) {
+        setIndicatorStyle({
+          left: activeEl.offsetLeft,
+          width: activeEl.offsetWidth,
+          opacity: 1
+        });
+      }
+    };
+    updateIndicator();
+    const timer = setTimeout(updateIndicator, 50);
+    window.addEventListener('resize', updateIndicator);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateIndicator);
+    };
+  }, [activeRole]);
 
   return (
     <main className="page-container" style={{ maxWidth: '1000px', margin: '0 auto' }}>
@@ -15,7 +65,7 @@ export default function StatusLelangPage() {
       </div>
 
       {/* Tabs Role - Conditional Rendering */}
-      <div className="cara-tabs" style={{ marginBottom: '2rem' }}>
+      <div className="cara-tabs" ref={tabsRef} style={{ marginBottom: '2rem', position: 'relative' }}>
         <div
           className={`cara-tab ${activeRole === 'pembeli' ? 'active' : ''}`}
           style={{ flex: 1, textAlign: 'center', cursor: 'pointer' }}
@@ -26,15 +76,18 @@ export default function StatusLelangPage() {
           style={{ flex: 1, textAlign: 'center', cursor: 'pointer' }}
           onClick={() => setActiveRole('penjual')}
         >Penjual</div>
+        
+        {/* Animated Slide Indicator */}
+        <div className="cara-indicator" style={indicatorStyle}></div>
       </div>
 
       {/* Sub Tabs (Pills) */}
       <div className="status-pills" style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
         {activeRole === 'pembeli' ? (
           <>
-            <button className="status-pill active">All</button>
-            <button className="status-pill">Favorit</button>
-            <button className="status-pill">Menang Lelang</button>
+            <button className={`status-pill ${activeSubTab === 'All' ? 'active' : ''}`} onClick={() => setActiveSubTab('All')}>All</button>
+            <button className={`status-pill ${activeSubTab === 'Favorit' ? 'active' : ''}`} onClick={() => setActiveSubTab('Favorit')}>Favorit</button>
+            <button className={`status-pill ${activeSubTab === 'Menang Lelang' ? 'active' : ''}`} onClick={() => setActiveSubTab('Menang Lelang')}>Menang Lelang</button>
             <button className="status-pill">Kalah Lelang</button>
             <button className="status-pill">Dikirim</button>
             <button className="status-pill">Selesai</button>
@@ -58,7 +111,30 @@ export default function StatusLelangPage() {
 
       {/* Conditional Rendering: Pembeli vs Penjual */}
       {activeRole === 'pembeli' ? (
-        <div className="status-list" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="status-list smooth-fade" key={`pembeli-${activeSubTab}`} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {activeSubTab === 'Favorit' ? (
+            favorites.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>Belum ada produk favorit tersimpan.</div>
+            ) : (
+              favorites.map(favId => (
+                <Link key={favId} href="/jelajahi/detail" className="status-card" style={{ textDecoration: 'none', color: 'inherit', position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10 }} onClick={(e) => toggleFavorite(favId, e)}>
+                    <i className="ph-fill ph-heart" style={{ color: 'var(--danger)', fontSize: '1.5rem', cursor: 'pointer' }}></i>
+                  </div>
+                  <img src="/assets/washer.png" alt="Produk Favorit" className="status-img" style={{ objectFit: 'cover' }} />
+                  <div className="status-info">
+                    <h3 className="status-title">Toshiba Front Loading Washing Machine TW-BK115G4FN(SK) 10.5kg (Item #{favId})</h3>
+                    <p className="status-location"><i className="ph ph-map-pin"></i> Tersimpan di Favorit</p>
+                  </div>
+                  <div className="status-bid-info">
+                     <p className="label">Harga Awal</p>
+                     <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 7.000.000</p>
+                  </div>
+                </Link>
+              ))
+            )
+          ) : (
+            <>
           {/* Item 1: Menunggu */}
           <Link href="/status-lelang/detail-menunggu" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
             <img src="/assets/washer.png" alt="Washing Machine" className="status-img" />
@@ -109,9 +185,11 @@ export default function StatusLelangPage() {
               <span className="badge-status badge-green">Anda Menang</span>
             </div>
           </Link>
+            </>
+          )}
         </div>
       ) : (
-        <div className="status-list" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="status-list smooth-fade" key="penjual" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Item 1: Berlangsung */}
           <Link href="/jelajahi/detail" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
             <img src="/assets/washer.png" alt="Washing Machine" className="status-img" />
@@ -165,5 +243,13 @@ export default function StatusLelangPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function StatusLelangPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '4rem', textAlign: 'center' }}>Memuat...</div>}>
+      <StatusLelangContent />
+    </Suspense>
   );
 }

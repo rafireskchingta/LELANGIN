@@ -3,6 +3,16 @@
 import Link from 'next/link';
 
 export default function TitipLelangPage() {
+  const handleLogout = (e) => {
+    e.preventDefault();
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('lelangin_user');
+      localStorage.removeItem('isLoggedIn');
+      window.dispatchEvent(new Event('auth-change'));
+      window.location.href = '/';
+    }
+  };
+
   return (
     <main className="akun-main-wrapper">
       <div className="akun-container-box">
@@ -17,15 +27,16 @@ export default function TitipLelangPage() {
               <li><Link href="/akun"><i className="ph ph-smiley"></i> Akun Saya</Link></li>
               <li><Link href="/akun/penjual"><i className="ph ph-cube"></i> Penjual</Link></li>
               <li><Link href="/akun/titip-lelang" className="active"><i className="ph ph-envelope-simple-open"></i> Titip Lelang</Link></li>
+              <li><a href="#" onClick={handleLogout} style={{ color: 'var(--danger)', cursor: 'pointer' }}><i className="ph ph-sign-out"></i> Keluar</a></li>
             </ul>
           </aside>
-          <div className="akun-content">
+          <div className="akun-content smooth-fade">
             <div style={{ border: '1px solid #E5E7EB', borderRadius: '8px', padding: '1.25rem 1.5rem', marginBottom: '2rem' }}>
               <h2 style={{ color: 'var(--primary)', fontSize: '1.25rem', fontWeight: 700 }}>Produk Titip Lelang</h2>
             </div>
             <div style={{ backgroundColor: '#FAFAFA', borderRadius: '8px', minHeight: '400px', padding: '2rem', position: 'relative' }}>
               <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <button className="btn-primary-full" style={{ width: 'auto', margin: 0, padding: '0.5rem 1.25rem', fontSize: '0.8rem', fontWeight: 600, borderRadius: '999px' }}>Tampilkan Seluruh Produk</button>
+                <Link href="/status-lelang?role=penjual" className="btn-primary-full" style={{ width: 'auto', margin: 0, padding: '0.5rem 1.25rem', fontSize: '0.8rem', fontWeight: 600, borderRadius: '999px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Tampilkan Seluruh Produk</Link>
                 <button style={{ border: 'none', background: '#EEF2FF', color: 'var(--primary)', width: '35px', height: '35px', borderRadius: '50%', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="ph ph-plus"></i></button>
                 <button style={{ border: 'none', background: '#EEF2FF', color: 'var(--primary)', width: '35px', height: '35px', borderRadius: '50%', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="ph ph-trash"></i></button>
               </div>

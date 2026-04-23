@@ -3,6 +3,16 @@
 import Link from 'next/link';
 
 export default function AkunPenjualPage() {
+  const handleLogout = (e) => {
+    e.preventDefault();
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('lelangin_user');
+      localStorage.removeItem('isLoggedIn');
+      window.dispatchEvent(new Event('auth-change'));
+      window.location.href = '/';
+    }
+  };
+
   return (
     <main className="akun-main-wrapper">
       <div className="akun-container-box">
@@ -17,9 +27,10 @@ export default function AkunPenjualPage() {
               <li><Link href="/akun"><i className="ph ph-smiley"></i> Akun Saya</Link></li>
               <li><Link href="/akun/penjual" className="active"><i className="ph ph-cube"></i> Penjual</Link></li>
               <li><Link href="/akun/titip-lelang"><i className="ph ph-envelope-simple-open"></i> Titip Lelang</Link></li>
+              <li><a href="#" onClick={handleLogout} style={{ color: 'var(--danger)', cursor: 'pointer' }}><i className="ph ph-sign-out"></i> Keluar</a></li>
             </ul>
           </aside>
-          <div className="akun-content">
+          <div className="akun-content smooth-fade">
             <h2 className="akun-section-title">Profil Penjual</h2>
             <p className="akun-section-desc">Lengkapi data berikut untuk mulai menjual produk melalui sistem lelang di Lelangin</p>
             <form action="#" method="POST" id="formDaftarPenjual">

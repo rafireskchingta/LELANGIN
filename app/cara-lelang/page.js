@@ -1,9 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export default function CaraLelangPage() {
   const [activeTab, setActiveTab] = useState('beli');
+  const tabsRef = useRef(null);
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
+
+  useEffect(() => {
+    const updateIndicator = () => {
+      const activeEl = tabsRef.current?.querySelector('.cara-tab.active');
+      if (activeEl) {
+        setIndicatorStyle({
+          left: activeEl.offsetLeft,
+          width: activeEl.offsetWidth,
+          opacity: 1
+        });
+      }
+    };
+    updateIndicator();
+    const timer = setTimeout(updateIndicator, 50);
+    window.addEventListener('resize', updateIndicator);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateIndicator);
+    };
+  }, [activeTab]);
 
   const stepsBeli = [
     { num: 1, title: 'Cek Produk Lelang', desc: 'Lihat berbagai produk yang sedang dilelang beserta jadwalnya melalui platform Lelangin.' },
@@ -61,13 +83,16 @@ export default function CaraLelangPage() {
           style={{ fontSize: '4rem', color: '#FBBF24', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }}></i>
       </div>
 
-      <div className="cara-tabs mt-5">
+      <div className="cara-tabs mt-5" ref={tabsRef} style={{ position: 'relative' }}>
         <div className={`cara-tab ${activeTab === 'beli' ? 'active' : ''}`} onClick={() => setActiveTab('beli')}>Cara Beli</div>
         <div className={`cara-tab ${activeTab === 'jual' ? 'active' : ''}`} onClick={() => setActiveTab('jual')}>Cara Jual</div>
+        
+        {/* Animated Slide Indicator */}
+        <div className="cara-indicator" style={indicatorStyle}></div>
       </div>
 
       {/* Content - Conditional Rendering */}
-      <div className="cara-content-section">
+      <div className="cara-content-section smooth-fade" key={activeTab}>
         <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)', marginTop: '2rem', marginBottom: '1.5rem' }}>{stepsTitle}</h3>
         <div className="grid-steps" style={{ marginTop: '1rem' }}>
           {steps.map((step) => (
