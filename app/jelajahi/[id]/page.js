@@ -1,8 +1,18 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 export default function DetailPage() {
+  const router = useRouter();
+
   return (
     <main className="page-container detail-page">
+      <button 
+        onClick={() => router.back()} 
+        style={{ fontFamily: 'inherit', background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, fontSize: '1.1rem', marginBottom: '2rem', padding: 0 }}
+      >
+        <i className="ph-bold ph-arrow-left"></i> Kembali
+      </button>
       <div className="detail-layout">
         {/* Kiri */}
         <div className="detail-left">

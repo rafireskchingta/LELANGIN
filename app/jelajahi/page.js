@@ -11,6 +11,9 @@ function JelajahiContent() {
   const [isFilterOpen, setIsFilterOpen] = useState(true);
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [favorites, setFavorites] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [sortOrder, setSortOrder] = useState('Terbaru');
+  const [isSortOpen, setIsSortOpen] = useState(false);
 
   useEffect(() => {
     const fetchFavs = () => {
@@ -56,19 +59,21 @@ function JelajahiContent() {
         ))}
       </div>
 
-      <div style={{ marginBottom: '1.5rem', display: 'flex' }}>
+      <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <button className="sidebar-toggle-btn"
           onClick={() => setIsFilterOpen(!isFilterOpen)}
           title={isFilterOpen ? 'Sembunyikan Filter' : 'Tampilkan Filter'}
         >
           <i className={`ph-bold ${isFilterOpen ? 'ph-caret-left' : 'ph-caret-right'}`}></i>
         </button>
+        <span className="smooth-fade" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <i className="ph ph-funnel"></i> Filter
+        </span>
       </div>
 
       <div className="jelajahi-layout">
         {/* Sidebar / Filter */}
         <aside className={`sidebar-filter ${isFilterOpen ? '' : 'closed'}`}>
-          <h2 style={{ fontSize: '1.4rem', color: 'inherit', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, marginBottom: '1.5rem' }}><i className="ph ph-funnel"></i> Filter</h2>
           <h3 style={{ marginTop: '0.5rem' }}><i className="ph-fill ph-funnel" style={{ fontSize: '1.25rem' }}></i> Pencarian Detail</h3>
 
           <div className="filter-section">
@@ -117,19 +122,27 @@ function JelajahiContent() {
               <i className="ph ph-magnifying-glass"></i>
               <input type="text" placeholder="Cari Barang Berdasarkan Kata Kunci" />
             </div>
-            <button className="btn-primary-j">CARI</button>
+            <button className="btn-primary-j">Cari</button>
           </div>
 
           <div className="sort-bar">
             <label>Urutkan berdasarkan</label>
-            <select defaultValue="Terbaru">
-              <option>Terbaru</option>
-            </select>
+            <div className="custom-select" onClick={() => setIsSortOpen(!isSortOpen)}>
+              <div className="custom-select-trigger">
+                {sortOrder} <i className={`ph-bold ${isSortOpen ? 'ph-caret-up' : 'ph-caret-down'}`}></i>
+              </div>
+              {isSortOpen && (
+                <div className="custom-options smooth-fade">
+                  <div className={`custom-option ${sortOrder === 'Terbaru' ? 'selected' : ''}`} onClick={(e) => { e.stopPropagation(); setSortOrder('Terbaru'); setIsSortOpen(false); }}>Terbaru</div>
+                  <div className={`custom-option ${sortOrder === 'Terlama' ? 'selected' : ''}`} onClick={(e) => { e.stopPropagation(); setSortOrder('Terlama'); setIsSortOpen(false); }}>Terlama</div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="jelajahi-grid smooth-fade" key={activeCategory}>
             {[1,2,3,4,5,6,7,8].map((i) => (
-              <Link key={i} href="/jelajahi/detail" className="auction-card card-jelajahi" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+              <div key={i} onClick={() => setIsModalOpen(true)} className="auction-card card-jelajahi" style={{ textDecoration: 'none', color: 'inherit', display: 'block', cursor: 'pointer' }}>
                 <div className="badge-time"><i className="ph ph-clock"></i> 12 Hari</div>
                 <img src="/assets/washer.png" alt="Washing Machine" />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
@@ -147,16 +160,16 @@ function JelajahiContent() {
                   <div><i className="ph ph-calendar"></i> 12 Maret 2026</div>
                   <div><i className="ph ph-map-pin"></i> Sukajadi, Bandung</div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </section>
       </div>
 
       {/* Item Detail Modal */}
-      <div className="modal-overlay" id="itemDetailOverlay">
-        <div className="modal modal-lg" id="itemDetailModal">
-          <button className="modal-close" data-close><i className="ph ph-x"></i></button>
+      <div className={`modal-overlay ${isModalOpen ? 'active' : ''}`} id="itemDetailOverlay" onClick={(e) => { if (e.target.id === 'itemDetailOverlay') setIsModalOpen(false) }}>
+        <div className={`modal modal-lg ${isModalOpen ? 'active' : ''}`} id="itemDetailModal">
+          <button className="modal-close" onClick={() => setIsModalOpen(false)}><i className="ph ph-x"></i></button>
           <div className="item-detail-layout">
             <div className="item-detail-image">
               <img src="/assets/washer.png" className="main-img" alt="Washing Machine" />

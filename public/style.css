@@ -888,6 +888,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;
+  font-family: 'Outfit', sans-serif;
 }
 
 .btn-primary-j:hover {
@@ -902,12 +903,55 @@ body {
   margin-bottom: 2rem;
 }
 
-.sort-bar select {
+.custom-select {
+  position: relative;
+  display: inline-block;
+  min-width: 140px;
+}
+
+.custom-select-trigger {
   padding: 0.5rem 1rem;
   border: 1px solid #D1D5DB;
-  border-radius: 8px;
+  border-radius: 999px;
   font-family: inherit;
   font-weight: 500;
+  cursor: pointer;
+  background-color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.custom-options {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid #D1D5DB;
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 10;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.custom-option {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.custom-option:last-child {
+  border-bottom: none;
+}
+
+.custom-option:hover,
+.custom-option.selected {
+  background-color: var(--primary);
+  color: white;
 }
 
 .jelajahi-grid {
