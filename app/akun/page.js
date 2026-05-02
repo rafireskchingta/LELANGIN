@@ -193,8 +193,12 @@ export default function AkunSayaPage() {
                   <a href="#" onClick={(e) => { e.preventDefault(); setIsEditMode(true); }} style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 500 }}>Edit</a>
                 )}
               </div>
-              <div style={{ textAlign: 'right', marginTop: '1rem', fontSize: '0.85rem' }}>
-                Ingin mendaftar menjadi penjual? <Link href="/akun/penjual" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>Daftar Sekarang</Link>
+              <div style={{ marginTop: '2rem', padding: '1.25rem 1.5rem', border: '1px solid #E0E7FF', borderRadius: '10px', backgroundColor: '#F5F3FF', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                <div>
+                  <p style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--primary)', margin: 0 }}>Daftar Penjual</p>
+                  <p style={{ fontSize: '0.82rem', color: '#6B7280', margin: '0.2rem 0 0' }}>Jadilah penjual dan mulai lelang produkmu di Lelangin</p>
+                </div>
+                <Link href="/akun/penjual" className="btn-primary-full" style={{ width: 'auto', margin: 0, padding: '0.55rem 1.5rem', fontSize: '0.88rem', borderRadius: '8px', textDecoration: 'none', whiteSpace: 'nowrap' }}>Daftar Sekarang</Link>
               </div>
             </form>
           </div>
