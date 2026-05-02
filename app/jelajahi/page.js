@@ -49,8 +49,8 @@ function JelajahiContent() {
       {/* Tabs */}
       <div className="tabs-container">
         {['Semua', 'Seni', 'Elektronik', 'Hobi'].map((cat) => (
-          <div 
-            key={cat} 
+          <div
+            key={cat}
             className={`tab-item ${activeCategory === cat ? 'active' : ''}`}
             onClick={() => setActiveCategory(cat)}
           >
@@ -141,14 +141,14 @@ function JelajahiContent() {
           </div>
 
           <div className="jelajahi-grid smooth-fade" key={activeCategory}>
-            {[1,2,3,4,5,6,7,8].map((i) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <div key={i} onClick={() => setIsModalOpen(true)} className="auction-card card-jelajahi" style={{ textDecoration: 'none', color: 'inherit', display: 'block', cursor: 'pointer' }}>
                 <div className="badge-time"><i className="ph ph-clock"></i> 12 Hari</div>
                 <img src="/assets/washer.png" alt="Washing Machine" />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
                   <div className="auction-price" style={{ marginBottom: 0, fontSize: '1.25rem' }}>Rp 7.000.000</div>
-                  <i 
-                    className={`${favorites.includes(i) ? 'ph-fill' : 'ph'} ph-heart`} 
+                  <i
+                    className={`${favorites.includes(i) ? 'ph-fill' : 'ph'} ph-heart`}
                     style={{ color: favorites.includes(i) ? 'var(--danger)' : 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s', fontSize: '1.25rem' }}
                     onClick={(e) => toggleFavorite(i, e)}
                   ></i>
@@ -180,7 +180,7 @@ function JelajahiContent() {
               </div>
               <div className="bid-history">
                 <button className="btn-history"><i className="ph ph-clock-counter-clockwise"></i> Riwayat Penawaran (45) <i
-                    className="ph ph-caret-down ml-auto"></i></button>
+                  className="ph ph-caret-down ml-auto"></i></button>
               </div>
             </div>
             <div className="item-detail-info">
@@ -223,7 +223,7 @@ function JelajahiContent() {
                   <div className="progress-fill" style={{ width: '80%' }}></div>
                 </div>
               </div>
-              <button className="btn-primary-full" onClick={() => window.location.href='/jelajahi/detail'}>Detail Barang</button>
+              <button className="btn-primary-full" onClick={() => window.location.href = '/jelajahi/detail'}>Detail Barang</button>
             </div>
           </div>
         </div>

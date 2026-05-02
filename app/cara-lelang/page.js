@@ -50,7 +50,7 @@ export default function CaraLelangPage() {
     { num: 2, title: 'Tambah Produk', desc: 'Unggah produk yang ingin dilelang dengan menambahkan foto, deskripsi, dan informasi produk secara lengkap.' },
     { num: 3, title: 'Tentukan Harga dan Durasi', desc: 'Atur harga awal lelang serta waktu berlangsungnya lelang sesuai yang diinginkan.' },
     { num: 4, title: 'Tampilkan Produk', desc: 'Produk akan tampil di platform dan dapat dilihat serta diikuti oleh peserta lelang.' },
-    { num: 5, title: 'Tentukan Pemenang', desc: 'Setelah waktu lelang berakhir, peserta dengan penawaran tertinggi akan menjadi pemenang.' },
+    { num: 5, title: 'Penentuan Pemenang', desc: 'Setelah waktu lelang berakhir, peserta dengan penawaran tertinggi akan menjadi pemenang.' },
     { num: 6, title: 'Kirim Produk', desc: 'Penjual dapat mengirimkan produk kepada pemenang lelang melalui layanan pengiriman.' },
   ];
 
@@ -93,7 +93,7 @@ export default function CaraLelangPage() {
 
       {/* Content - Conditional Rendering */}
       <div className="cara-content-section smooth-fade" key={activeTab}>
-        <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)', marginTop: '2rem', marginBottom: '1.5rem' }}>{stepsTitle}</h3>
+        <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#000', marginTop: '1.5rem', marginBottom: '1rem' }}>{stepsTitle}</h3>
         <div className="grid-steps" style={{ marginTop: '1rem' }}>
           {steps.map((step) => (
             <div key={step.num} className="step-box">
@@ -106,7 +106,7 @@ export default function CaraLelangPage() {
           ))}
         </div>
 
-        <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)', marginTop: '3rem', marginBottom: '1.5rem' }}>{benefitsTitle}</h3>
+        <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#000', marginTop: '2rem', marginBottom: '1rem' }}>{benefitsTitle}</h3>
         <div className="grid-benefits" style={{ marginTop: '1rem' }}>
           {benefits.map((item, i) => (
             <div key={i} className="benefit-item">
