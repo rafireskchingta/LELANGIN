@@ -68,12 +68,12 @@ export default function Navbar() {
 
   return (
     <header className="header">
-      <Link href="/" className="logo-section" style={{ textDecoration: 'none' }}>
+      <div className="logo-section">
         <div className="logo-icon">
           <i className="ph ph-gavel"></i>
         </div>
         <h2>Lelangin</h2>
-      </Link>
+      </div>
       <nav className="nav-links" ref={navRef}>
         <Link href="/" className={pathname === '/' ? 'active' : ''}>
           Beranda
