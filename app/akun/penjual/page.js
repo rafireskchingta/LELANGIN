@@ -8,12 +8,11 @@ import { supabase } from '../../../src/lib/supabase';
 export default function AkunPenjualPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [isPenjual, setIsPenjual] = useState(false);
+  // sellerStatus: null (belum daftar), 'menunggu', 'disetujui', 'ditolak'
+  const [sellerStatus, setSellerStatus] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [toast, setToast] = useState(null); // { msg, type }
+  const [toast, setToast] = useState(null);
 
   // State KTP
   const [ktpFile, setKtpFile] = useState(null);
@@ -28,8 +27,8 @@ export default function AkunPenjualPage() {
     alamat: '', namaBank: '', noRekening: '', namaPemilikRekening: '',
   });
 
-  const bulanArr = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-  const bulanMap = { 'Januari':'01','Februari':'02','Maret':'03','April':'04','Mei':'05','Juni':'06','Juli':'07','Agustus':'08','September':'09','Oktober':'10','November':'11','Desember':'12' };
+  const bulanArr = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const bulanMap = { 'Januari': '01', 'Februari': '02', 'Maret': '03', 'April': '04', 'Mei': '05', 'Juni': '06', 'Juli': '07', 'Agustus': '08', 'September': '09', 'Oktober': '10', 'November': '11', 'Desember': '12' };
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
@@ -59,8 +58,8 @@ export default function AkunPenjualPage() {
           .eq('user_id', session.user.id)
           .maybeSingle();
 
-        const userIsPenjual = !!sellerApp;
-        setIsPenjual(userIsPenjual);
+        // Simpan status: null, 'menunggu', 'disetujui', 'ditolak'
+        setSellerStatus(sellerApp?.status || null);
 
         let tglLahirTgl = '', tglLahirBulan = '', tglLahirTahun = '';
         if (profile?.birth_date) {
@@ -103,50 +102,8 @@ export default function AkunPenjualPage() {
     fetchData();
   }, [router]);
 
-  const handleLogout = async (e) => {
-    e.preventDefault();
-    localStorage.removeItem('lelangin_user');
-    localStorage.removeItem('isLoggedIn');
-    window.dispatchEvent(new Event('auth-change'));
-    await supabase.auth.signOut();
-    router.push('/');
-  };
-
   const handleChange = (field) => (e) => {
     setPenjual(prev => ({ ...prev, [field]: e.target.value }));
-  };
-
-  // Simpan perubahan data pribadi
-  const handleSimpanData = async () => {
-    if (!userId) return;
-    setSaving(true);
-    try {
-      const tgl = penjual.tglLahirTgl.padStart(2, '0');
-      const bln = bulanMap[penjual.tglLahirBulan] || '01';
-      const thn = penjual.tglLahirTahun || '2000';
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          username: penjual.username,
-          full_name: penjual.nama,
-          gender: penjual.jenisKelamin,
-          phone_number: penjual.noTelp,
-          birth_date: `${thn}-${bln}-${tgl}`,
-        })
-        .eq('id', userId);
-
-      if (profileError) throw profileError;
-
-      showToast('Data berhasil disimpan!', 'success');
-      setIsEditMode(false);
-    } catch (err) {
-      const msg = err?.message || JSON.stringify(err);
-      console.error('[Simpan] Error:', JSON.stringify(err, null, 2));
-      showToast('Gagal menyimpan: ' + msg, 'error');
-    } finally {
-      setSaving(false);
-    }
   };
 
   // Handle pilih / drop file KTP
@@ -257,26 +214,8 @@ export default function AkunPenjualPage() {
     }
     setSubmitting(true);
     try {
-      const tgl = penjual.tglLahirTgl.padStart(2, '0');
-      const bln = bulanMap[penjual.tglLahirBulan] || '01';
-      const thn = penjual.tglLahirTahun || '2000';
-
-      // 1. Update data pribadi ke profiles
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          username: penjual.username,
-          full_name: penjual.nama,
-          gender: penjual.jenisKelamin,
-          phone_number: penjual.noTelp,
-          birth_date: `${thn}-${bln}-${tgl}`,
-          role: 'penjual',
-        })
-        .eq('id', userId);
-
-      if (profileError) throw profileError;
-
-      // 2. Upsert semua field ke seller_applications (semua NOT NULL terpenuhi)
+      // Upsert data ke seller_applications dengan status 'menunggu'
+      // Role di profiles TIDAK diubah — admin yang akan approve
       const { data: appData, error: appError } = await supabase
         .from('seller_applications')
         .upsert({
@@ -293,19 +232,8 @@ export default function AkunPenjualPage() {
       console.log('[Daftar] seller_applications result:', appData, appError);
       if (appError) throw appError;
 
-      // Update localStorage
-      const localUser = localStorage.getItem('lelangin_user');
-      if (localUser) {
-        try {
-          const parsed = JSON.parse(localUser);
-          parsed.role = 'penjual';
-          parsed.isPenjual = true;
-          localStorage.setItem('lelangin_user', JSON.stringify(parsed));
-        } catch (_) {}
-      }
-
-      setIsPenjual(true);
-      showToast('Selamat! Pendaftaran penjual berhasil dikirim.', 'success');
+      setSellerStatus('menunggu');
+      showToast('Pendaftaran penjual berhasil dikirim! Menunggu persetujuan admin.', 'success');
     } catch (err) {
       const msg = err?.message || JSON.stringify(err);
       console.error('[Daftar] Error:', JSON.stringify(err, null, 2));
@@ -315,16 +243,8 @@ export default function AkunPenjualPage() {
     }
   };
 
-  if (loading) return (
-    <main className="akun-main-wrapper">
-      <div className="akun-container-box" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
-        <p style={{ color: '#6B7280' }}>Memuat data...</p>
-      </div>
-    </main>
-  );
-
   return (
-    <main className="akun-main-wrapper">
+    <>
       {/* Toast notifikasi */}
       {toast && (
         <div style={{
@@ -341,283 +261,278 @@ export default function AkunPenjualPage() {
         </div>
       )}
 
-      <div className="akun-container-box">
-        <div className="akun-header-banner"><h1>Informasi Akun Saya</h1></div>
-        <div className="akun-layout-split">
-          <aside className="akun-sidebar">
-            <div className="sidebar-profile">
-              <div className="sidebar-pic">{(penjual.username || 'U').charAt(0).toUpperCase()}</div>
-              <div className="sidebar-user"><h3>{penjual.username || penjual.nama}</h3><Link href="/akun">Ubah Profil</Link></div>
-            </div>
-            <ul className="sidebar-nav">
-              <li><Link href="/akun"><i className="ph ph-smiley"></i> Akun Saya</Link></li>
-              <li><Link href="/akun/penjual" className="active"><i className="ph ph-cube"></i> Penjual</Link></li>
-              <li><Link href="/akun/titip-lelang"><i className="ph ph-envelope-simple-open"></i> Titip Lelang</Link></li>
-              <li><a href="#" onClick={handleLogout} style={{ color: 'var(--danger)', cursor: 'pointer' }}><i className="ph ph-sign-out"></i> Keluar</a></li>
-            </ul>
-          </aside>
+      {/* Banner status pendaftaran */}
+      {sellerStatus === 'menunggu' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: '8px', padding: '0.75rem 1.1rem', marginBottom: '1.5rem', fontSize: '0.875rem', color: '#92400E', fontWeight: 500 }}>
+          <i className="ph ph-clock" style={{ fontSize: '1.1rem' }}></i>
+          Pendaftaran penjual sedang <strong>menunggu persetujuan admin</strong>
+        </div>
+      )}
+      {sellerStatus === 'disetujui' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: '8px', padding: '0.75rem 1.1rem', marginBottom: '1.5rem', fontSize: '0.875rem', color: '#065F46', fontWeight: 500 }}>
+          <i className="ph ph-check-circle" style={{ fontSize: '1.1rem' }}></i>
+          Akun kamu sudah terdaftar sebagai <strong>Penjual</strong>
+        </div>
+      )}
+      {sellerStatus === 'ditolak' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#FEE2E2', border: '1px solid #FCA5A5', borderRadius: '8px', padding: '0.75rem 1.1rem', marginBottom: '1.5rem', fontSize: '0.875rem', color: '#991B1B', fontWeight: 500 }}>
+          <i className="ph ph-x-circle" style={{ fontSize: '1.1rem' }}></i>
+          Pendaftaran penjual <strong>ditolak</strong>. Silakan perbaiki data dan ajukan kembali.
+        </div>
+      )}
 
-          <div className="akun-content smooth-fade">
-            {isPenjual && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: '8px', padding: '0.75rem 1.1rem', marginBottom: '1.5rem', fontSize: '0.875rem', color: '#065F46', fontWeight: 500 }}>
-                <i className="ph ph-check-circle" style={{ fontSize: '1.1rem' }}></i>
-                Akun kamu sudah terdaftar sebagai <strong>Penjual</strong>
-              </div>
-            )}
+      <h2 className="akun-section-title">Profil Penjual</h2>
+      <p className="akun-section-desc">
+        {sellerStatus === 'menunggu'
+          ? 'Data pendaftaran kamu sedang ditinjau oleh admin. Semua data dikunci selama proses peninjauan.'
+          : sellerStatus === 'disetujui'
+            ? 'Data akun penjual kamu. Untuk mengedit data pribadi, silakan ke halaman Akun Saya.'
+            : 'Lengkapi data berikut untuk mulai menjual produk melalui sistem lelang di Lelangin'}
+      </p>
 
-            <h2 className="akun-section-title">Profil Penjual</h2>
-            <p className="akun-section-desc">
-              {isPenjual
-                ? 'Data akun penjual kamu. Kamu bisa mengedit informasi di bawah jika diperlukan.'
-                : 'Lengkapi data berikut untuk mulai menjual produk melalui sistem lelang di Lelangin'}
-            </p>
+      <form onSubmit={handleDaftarPenjual} id="formDaftarPenjual">
+        {/* === Data Pribadi (read-only, edit di Akun Saya) === */}
+        <div className="form-horizontal-group">
+          <label>Username</label>
+          <div className="input-wrapper">
+            <input type="text" value={penjual.username} disabled />
+          </div>
+        </div>
+        <div className="form-horizontal-group">
+          <label>Nama</label>
+          <div className="input-wrapper">
+            <input type="text" value={penjual.nama} disabled />
+          </div>
+        </div>
+        <div className="form-horizontal-group">
+          <label>Email</label>
+          <div className="input-wrapper">
+            <input type="email" value={penjual.email} disabled />
+          </div>
+        </div>
+        <div className="form-horizontal-group">
+          <label>Jenis Kelamin</label>
+          <div className="input-wrapper">
+            <select disabled value={penjual.jenisKelamin}>
+              <option value="">Pilih</option>
+              <option value="Pria">Pria</option>
+              <option value="Wanita">Wanita</option>
+            </select>
+          </div>
+        </div>
+        <div className="form-horizontal-group">
+          <label>No Telp</label>
+          <div className="input-wrapper">
+            <input type="tel" value={penjual.noTelp} disabled />
+          </div>
+        </div>
+        <div className="form-horizontal-group">
+          <label>Tanggal Lahir</label>
+          <div className="input-wrapper">
+            <select disabled value={penjual.tglLahirTgl}>
+              <option value="">Tgl</option>
+              {Array.from({ length: 31 }, (_, i) => <option key={i} value={String(i + 1)}>{i + 1}</option>)}
+            </select>
+            <select disabled value={penjual.tglLahirBulan}>
+              <option value="">Bulan</option>
+              {bulanArr.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+            <select disabled value={penjual.tglLahirTahun}>
+              <option value="">Tahun</option>
+              {Array.from({ length: 30 }, (_, i) => <option key={i} value={String(1995 + i)}>{1995 + i}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="form-horizontal-group">
+          <label>Lokasi <span className="required">*</span></label>
+          <div className="input-wrapper">
+            <select
+              value={penjual.alamat}
+              disabled={sellerStatus === 'menunggu' || sellerStatus === 'disetujui'}
+              onChange={handleChange('alamat')}
+              required
+            >
+              <option value="">Pilih Provinsi</option>
+              <option value="Banten">Banten</option>
+              <option value="DKI Jakarta">DKI Jakarta</option>
+              <option value="Jawa Barat">Jawa Barat</option>
+              <option value="Jawa Tengah">Jawa Tengah</option>
+              <option value="DI Yogyakarta">DI Yogyakarta</option>
+              <option value="Jawa Timur">Jawa Timur</option>
+            </select>
+          </div>
+        </div>
 
-            <form onSubmit={handleDaftarPenjual} id="formDaftarPenjual">
-              {/* === Data Pribadi === */}
-              <div className="form-horizontal-group">
-                <label>Username</label>
-                <div className="input-wrapper">
-                  <input type="text" value={penjual.username} disabled={!isEditMode} onChange={handleChange('username')} />
-                </div>
-              </div>
-              <div className="form-horizontal-group">
-                <label>Nama</label>
-                <div className="input-wrapper">
-                  <input type="text" value={penjual.nama} disabled={!isEditMode} onChange={handleChange('nama')} />
-                </div>
-              </div>
-              <div className="form-horizontal-group">
-                <label>Email</label>
-                <div className="input-wrapper">
-                  <input type="email" value={penjual.email} disabled />
-                </div>
-              </div>
-              <div className="form-horizontal-group">
-                <label>Jenis Kelamin</label>
-                <div className="input-wrapper">
-                  <select disabled={!isEditMode} value={penjual.jenisKelamin} onChange={handleChange('jenisKelamin')}>
-                    <option value="">Pilih</option>
-                    <option value="Pria">Pria</option>
-                    <option value="Wanita">Wanita</option>
-                  </select>
-                </div>
-              </div>
-              <div className="form-horizontal-group">
-                <label>No Telp</label>
-                <div className="input-wrapper">
-                  <input type="tel" value={penjual.noTelp} disabled={!isEditMode} onChange={handleChange('noTelp')} />
-                </div>
-              </div>
-              <div className="form-horizontal-group">
-                <label>Tanggal Lahir</label>
-                <div className="input-wrapper">
-                  <select disabled={!isEditMode} value={penjual.tglLahirTgl} onChange={handleChange('tglLahirTgl')}>
-                    <option value="">Tgl</option>
-                    {Array.from({ length: 31 }, (_, i) => <option key={i} value={String(i + 1)}>{i + 1}</option>)}
-                  </select>
-                  <select disabled={!isEditMode} value={penjual.tglLahirBulan} onChange={handleChange('tglLahirBulan')}>
-                    <option value="">Bulan</option>
-                    {bulanArr.map(b => <option key={b} value={b}>{b}</option>)}
-                  </select>
-                  <select disabled={!isEditMode} value={penjual.tglLahirTahun} onChange={handleChange('tglLahirTahun')}>
-                    <option value="">Tahun</option>
-                    {Array.from({ length: 30 }, (_, i) => <option key={i} value={String(1995 + i)}>{1995 + i}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="form-horizontal-group">
-                <label>Lokasi <span className="required">*</span></label>
-                <div className="input-wrapper">
-                  <select
-                    value={penjual.alamat}
-                    disabled={!isEditMode && isPenjual}
-                    onChange={handleChange('alamat')}
-                    required
-                  >
-                    <option value="">Pilih Provinsi</option>
-                    <option value="Banten">Banten</option>
-                    <option value="DKI Jakarta">DKI Jakarta</option>
-                    <option value="Jawa Barat">Jawa Barat</option>
-                    <option value="Jawa Tengah">Jawa Tengah</option>
-                    <option value="DI Yogyakarta">DI Yogyakarta</option>
-                    <option value="Jawa Timur">Jawa Timur</option>
-                  </select>
-                </div>
-              </div>
+        {/* Link ke Akun Saya untuk edit data pribadi — hanya tampil jika disetujui */}
+        {sellerStatus === 'disetujui' && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
+            <Link href="/akun" style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <i className="ph ph-pencil-simple" style={{ fontSize: '0.9rem' }}></i>
+              Edit data pribadi di Akun Saya
+            </Link>
+          </div>
+        )}
 
-              {/* Tombol Edit / Simpan Data Pribadi */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.75rem', gap: '0.75rem' }}>
-                {isEditMode ? (
-                  <>
-                    <button type="button" onClick={() => setIsEditMode(false)}
-                      style={{ background: 'none', border: '1px solid #D1D5DB', borderRadius: '6px', padding: '0.5rem 1.25rem', fontSize: '0.875rem', color: '#6B7280', cursor: 'pointer' }}>
-                      Batal
-                    </button>
-                    <button type="button" onClick={handleSimpanData} disabled={saving}
+        {/* === Upload KTP === */}
+        <h3 className="sub-title" style={{ marginTop: '2.5rem' }}>Upload KTP</h3>
+        <div style={{ marginBottom: '1.25rem' }}>
+          <label style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'block', marginBottom: '0.75rem' }}>KTP <span className="required">*</span></label>
+          <div>
+            {/* Preview jika sudah ada file/URL */}
+            {ktpPreview ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ position: 'relative', display: 'inline-block', maxWidth: '320px' }}>
+                  <img
+                    src={ktpPreview}
+                    alt="Preview KTP"
+                    style={{ width: '100%', borderRadius: '8px', border: '1px solid #E5E7EB', objectFit: 'cover' }}
+                  />
+                  {ktpUrl && (
+                    <span style={{
+                      position: 'absolute', top: '8px', right: '8px',
+                      backgroundColor: '#D1FAE5', color: '#065F46',
+                      fontSize: '0.7rem', fontWeight: 600, padding: '2px 8px',
+                      borderRadius: '999px', border: '1px solid #6EE7B7'
+                    }}>
+                      ✓ Tersimpan
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {/* Tombol upload jika file baru dipilih tapi belum diupload */}
+                  {ktpFile && !ktpUploading && (
+                    <button
+                      type="button"
+                      onClick={handleUploadKtp}
                       className="btn-primary-full"
-                      style={{ width: 'auto', padding: '0.5rem 1.5rem', margin: 0, fontSize: '0.875rem', borderRadius: '6px' }}>
-                      {saving ? 'Menyimpan...' : 'Simpan Data'}
-                    </button>
-                  </>
-                ) : (
-                  <a href="#" onClick={(e) => { e.preventDefault(); setIsEditMode(true); }}
-                    style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 500 }}>
-                    Edit
-                  </a>
-                )}
-              </div>
-
-              {/* === Upload KTP === */}
-              <h3 className="sub-title" style={{ marginTop: '2.5rem' }}>Upload KTP</h3>
-              <div className="form-horizontal-group" style={{ alignItems: 'flex-start' }}>
-                <label style={{ marginTop: '1rem' }}>KTP <span className="required">*</span></label>
-                <div className="input-wrapper">
-                  {/* Preview jika sudah ada file/URL */}
-                  {ktpPreview ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      <div style={{ position: 'relative', display: 'inline-block', maxWidth: '320px' }}>
-                        <img
-                          src={ktpPreview}
-                          alt="Preview KTP"
-                          style={{ width: '100%', borderRadius: '8px', border: '1px solid #E5E7EB', objectFit: 'cover' }}
-                        />
-                        {ktpUrl && (
-                          <span style={{
-                            position: 'absolute', top: '8px', right: '8px',
-                            backgroundColor: '#D1FAE5', color: '#065F46',
-                            fontSize: '0.7rem', fontWeight: 600, padding: '2px 8px',
-                            borderRadius: '999px', border: '1px solid #6EE7B7'
-                          }}>
-                            ✓ Tersimpan
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        {/* Tombol upload jika file baru dipilih tapi belum diupload */}
-                        {ktpFile && !ktpUploading && (
-                          <button
-                            type="button"
-                            onClick={handleUploadKtp}
-                            className="btn-primary-full"
-                            style={{ width: 'auto', margin: 0, padding: '0.45rem 1.25rem', fontSize: '0.82rem', borderRadius: '6px' }}
-                          >
-                            Upload KTP
-                          </button>
-                        )}
-                        {ktpUploading && (
-                          <span style={{ fontSize: '0.82rem', color: '#6B7280', padding: '0.45rem 0' }}>
-                            Mengupload...
-                          </span>
-                        )}
-                        {/* Ganti foto */}
-                        <label style={{
-                          cursor: 'pointer', fontSize: '0.82rem', color: 'var(--primary)',
-                          border: '1px solid var(--primary)', borderRadius: '6px',
-                          padding: '0.45rem 1rem', fontWeight: 500
-                        }}>
-                          Ganti Foto
-                          <input
-                            type="file"
-                            accept="image/jpeg,image/png,image/jpg,image/webp"
-                            style={{ display: 'none' }}
-                            onChange={handleKtpInputChange}
-                          />
-                        </label>
-                        {/* Hapus */}
-                        {ktpUrl && (
-                          <button
-                            type="button"
-                            onClick={handleHapusKtp}
-                            style={{
-                              background: 'none', border: '1px solid #FCA5A5', borderRadius: '6px',
-                              padding: '0.45rem 1rem', fontSize: '0.82rem', color: '#DC2626', cursor: 'pointer'
-                            }}
-                          >
-                            Hapus
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    /* Dropzone saat belum ada file */
-                    <label
-                      htmlFor="ktp-file-input"
-                      className={`upload-dropzone${ktpDragOver ? ' drag-over' : ''}`}
-                      style={{ cursor: 'pointer', display: 'block' }}
-                      onDragOver={(e) => { e.preventDefault(); setKtpDragOver(true); }}
-                      onDragLeave={() => setKtpDragOver(false)}
-                      onDrop={handleKtpDrop}
+                      style={{ width: 'auto', margin: 0, padding: '0.45rem 1.25rem', fontSize: '0.82rem', borderRadius: '6px' }}
                     >
-                      <i className="ph ph-identification-card" style={{ fontSize: '1.5rem', display: 'block', marginBottom: '0.4rem' }}></i>
-                      Tarik gambar KTP ke sini atau <span style={{ color: 'var(--primary)', textDecoration: 'underline' }}>pilih file</span>
-                      <span style={{ display: 'block', fontSize: '0.75rem', color: '#9CA3AF', marginTop: '0.25rem' }}>
-                        JPG, PNG, WebP — maks. 5 MB
-                      </span>
-                      <input
-                        id="ktp-file-input"
-                        type="file"
-                        accept="image/jpeg,image/png,image/jpg,image/webp"
-                        style={{ display: 'none' }}
-                        onChange={handleKtpInputChange}
-                      />
-                    </label>
+                      Upload KTP
+                    </button>
+                  )}
+                  {ktpUploading && (
+                    <span style={{ fontSize: '0.82rem', color: '#6B7280', padding: '0.45rem 0' }}>
+                      Mengupload...
+                    </span>
+                  )}
+                  {/* Ganti foto */}
+                  <label style={{
+                    cursor: 'pointer', fontSize: '0.82rem', color: 'var(--primary)',
+                    border: '1px solid var(--primary)', borderRadius: '6px',
+                    padding: '0.45rem 1rem', fontWeight: 500
+                  }}>
+                    Ganti Foto
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/jpg,image/webp"
+                      style={{ display: 'none' }}
+                      onChange={handleKtpInputChange}
+                    />
+                  </label>
+                  {/* Hapus */}
+                  {ktpUrl && (
+                    <button
+                      type="button"
+                      onClick={handleHapusKtp}
+                      style={{
+                        background: 'none', border: '1px solid #FCA5A5', borderRadius: '6px',
+                        padding: '0.45rem 1rem', fontSize: '0.82rem', color: '#DC2626', cursor: 'pointer'
+                      }}
+                    >
+                      Hapus
+                    </button>
                   )}
                 </div>
               </div>
-
-              {/* === Informasi Pembayaran === */}
-              <h3 className="sub-title" style={{ marginTop: '3rem' }}>Informasi Pembayaran</h3>
-              <div className="form-horizontal-group">
-                <label>Nama Bank <span className="required">*</span></label>
-                <div className="input-wrapper">
-                  <select value={penjual.namaBank} onChange={handleChange('namaBank')} required>
-                    <option value=""></option>
-                    <option value="Mandiri">Mandiri</option>
-                    <option value="BCA">BCA</option>
-                    <option value="BNI">BNI</option>
-                    <option value="BRI">BRI</option>
-                  </select>
+            ) : (
+              /* Dropzone saat belum ada file — horizontal/wide layout */
+              <label
+                htmlFor="ktp-file-input"
+                className={`upload-dropzone${ktpDragOver ? ' drag-over' : ''}`}
+                style={{ cursor: 'pointer', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem', padding: '1.5rem 2rem', textAlign: 'left', width: '100%' }}
+                onDragOver={(e) => { e.preventDefault(); setKtpDragOver(true); }}
+                onDragLeave={() => setKtpDragOver(false)}
+                onDrop={handleKtpDrop}
+              >
+                <i className="ph ph-identification-card" style={{ fontSize: '2.5rem', flexShrink: 0, color: 'var(--primary)' }}></i>
+                <div>
+                  <span style={{ fontSize: '0.9rem' }}>Tarik gambar KTP ke sini atau <span style={{ color: 'var(--primary)', textDecoration: 'underline' }}>pilih file</span></span>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#9CA3AF', marginTop: '0.25rem' }}>
+                    JPG, PNG, WebP — maks. 5 MB
+                  </span>
                 </div>
-              </div>
-              <div className="form-horizontal-group">
-                <label>No Rekening <span className="required">*</span></label>
-                <div className="input-wrapper">
-                  <input type="text" value={penjual.noRekening} onChange={handleChange('noRekening')} required />
-                </div>
-              </div>
-              <div className="form-horizontal-group">
-                <label>Nama Pemilik<br />Rekening <span className="required">*</span></label>
-                <div className="input-wrapper">
-                  <input type="text" value={penjual.namaPemilikRekening} onChange={handleChange('namaPemilikRekening')} required />
-                </div>
-              </div>
-
-              {!isPenjual && (
-                <>
-                  <div className="checkbox-list-inline" style={{ marginTop: '2rem' }}>
-                    <label><input type="checkbox" required /> Saya menyetujui syarat dan ketentuan yang berlaku di Lelangin</label>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '3rem' }}>
-                    <button type="submit" disabled={submitting} className="btn-primary-full"
-                      style={{ width: 'auto', padding: '0.8rem 2.5rem', borderRadius: '6px', margin: 0, fontSize: '1rem' }}>
-                      {submitting ? 'Memproses...' : 'Daftar Penjual'}
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {isPenjual && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '3rem' }}>
-                  <button type="submit" disabled={submitting} className="btn-primary-full"
-                    style={{ width: 'auto', padding: '0.8rem 2.5rem', borderRadius: '6px', margin: 0, fontSize: '1rem' }}>
-                    {submitting ? 'Menyimpan...' : 'Simpan Perubahan'}
-                  </button>
-                </div>
-              )}
-            </form>
+                <input
+                  id="ktp-file-input"
+                  type="file"
+                  accept="image/jpeg,image/png,image/jpg,image/webp"
+                  style={{ display: 'none' }}
+                  onChange={handleKtpInputChange}
+                />
+              </label>
+            )}
           </div>
         </div>
-      </div>
-    </main>
+
+        {/* === Informasi Pembayaran === */}
+        <h3 className="sub-title" style={{ marginTop: '3rem' }}>Informasi Pembayaran</h3>
+        <div className="form-horizontal-group">
+          <label>Nama Bank <span className="required">*</span></label>
+          <div className="input-wrapper">
+            <select value={penjual.namaBank} onChange={handleChange('namaBank')} required disabled={sellerStatus === 'menunggu'}>
+              <option value=""></option>
+              <option value="Mandiri">Mandiri</option>
+              <option value="BCA">BCA</option>
+              <option value="BNI">BNI</option>
+              <option value="BRI">BRI</option>
+            </select>
+          </div>
+        </div>
+        <div className="form-horizontal-group">
+          <label>No Rekening <span className="required">*</span></label>
+          <div className="input-wrapper">
+            <input type="text" value={penjual.noRekening} onChange={handleChange('noRekening')} required disabled={sellerStatus === 'menunggu'} />
+          </div>
+        </div>
+        <div className="form-horizontal-group">
+          <label>Nama Pemilik<br />Rekening <span className="required">*</span></label>
+          <div className="input-wrapper">
+            <input type="text" value={penjual.namaPemilikRekening} onChange={handleChange('namaPemilikRekening')} required disabled={sellerStatus === 'menunggu'} />
+          </div>
+        </div>
+
+        {/* Belum daftar atau ditolak — tampilkan form submit */}
+        {(!sellerStatus || sellerStatus === 'ditolak') && (
+          <>
+            <div className="checkbox-list-inline" style={{ marginTop: '2rem' }}>
+              <label><input type="checkbox" required /> Saya menyetujui syarat dan ketentuan yang berlaku di Lelangin</label>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '3rem' }}>
+              <button type="submit" disabled={submitting} className="btn-primary-full"
+                style={{ width: 'auto', padding: '0.8rem 2.5rem', borderRadius: '6px', margin: 0, fontSize: '1rem' }}>
+                {submitting ? 'Memproses...' : sellerStatus === 'ditolak' ? 'Ajukan Kembali' : 'Daftar Penjual'}
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Menunggu — semua dikunci, tidak ada tombol */}
+        {sellerStatus === 'menunggu' && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '3rem', padding: '1rem', backgroundColor: '#FEF3C7', borderRadius: '8px', fontSize: '0.875rem', color: '#92400E', fontWeight: 500, gap: '0.5rem', alignItems: 'center' }}>
+            <i className="ph ph-hourglass-medium" style={{ fontSize: '1.1rem' }}></i>
+            Menunggu persetujuan admin. Semua data dikunci.
+          </div>
+        )}
+
+        {/* Disetujui — bisa edit data penjual */}
+        {sellerStatus === 'disetujui' && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '3rem' }}>
+            <button type="submit" disabled={submitting} className="btn-primary-full"
+              style={{ width: 'auto', padding: '0.8rem 2.5rem', borderRadius: '6px', margin: 0, fontSize: '1rem' }}>
+              {submitting ? 'Menyimpan...' : 'Simpan Perubahan'}
+            </button>
+          </div>
+        )}
+      </form>
+    </>
   );
 }

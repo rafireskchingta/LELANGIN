@@ -8,10 +8,21 @@ import { supabase } from '../../src/lib/supabase';
 export default function AkunSayaPage() {
   const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [originalUser, setOriginalUser] = useState(null);
   const [user, setUser] = useState({
-    username: '', nama: '', email: '', jenisKelamin: '',
+    id: '', username: '', nama: '', email: '', jenisKelamin: '',
     noTelp: '', tglLahirTgl: '', tglLahirBulan: '', tglLahirTahun: '', avatar: 'U'
   });
+  const [toast, setToast] = useState(null);
+
+  const bulanArr = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const bulanMap = { 'Januari': '01', 'Februari': '02', 'Maret': '03', 'April': '04', 'Mei': '05', 'Juni': '06', 'Juli': '07', 'Agustus': '08', 'September': '09', 'Oktober': '10', 'November': '11', 'Desember': '12' };
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   useEffect(() => {
     async function fetchUser() {
@@ -28,7 +39,7 @@ export default function AkunSayaPage() {
           if (isLoggedIn === 'true' && localUser) {
             try {
               const parsed = JSON.parse(localUser);
-              setUser({
+              const userObj = {
                 id: parsed.id || '',
                 email: parsed.email || '',
                 username: parsed.username || '',
@@ -39,7 +50,9 @@ export default function AkunSayaPage() {
                 tglLahirBulan: parsed.tglLahirBulan || '',
                 tglLahirTahun: parsed.tglLahirTahun || '',
                 avatar: parsed.avatar || (parsed.nama || 'U').charAt(0).toUpperCase()
-              });
+              };
+              setUser(userObj);
+              setOriginalUser(userObj);
               return; // Jangan redirect, data dari localStorage sudah cukup
             } catch (parseErr) {
               console.error('Failed to parse local user data:', parseErr);
@@ -78,13 +91,13 @@ export default function AkunSayaPage() {
           if (parts.length === 3) {
             userObj.tglLahirTahun = parts[0];
             const blnIndex = parseInt(parts[1]) - 1;
-            const bulanArr = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
             userObj.tglLahirBulan = bulanArr[blnIndex] || '';
             userObj.tglLahirTgl = parseInt(parts[2]).toString();
           }
         }
 
         setUser(userObj);
+        setOriginalUser(userObj);
       } catch (err) {
         console.error('Failed to fetch user:', err);
         // Fallback: cek localStorage sebelum redirect
@@ -98,112 +111,141 @@ export default function AkunSayaPage() {
     fetchUser();
   }, [router]);
 
-  const handleLogout = async (e) => {
-    e.preventDefault();
-    localStorage.removeItem('lelangin_user');
-    localStorage.removeItem('isLoggedIn');
-    window.dispatchEvent(new Event('auth-change'));
+  // Simpan perubahan profil ke Supabase
+  const handleSimpanData = async () => {
+    if (!user.id) return;
+    setSaving(true);
+    try {
+      const tgl = (user.tglLahirTgl || '1').padStart(2, '0');
+      const bln = bulanMap[user.tglLahirBulan] || '01';
+      const thn = user.tglLahirTahun || '2000';
 
-    await supabase.auth.signOut();
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          username: user.username,
+          full_name: user.nama,
+          gender: user.jenisKelamin,
+          phone_number: user.noTelp,
+          birth_date: `${thn}-${bln}-${tgl}`,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
 
-    // Gunakan fungsi showToast dari script.js jika ada
-    if (typeof window !== 'undefined' && window.showToast) {
-      window.showToast('Berhasil keluar!', 'info');
+      if (profileError) throw profileError;
+
+      setOriginalUser({ ...user });
+      showToast('Data berhasil disimpan!', 'success');
+      setIsEditMode(false);
+    } catch (err) {
+      const msg = err?.message || JSON.stringify(err);
+      console.error('[Simpan] Error:', JSON.stringify(err, null, 2));
+      showToast('Gagal menyimpan: ' + msg, 'error');
+    } finally {
+      setSaving(false);
     }
+  };
 
-    router.push('/');
+  // Batal edit — kembalikan data ke semula
+  const handleBatal = () => {
+    if (originalUser) setUser(originalUser);
+    setIsEditMode(false);
   };
 
   return (
-    <main className="akun-main-wrapper">
-      <div className="akun-container-box">
-        <div className="akun-header-banner">
-          <h1>Informasi Akun Saya</h1>
+    <>
+      {/* Toast notifikasi */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: '1.5rem', right: '1.5rem', zIndex: 9999,
+          backgroundColor: toast.type === 'success' ? '#D1FAE5' : '#FEE2E2',
+          color: toast.type === 'success' ? '#065F46' : '#991B1B',
+          border: `1px solid ${toast.type === 'success' ? '#6EE7B7' : '#FCA5A5'}`,
+          borderRadius: '8px', padding: '0.85rem 1.25rem',
+          fontSize: '0.875rem', fontWeight: 500, boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          display: 'flex', alignItems: 'center', gap: '0.5rem'
+        }}>
+          <i className={`ph ${toast.type === 'success' ? 'ph-check-circle' : 'ph-warning-circle'}`}></i>
+          {toast.msg}
         </div>
-        <div className="akun-layout-split">
-          <aside className="akun-sidebar">
-            <div className="sidebar-profile">
-              <div className="sidebar-pic">{user.avatar}</div>
-              <div className="sidebar-user">
-                <h3>{user.username || user.nama}</h3>
-                <a href="#">Ubah Profil</a>
-              </div>
-            </div>
-            <ul className="sidebar-nav">
-              <li><Link href="/akun" className="active"><i className="ph ph-smiley"></i> Akun Saya</Link></li>
-              <li><Link href="/akun/penjual"><i className="ph ph-cube"></i> Penjual</Link></li>
-              <li><Link href="/akun/titip-lelang"><i className="ph ph-envelope-simple-open"></i> Titip Lelang</Link></li>
-              <li><a href="#" onClick={handleLogout} style={{ color: 'var(--danger)', cursor: 'pointer' }}><i className="ph ph-sign-out"></i> Keluar</a></li>
-            </ul>
-          </aside>
-          <div className="akun-content smooth-fade">
-            <h2 className="akun-section-title">Profil Saya</h2>
-            <p className="akun-section-desc">Kelola informasi pribadi Anda untuk mengontrol, melindungi, dan mengamankan akun</p>
-            <form action="#" method="POST" id="formProfile">
-              <div className="form-horizontal-group">
-                <label>Username</label>
-                <div className="input-wrapper"><input type="text" name="username" value={user.username || ''} disabled={!isEditMode} onChange={(e) => setUser({...user, username: e.target.value})} /></div>
-              </div>
-              <div className="form-horizontal-group">
-                <label>Nama Lengkap</label>
-                <div className="input-wrapper"><input type="text" name="nama" value={user.nama || ''} disabled={!isEditMode} onChange={(e) => setUser({...user, nama: e.target.value})} /></div>
-              </div>
-              <div className="form-horizontal-group">
-                <label>Email</label>
-                <div className="input-wrapper"><input type="email" name="email" value={user.email || ''} disabled /></div>
-              </div>
-              <div className="form-horizontal-group">
-                <label>Jenis Kelamin</label>
-                <div className="input-wrapper">
-                  <select disabled={!isEditMode} value={user.jenisKelamin || ''} onChange={(e) => setUser({...user, jenisKelamin: e.target.value})}>
-                    <option value="" disabled>Pilih Jenis Kelamin</option>
-                    <option value="Pria">Pria</option>
-                    <option value="Wanita">Wanita</option>
-                    <option value="Perempuan">Perempuan</option>
-                    <option value="Laki-laki">Laki-laki</option>
-                  </select>
-                </div>
-              </div>
-              <div className="form-horizontal-group">
-                <label>No Telp</label>
-                <div className="input-wrapper"><input type="tel" name="noTelp" inputMode="numeric" value={user.noTelp || ''} disabled={!isEditMode} onChange={(e) => setUser({...user, noTelp: e.target.value})} /></div>
-              </div>
-              <div className="form-horizontal-group">
-                <label>Tanggal Lahir</label>
-                <div className="input-wrapper">
-                  <select disabled={!isEditMode} value={user.tglLahirTgl || ''} onChange={(e) => setUser({...user, tglLahirTgl: e.target.value})}>
-                    <option value="">Tgl</option>
-                    {Array.from({ length: 31 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
-                  </select>
-                  <select disabled={!isEditMode} value={user.tglLahirBulan || ''} onChange={(e) => setUser({...user, tglLahirBulan: e.target.value})}>
-                    <option value="">Bulan</option>
-                    {['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].map(b => <option key={b} value={b}>{b}</option>)}
-                  </select>
-                  <select disabled={!isEditMode} value={user.tglLahirTahun || ''} onChange={(e) => setUser({...user, tglLahirTahun: e.target.value})}>
-                    <option value="">Tahun</option>
-                    {Array.from({ length: 30 }, (_, i) => <option key={i} value={1995 + i}>{1995 + i}</option>)}
-                  </select>
-                </div>
-              </div>
+      )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem', marginTop: '3rem' }}>
-                {isEditMode ? (
-                  <button onClick={(e) => { e.preventDefault(); setIsEditMode(false); }} className="btn-primary-full" style={{ width: 'auto', padding: '0.6rem 2rem', margin: 0, fontSize: '0.9rem', borderRadius: '6px' }}>Simpan Profil</button>
-                ) : (
-                  <a href="#" onClick={(e) => { e.preventDefault(); setIsEditMode(true); }} style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 500 }}>Edit</a>
-                )}
-              </div>
-              <div style={{ marginTop: '2rem', padding: '1.25rem 1.5rem', border: '1px solid #E0E7FF', borderRadius: '10px', backgroundColor: '#F5F3FF', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-                <div>
-                  <p style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--primary)', margin: 0 }}>Daftar Penjual</p>
-                  <p style={{ fontSize: '0.82rem', color: '#6B7280', margin: '0.2rem 0 0' }}>Jadilah penjual dan mulai lelang produkmu di Lelangin</p>
-                </div>
-                <Link href="/akun/penjual" className="btn-primary-full" style={{ width: 'auto', margin: 0, padding: '0.55rem 1.5rem', fontSize: '0.88rem', borderRadius: '8px', textDecoration: 'none', whiteSpace: 'nowrap' }}>Daftar Sekarang</Link>
-              </div>
-            </form>
+      <h2 className="akun-section-title">Profil Saya</h2>
+      <p className="akun-section-desc">Kelola informasi pribadi Anda untuk mengontrol, melindungi, dan mengamankan akun</p>
+      <form action="#" method="POST" id="formProfile">
+        <div className="form-horizontal-group">
+          <label>Username</label>
+          <div className="input-wrapper"><input type="text" name="username" value={user.username || ''} disabled={!isEditMode} onChange={(e) => setUser({ ...user, username: e.target.value })} /></div>
+        </div>
+        <div className="form-horizontal-group">
+          <label>Nama Lengkap</label>
+          <div className="input-wrapper"><input type="text" name="nama" value={user.nama || ''} disabled={!isEditMode} onChange={(e) => setUser({ ...user, nama: e.target.value })} /></div>
+        </div>
+        <div className="form-horizontal-group">
+          <label>Email</label>
+          <div className="input-wrapper"><input type="email" name="email" value={user.email || ''} disabled /></div>
+        </div>
+        <div className="form-horizontal-group">
+          <label>Jenis Kelamin</label>
+          <div className="input-wrapper">
+            <select disabled={!isEditMode} value={user.jenisKelamin || ''} onChange={(e) => setUser({ ...user, jenisKelamin: e.target.value })}>
+              <option value="" disabled>Pilih Jenis Kelamin</option>
+              <option value="Pria">Pria</option>
+              <option value="Wanita">Wanita</option>
+            </select>
           </div>
         </div>
-      </div>
-    </main>
+        <div className="form-horizontal-group">
+          <label>No Telp</label>
+          <div className="input-wrapper"><input type="tel" name="noTelp" inputMode="numeric" value={user.noTelp || ''} disabled={!isEditMode} onChange={(e) => setUser({ ...user, noTelp: e.target.value })} /></div>
+        </div>
+        <div className="form-horizontal-group">
+          <label>Tanggal Lahir</label>
+          <div className="input-wrapper">
+            <select disabled={!isEditMode} value={user.tglLahirTgl || ''} onChange={(e) => setUser({ ...user, tglLahirTgl: e.target.value })}>
+              <option value="">Tgl</option>
+              {Array.from({ length: 31 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
+            </select>
+            <select disabled={!isEditMode} value={user.tglLahirBulan || ''} onChange={(e) => setUser({ ...user, tglLahirBulan: e.target.value })}>
+              <option value="">Bulan</option>
+              {bulanArr.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+            <select disabled={!isEditMode} value={user.tglLahirTahun || ''} onChange={(e) => setUser({ ...user, tglLahirTahun: e.target.value })}>
+              <option value="">Tahun</option>
+              {Array.from({ length: 30 }, (_, i) => <option key={i} value={1995 + i}>{1995 + i}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* Tombol Edit / Batal + Simpan — konsisten di kanan bawah */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', marginTop: '3rem' }}>
+          {isEditMode ? (
+            <>
+              <button type="button" onClick={handleBatal}
+                style={{ background: '#FFFFFF', border: '1px solid #D1D5DB', borderRadius: '6px', padding: '0.6rem 2rem', fontSize: '0.9rem', color: '#6B7280', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+                Batal
+              </button>
+              <button type="button" onClick={handleSimpanData} disabled={saving}
+                className="btn-primary-full"
+                style={{ width: 'auto', padding: '0.6rem 2rem', margin: 0, fontSize: '0.9rem', borderRadius: '6px' }}>
+                {saving ? 'Menyimpan...' : 'Simpan'}
+              </button>
+            </>
+          ) : (
+            <button type="button" onClick={() => setIsEditMode(true)}
+              style={{ background: '#FFFFFF', border: '1px solid var(--primary)', borderRadius: '6px', padding: '0.6rem 2rem', fontSize: '0.9rem', color: 'var(--primary)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+              Edit
+            </button>
+          )}
+        </div>
+        <div style={{ marginTop: '2rem', padding: '1.25rem 1.5rem', border: '1px solid #E0E7FF', borderRadius: '10px', backgroundColor: '#F5F3FF', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+          <div>
+            <p style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--primary)', margin: 0 }}>Daftar Penjual</p>
+            <p style={{ fontSize: '0.82rem', color: '#6B7280', margin: '0.2rem 0 0' }}>Jadilah penjual dan mulai lelang produkmu di Lelangin</p>
+          </div>
+          <Link href="/akun/penjual" className="btn-primary-full" style={{ width: 'auto', margin: 0, padding: '0.55rem 1.5rem', fontSize: '0.88rem', borderRadius: '8px', textDecoration: 'none', whiteSpace: 'nowrap' }}>Daftar Sekarang</Link>
+        </div>
+      </form>
+    </>
   );
 }
