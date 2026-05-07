@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 
-export default function CustomSelect({ options, value, onChange, placeholder = "Pilih" }) {
+export default function CustomSelect({ options, value, onChange, placeholder = "Pilih", disabled = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -28,7 +28,7 @@ export default function CustomSelect({ options, value, onChange, placeholder = "
   return (
     <div ref={dropdownRef} style={{ position: 'relative', width: '100%', fontFamily: 'inherit' }}>
       <div 
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => { if (!disabled) setIsOpen(!isOpen); }}
         style={{
           width: '100%',
           padding: '0.65rem 1rem',
@@ -36,15 +36,16 @@ export default function CustomSelect({ options, value, onChange, placeholder = "
           borderRadius: '10px',
           fontSize: '0.85rem',
           color: value ? 'var(--text-main)' : '#9CA3AF',
-          backgroundColor: '#FFFFFF',
-          cursor: 'pointer',
+          backgroundColor: disabled ? '#F9FAFB' : '#FFFFFF',
+          cursor: disabled ? 'not-allowed' : 'pointer',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           fontFamily: 'inherit',
           transition: 'all 0.2s ease',
           boxShadow: isOpen ? '0 0 0 2px #E0E7FF' : 'none',
-          borderColor: isOpen ? '#818CF8' : '#E5E7EB'
+          borderColor: isOpen ? '#818CF8' : '#E5E7EB',
+          opacity: disabled ? 0.7 : 1
         }}
       >
         <span>{selectedLabel}</span>

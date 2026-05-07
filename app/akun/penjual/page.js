@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../src/lib/supabase';
+import CustomSelect from '../../../components/CustomSelect';
 
 export default function AkunPenjualPage() {
   const router = useRouter();
@@ -346,20 +347,20 @@ export default function AkunPenjualPage() {
         <div className="form-horizontal-group">
           <label>Lokasi <span className="required">*</span></label>
           <div className="input-wrapper">
-            <select
+            <CustomSelect
               value={penjual.alamat}
+              onChange={(val) => setPenjual(prev => ({ ...prev, alamat: val }))}
+              placeholder="Pilih Provinsi"
               disabled={sellerStatus === 'menunggu' || sellerStatus === 'disetujui'}
-              onChange={handleChange('alamat')}
-              required
-            >
-              <option value="">Pilih Provinsi</option>
-              <option value="Banten">Banten</option>
-              <option value="DKI Jakarta">DKI Jakarta</option>
-              <option value="Jawa Barat">Jawa Barat</option>
-              <option value="Jawa Tengah">Jawa Tengah</option>
-              <option value="DI Yogyakarta">DI Yogyakarta</option>
-              <option value="Jawa Timur">Jawa Timur</option>
-            </select>
+              options={[
+                { value: 'Banten', label: 'Banten' },
+                { value: 'DKI Jakarta', label: 'DKI Jakarta' },
+                { value: 'Jawa Barat', label: 'Jawa Barat' },
+                { value: 'Jawa Tengah', label: 'Jawa Tengah' },
+                { value: 'DI Yogyakarta', label: 'DI Yogyakarta' },
+                { value: 'Jawa Timur', label: 'Jawa Timur' }
+              ]}
+            />
           </div>
         </div>
 
@@ -478,19 +479,24 @@ export default function AkunPenjualPage() {
         <div className="form-horizontal-group">
           <label>Nama Bank <span className="required">*</span></label>
           <div className="input-wrapper">
-            <select value={penjual.namaBank} onChange={handleChange('namaBank')} required disabled={sellerStatus === 'menunggu'}>
-              <option value=""></option>
-              <option value="Mandiri">Mandiri</option>
-              <option value="BCA">BCA</option>
-              <option value="BNI">BNI</option>
-              <option value="BRI">BRI</option>
-            </select>
+            <CustomSelect
+              value={penjual.namaBank}
+              onChange={(val) => setPenjual(prev => ({ ...prev, namaBank: val }))}
+              placeholder="Pilih Bank"
+              disabled={sellerStatus === 'menunggu'}
+              options={[
+                { value: 'Mandiri', label: 'Mandiri' },
+                { value: 'BCA', label: 'BCA' },
+                { value: 'BNI', label: 'BNI' },
+                { value: 'BRI', label: 'BRI' }
+              ]}
+            />
           </div>
         </div>
         <div className="form-horizontal-group">
           <label>No Rekening <span className="required">*</span></label>
           <div className="input-wrapper">
-            <input type="text" value={penjual.noRekening} onChange={handleChange('noRekening')} required disabled={sellerStatus === 'menunggu'} />
+            <input type="text" inputMode="numeric" value={penjual.noRekening} onChange={(e) => setPenjual(prev => ({ ...prev, noRekening: e.target.value.replace(/\D/g, '') }))} required disabled={sellerStatus === 'menunggu'} />
           </div>
         </div>
         <div className="form-horizontal-group">

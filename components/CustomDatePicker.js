@@ -283,7 +283,7 @@ export default function CustomDatePicker({ value, onChange, placeholder = "Pilih
 
           {/* Footer */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem' }}>
-            <button type="button" onClick={handleNow} style={{ background: 'none', border: 'none', color: '#9CA3AF', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>Now</button>
+            <button type="button" onClick={handleNow} style={{ background: 'none', border: 'none', color: '#6078EB', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>Now</button>
             <button type="button" onClick={handleConfirm} style={{ background: 'none', border: 'none', color: '#6078EB', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>Confirm</button>
           </div>
         </div>

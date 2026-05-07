@@ -99,21 +99,34 @@ export default function CustomTimePicker({ value, onChange, placeholder = "-- : 
             {/* Hours */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
               <i className="ph-bold ph-caret-up" onClick={handleDecrementHour} style={{ cursor: 'pointer', color: '#374151', fontSize: '1.2rem' }}></i>
-              <div style={{ 
-                background: '#E0E7FF', 
-                border: '1px solid #818CF8', 
-                borderRadius: '12px', 
-                width: '64px', 
-                height: '64px', 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center',
-                fontSize: '2rem',
-                fontWeight: 800,
-                color: '#374151'
-              }}>
-                {String(hours).padStart(2, '0')}
-              </div>
+              <input 
+                type="text" 
+                inputMode="numeric"
+                value={String(hours).padStart(2, '0')}
+                onChange={(e) => {
+                  let val = e.target.value.replace(/\D/g, '');
+                  if (val.length > 2) val = val.slice(-2);
+                  let num = parseInt(val, 10);
+                  if (!isNaN(num)) {
+                    if (num > 23) num = 23;
+                    setHours(num);
+                  } else {
+                    setHours(0);
+                  }
+                }}
+                style={{ 
+                  background: '#E0E7FF', 
+                  border: '1px solid #818CF8', 
+                  borderRadius: '12px', 
+                  width: '64px', 
+                  height: '64px', 
+                  textAlign: 'center',
+                  fontSize: '2rem',
+                  fontWeight: 800,
+                  color: '#374151',
+                  outline: 'none'
+                }}
+              />
               <i className="ph-bold ph-caret-down" onClick={handleIncrementHour} style={{ cursor: 'pointer', color: '#374151', fontSize: '1.2rem' }}></i>
             </div>
 
@@ -123,21 +136,34 @@ export default function CustomTimePicker({ value, onChange, placeholder = "-- : 
             {/* Minutes */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
               <i className="ph-bold ph-caret-up" onClick={handleDecrementMinute} style={{ cursor: 'pointer', color: '#374151', fontSize: '1.2rem' }}></i>
-              <div style={{ 
-                background: '#F8FAFC', 
-                border: '1px solid #818CF8', 
-                borderRadius: '12px', 
-                width: '64px', 
-                height: '64px', 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center',
-                fontSize: '2rem',
-                fontWeight: 800,
-                color: '#374151'
-              }}>
-                {String(minutes).padStart(2, '0')}
-              </div>
+              <input 
+                type="text" 
+                inputMode="numeric"
+                value={String(minutes).padStart(2, '0')}
+                onChange={(e) => {
+                  let val = e.target.value.replace(/\D/g, '');
+                  if (val.length > 2) val = val.slice(-2);
+                  let num = parseInt(val, 10);
+                  if (!isNaN(num)) {
+                    if (num > 59) num = 59;
+                    setMinutes(num);
+                  } else {
+                    setMinutes(0);
+                  }
+                }}
+                style={{ 
+                  background: '#F8FAFC', 
+                  border: '1px solid #818CF8', 
+                  borderRadius: '12px', 
+                  width: '64px', 
+                  height: '64px', 
+                  textAlign: 'center',
+                  fontSize: '2rem',
+                  fontWeight: 800,
+                  color: '#374151',
+                  outline: 'none'
+                }}
+              />
               <i className="ph-bold ph-caret-down" onClick={handleIncrementMinute} style={{ cursor: 'pointer', color: '#374151', fontSize: '1.2rem' }}></i>
             </div>
           </div>

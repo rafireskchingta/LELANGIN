@@ -7,6 +7,8 @@ import { useState, useEffect, useRef } from 'react';
 export default function Navbar() {
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  if (pathname.startsWith('/admin')) return null;
   const navRef = useRef(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
 

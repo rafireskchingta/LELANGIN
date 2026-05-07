@@ -1940,3 +1940,634 @@ body {
   color: var(--text-main);
   cursor: pointer;
 }
+
+/* =========================================
+   ADMIN PANEL STYLES
+   ========================================= */
+
+.admin-login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #F8FAFC;
+  padding: 1.5rem;
+}
+
+.admin-login-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 420px;
+  padding: 2.5rem;
+  border: 1px solid #E5E7EB;
+}
+
+.admin-login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.admin-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.admin-logo h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.admin-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #4F46E5;
+  color: #FCD34D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+}
+
+.admin-login-header p {
+  color: #6B7280;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.admin-login-form .form-group {
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.admin-login-form label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.admin-login-form input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background-color: #F9FAFB;
+}
+
+.admin-login-form input:focus {
+  outline: none;
+  border-color: #4F46E5;
+  background-color: #FFFFFF;
+  box-shadow: 0 0 0 3px #EEF2FF;
+}
+
+.admin-login-form .btn-primary-full {
+  margin-top: 1rem;
+  padding: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  background-color: #4F46E5;
+  width: 100%;
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.admin-login-form .btn-primary-full:hover {
+}
+
+/* Custom Nav Active Button */
+.btn-akun-active {
+  background-color: var(--primary) !important;
+  color: white !important;
+  border-radius: 6px !important;
+  padding: 0.5rem 1rem !important;
+}
+
+/* Grid Specifics for Tambah Produk */
+.sub-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 2rem 0 1rem 0;
+  color: var(--text-main);
+}
+
+/* Custom Disabled Input Styles */
+.form-horizontal-group input:disabled,
+.form-horizontal-group select:disabled {
+  background-color: #e5e7eb !important;
+  color: #6b7280 !important;
+  cursor: not-allowed;
+}
+
+.form-horizontal-group input:not(:disabled),
+.form-horizontal-group select:not(:disabled) {
+  background-color: #ffffff !important;
+}
+
+
+
+
+
+/* TAMBAHAN SESUAI MOCKUP NEW (2026) */
+.badge-info {
+  background-color: #EEF2FF;
+  color: var(--primary);
+  border: 1px solid #C7D2FE;
+  font-weight: 500;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.text-green {
+  color: #10B981 !important;
+}
+
+
+.btn-secondary-light {
+  background-color: #EEF2FF;
+  color: var(--primary);
+  border: 1px solid #EEF2FF;
+  padding: 0.85rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.btn-secondary-light:hover {
+  background-color: #E0E7FF;
+  border-color: #C7D2FE;
+}
+
+.modal-checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+.modal-checkbox-list label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+/* =========================================
+   ADMIN PANEL STYLES
+   ========================================= */
+
+.admin-login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #F8FAFC;
+  padding: 1.5rem;
+}
+
+.admin-login-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 420px;
+  padding: 2.5rem;
+  border: 1px solid #E5E7EB;
+}
+
+.admin-login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.admin-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.admin-logo h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.admin-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #4F46E5;
+  color: #FCD34D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+}
+
+.admin-login-header p {
+  color: #6B7280;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.admin-login-form .form-group {
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.admin-login-form label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.admin-login-form input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background-color: #F9FAFB;
+}
+
+.admin-login-form input:focus {
+  outline: none;
+  border-color: #4F46E5;
+  background-color: #FFFFFF;
+  box-shadow: 0 0 0 3px #EEF2FF;
+}
+
+.admin-login-form .btn-primary-full {
+  margin-top: 1rem;
+  padding: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  background-color: #4F46E5;
+  width: 100%;
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.admin-login-form .btn-primary-full:hover {
+  background-color: #4338CA;
+}
+
+.admin-login-form .btn-primary-full:disabled {
+  background-color: #9CA3AF;
+  cursor: not-allowed;
+}
+
+/* =========================================
+   ADMIN LAYOUT & DASHBOARD
+   ========================================= */
+
+body:has(.admin-layout-wrapper) {
+  background-color: #F8FAFC;
+}
+
+.admin-layout-wrapper {
+  display: flex;
+  min-height: 100vh;
+  background-color: #F8FAFC;
+}
+
+/* Sidebar */
+.admin-sidebar {
+  width: 260px;
+  background-color: #FFFFFF;
+  border-right: 1px solid #E5E7EB;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.admin-sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid transparent;
+}
+
+.admin-logo-small {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-logo-small h2 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.admin-logo-small h2 span {
+  color: #4F46E5;
+}
+
+.admin-icon-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #4F46E5;
+  color: #FCD34D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+}
+
+.admin-sidebar-nav {
+  flex: 1;
+  padding: 1.5rem 1rem;
+}
+
+.admin-sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.admin-sidebar-nav li {
+  margin-bottom: 0.5rem;
+}
+
+.admin-sidebar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  color: #6B7280;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.admin-sidebar-nav a i {
+  font-size: 1.25rem;
+}
+
+.admin-sidebar-nav a:hover {
+  background-color: #F3F4F6;
+  color: #374151;
+}
+
+.admin-sidebar-nav a.active {
+  background-color: #4F46E5;
+  color: #FFFFFF;
+}
+
+.admin-sidebar-footer {
+  padding: 1.5rem;
+  border-top: 1px solid transparent;
+}
+
+.admin-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #EF4444;
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem;
+  width: 100%;
+  text-align: left;
+}
+
+.admin-logout-btn:hover {
+  color: #DC2626;
+}
+
+/* Main Area */
+.admin-main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Topbar */
+.admin-topbar {
+  height: 70px;
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+}
+
+.admin-role-badge {
+  background-color: #EEF2FF;
+  color: #4F46E5;
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Page Content */
+.admin-content-container {
+  padding: 2.5rem;
+  flex: 1;
+}
+
+.admin-page-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 2rem;
+}
+
+/* Dashboard Stats */
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.admin-stat-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.stat-users { background-color: #EEF2FF; color: #4F46E5; }
+.stat-active { background-color: #EEF2FF; color: #4F46E5; }
+.stat-done { background-color: #EEF2FF; color: #4F46E5; }
+.stat-trans { background-color: #EEF2FF; color: #4F46E5; }
+
+.stat-info p {
+  color: #6B7280;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin: 0 0 0.25rem 0;
+}
+
+.stat-info h3 {
+  color: #111827;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Dashboard Split */
+.admin-dashboard-split {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.admin-panel-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.panel-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 1.5rem;
+}
+
+.panel-card-title.underline-blue {
+  color: #1D4ED8;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.activity-list, .transaction-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.activity-list li {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+}
+
+.activity-list li:last-child {
+  margin-bottom: 0;
+}
+
+.activity-icon {
+  color: #6B7280;
+  font-size: 1.25rem;
+  margin-top: 0.1rem;
+}
+
+.activity-content p {
+  margin: 0 0 0.25rem 0;
+  color: #374151;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.activity-content strong {
+  color: #111827;
+}
+
+.activity-time {
+  color: #9CA3AF;
+  font-size: 0.75rem;
+}
+
+.transaction-list li {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.transaction-list li:last-child {
+  margin-bottom: 0;
+}
+
+.trans-icon {
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+.trans-name {
+  flex: 1;
+  font-size: 0.95rem;
+  color: #111827;
+  font-weight: 500;
+}
+
+.trans-badge {
+  padding: 0.25rem 1rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-dikirim {
+  background-color: #D1FAE5;
+  color: #065F46;
+}
+
+.badge-selesai {
+  background-color: #E5E7EB;
+  color: #4B5563;
+}

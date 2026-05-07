@@ -197,7 +197,7 @@ export default function AkunSayaPage() {
         </div>
         <div className="form-horizontal-group">
           <label>No Telp</label>
-          <div className="input-wrapper"><input type="tel" name="noTelp" inputMode="numeric" value={user.noTelp || ''} disabled={!isEditMode} onChange={(e) => setUser({ ...user, noTelp: e.target.value })} /></div>
+          <div className="input-wrapper"><input type="tel" name="noTelp" inputMode="numeric" value={user.noTelp || ''} disabled={!isEditMode} onChange={(e) => setUser({ ...user, noTelp: e.target.value.replace(/\D/g, '') })} /></div>
         </div>
         <div className="form-horizontal-group">
           <label>Tanggal Lahir</label>
