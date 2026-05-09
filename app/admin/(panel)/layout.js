@@ -1,16 +1,25 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+  import { usePathname, useRouter } from 'next/navigation';
+  import { useEffect } from 'react';
 
-export default function AdminPanelLayout({ children }) {
-  const pathname = usePathname();
-  const router = useRouter();
+  export default function AdminPanelLayout({ children }) {
+    const pathname = usePathname();
+    const router = useRouter();
 
-  const handleLogout = (e) => {
-    e.preventDefault();
-    router.push('/admin/login');
-  };
+    useEffect(() => {
+      const isAdminLoggedIn = localStorage.getItem('isAdminLoggedIn');
+      if (!isAdminLoggedIn) {
+        router.push('/');
+      }
+    }, [router]);
+
+    const handleLogout = (e) => {
+      e.preventDefault();
+      localStorage.removeItem('isAdminLoggedIn');
+      window.location.href = '/';
+    };
 
   const navItems = [
     { name: 'Beranda', path: '/admin/dashboard', icon: 'ph-squares-four' },
@@ -61,6 +70,10 @@ export default function AdminPanelLayout({ children }) {
         {/* Topbar */}
         <header className="admin-topbar">
           <div className="topbar-left">
+            <div className="admin-topbar-search">
+              <i className="ph ph-magnifying-glass"></i>
+              <input type="text" placeholder="Cari data" />
+            </div>
           </div>
           <div className="topbar-right">
             <div className="admin-role-badge">

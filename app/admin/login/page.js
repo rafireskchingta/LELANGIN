@@ -16,6 +16,7 @@ export default function AdminLoginPage() {
     if (email === 'adminlelangin@gmail.com' && password === '122026') {
       setTimeout(() => {
         setLoading(false);
+        localStorage.setItem('isAdminLoggedIn', 'true');
         router.push('/admin/dashboard');
       }, 500);
       return;

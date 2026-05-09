@@ -104,13 +104,13 @@ body {
 
 /* Page Transitions */
 .page-transition-enter {
-  animation: pageFadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: pageFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes pageFadeIn {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -2570,4 +2570,914 @@ body:has(.admin-layout-wrapper) {
 .badge-selesai {
   background-color: #E5E7EB;
   color: #4B5563;
+}
+
+/* Admin Page Header & Actions */
+.admin-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.admin-page-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-admin-outline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1px solid #D1D5DB;
+  border-radius: 999px;
+  color: #374151;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-admin-outline:hover {
+  background: #F3F4F6;
+}
+
+.btn-admin-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #4F46E5;
+  border: none;
+  border-radius: 999px;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-admin-primary:hover {
+  background: #4338CA;
+}
+
+/* Admin Table */
+.admin-table-container {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th {
+  background: #F9FAFB;
+  padding: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.admin-table td {
+  padding: 1rem;
+  font-size: 0.85rem;
+  color: #111827;
+  border-bottom: 1px solid #E5E7EB;
+  vertical-align: middle;
+}
+
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table a {
+  text-decoration: none;
+  color: #4F46E5;
+}
+
+/* Admin Role Badges */
+.admin-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.admin-badge-user {
+  background-color: #F3F4F6;
+  color: #6B7280;
+}
+
+.admin-badge-admin {
+  background-color: #EEF2FF;
+  color: #4F46E5;
+}
+
+.admin-badge-blue-text {
+  background: #EEF2FF;
+  color: #4F46E5;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.admin-badge-red-text {
+  background: #FEF2F2;
+  color: #EF4444;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+/* Admin Actions */
+.admin-action-btn {
+  background: none;
+  border: none;
+  color: #6B7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  font-size: 1.1rem;
+  transition: color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-action-btn:hover {
+  color: #111827;
+}
+
+.admin-action-btns {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Back Link */
+.admin-back-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #E5E7EB;
+  color: #374151;
+  text-decoration: none;
+  margin-right: 1rem;
+  font-size: 1.25rem;
+  transition: all 0.2s;
+}
+
+.admin-back-link:hover {
+  background: #F3F4F6;
+}
+
+.admin-header-with-back {
+  display: flex;
+  align-items: center;
+}
+
+.admin-subtitle {
+  color: #1D4ED8;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  display: block;
+  margin-top: 0.5rem;
+}
+
+/* Admin Search */
+.admin-topbar-search {
+  position: relative;
+  width: 300px;
+}
+
+.admin-topbar-search i {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9CA3AF;
+  font-size: 1rem;
+}
+
+.admin-topbar-search input {
+  width: 100%;
+  padding: 0.6rem 1rem 0.6rem 2.5rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 999px;
+  background: #FFFFFF;
+  font-size: 0.85rem;
+  outline: none;
+  font-family: inherit;
+}
+
+.admin-topbar-search input:focus {
+  border-color: #4F46E5;
+}
+
+.topbar-left {
+  flex: 1;
+}
+
+/* Admin Modal */
+.admin-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.admin-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.admin-modal {
+  background: #FFFFFF;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  padding: 2rem;
+  position: relative;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.admin-modal-overlay.active .admin-modal {
+  transform: translateY(0);
+}
+
+.admin-modal-close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #6B7280;
+  cursor: pointer;
+}
+
+.admin-modal-header {
+  margin-bottom: 1.5rem;
+}
+
+.admin-modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #4F46E5;
+  margin: 0 0 0.25rem 0;
+}
+
+.admin-modal-header p {
+  color: #111827;
+  font-size: 0.95rem;
+  margin: 0;
+  font-weight: 500;
+}
+
+.admin-modal-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.admin-modal-form label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.4rem;
+}
+
+.admin-modal-form input,
+.admin-modal-form select {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background-color: #FFFFFF;
+  outline: none;
+  font-family: inherit;
+}
+
+.admin-modal-form input:focus,
+.admin-modal-form select:focus {
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 3px #EEF2FF;
+}
+
+.admin-modal-form .date-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-modal-form .date-group select {
+  flex: 1;
+}
+
+.admin-modal-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.admin-modal-actions button {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.admin-modal-actions .btn-cancel {
+  background: #EEF2FF;
+  color: #4F46E5;
+}
+
+.admin-modal-actions .btn-cancel:hover {
+  background: #E0E7FF;
+}
+
+.admin-modal-actions .btn-submit {
+  background: #4F46E5;
+  color: #FFFFFF;
+}
+
+.admin-modal-actions .btn-submit:hover {
+  background: #4338CA;
+}
+
+/* Detail Produk Modal */
+.admin-modal.modal-large {
+  max-width: 800px;
+}
+
+.product-detail-layout {
+  display: flex;
+  gap: 2rem;
+}
+
+.product-detail-left {
+  flex: 0 0 300px;
+}
+
+.product-detail-right {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.product-detail-img-box {
+  background: #F9FAFB;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+  padding: 0.5rem;
+  margin-top: 1rem;
+}
+
+.product-detail-img-box img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.product-id-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #4F46E5;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.product-id-badge i {
+  font-size: 1.25rem;
+  background: #EEF2FF;
+  padding: 0.4rem;
+  border-radius: 8px;
+}
+
+.product-detail-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-item label {
+  font-size: 0.75rem;
+  color: #6B7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detail-item span {
+  font-size: 0.95rem;
+  color: #111827;
+  font-weight: 500;
+}
+
+.harga-terakhir-box {
+  grid-column: 1 / -1;
+  background: #EEF2FF;
+  border: 1px solid #E0E7FF;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-top: 1rem;
+}
+
+.harga-terakhir-box label {
+  display: block;
+  font-size: 0.75rem;
+  color: #4F46E5;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.harga-terakhir-box span {
+  display: block;
+  font-size: 1.25rem;
+  color: #4F46E5;
+  font-weight: 700;
+}
+
+.btn-tutup-detail {
+  background: #1F2937;
+  color: #FFFFFF;
+  padding: 0.75rem 2rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  float: right;
+  margin-top: 1.5rem;
+}
+
+.btn-tutup-detail:hover {
+  background: #111827;
+}
+
+/* Edit Informasi Produk Page */
+.admin-edit-produk-container {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #E5E7EB;
+  overflow: hidden;
+}
+
+.admin-edit-header {
+  background: #4F46E5;
+  padding: 1.5rem 2rem;
+  color: #FFFFFF;
+}
+
+.admin-edit-header h2 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.admin-edit-header p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.admin-edit-body {
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+}
+
+.admin-edit-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #4F46E5;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-group-edit {
+  margin-bottom: 1.25rem;
+}
+
+.form-group-edit label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6B7280;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+}
+
+.form-group-edit input,
+.form-group-edit select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: #F9FAFB;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #111827;
+  outline: none;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.form-group-edit input:focus,
+.form-group-edit select:focus {
+  border-color: #4F46E5;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px #EEF2FF;
+}
+
+.form-group-edit input:disabled {
+  background: #F3F4F6;
+  color: #9CA3AF;
+  cursor: not-allowed;
+}
+
+.status-lelang-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.status-lelang-btn {
+  flex: 1;
+  padding: 0.6rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #6B7280;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-lelang-btn.active {
+  background: #4F46E5;
+  color: #FFFFFF;
+  border-color: #4F46E5;
+}
+
+.foto-produk-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.foto-produk-preview {
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  border: 2px solid #4F46E5;
+  object-fit: cover;
+}
+
+.foto-produk-upload {
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  border: 1px dashed #D1D5DB;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  color: #9CA3AF;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.foto-produk-upload i {
+  font-size: 1.5rem;
+}
+
+.review-data-box {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.review-data-box h4 {
+  margin: 0 0 0.25rem 0;
+  color: #92400E;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.review-data-box p {
+  margin: 0;
+  color: #B45309;
+  font-size: 0.8rem;
+}
+
+/* Riwayat Transaksi */
+.admin-table-transaksi th,
+.admin-table-transaksi td {
+  font-size: 0.85rem;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge.dikirim {
+  background: #DEF7EC;
+  color: #03543F;
+}
+
+.status-badge.selesai {
+  background: #E5E7EB;
+  color: #374151;
+}
+
+/* Fix global font inheritance for admin forms */
+input, button, select, textarea {
+  font-family: 'Outfit', sans-serif !important;
+}
+
+/* Verifikasi Penjual */
+.verifikasi-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.verifikasi-tab {
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid #D1D5DB;
+  background: #FFFFFF;
+  color: #374151;
+  transition: all 0.2s;
+}
+
+.verifikasi-tab.active {
+  background: #4F46E5;
+  color: #FFFFFF;
+  border-color: #4F46E5;
+}
+
+.verifikasi-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+.verifikasi-status.menunggu {
+  background: #F3F4F6;
+  color: #4B5563;
+}
+.verifikasi-status.disetujui {
+  background: #D1FAE5;
+  color: #065F46;
+}
+.verifikasi-status.ditolak {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+.btn-lihat-detail {
+  background: #4F46E5;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-lihat-detail:hover {
+  background: #4338CA;
+}
+
+/* Detail Verifikasi Layout */
+.detail-verifikasi-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  background: #FFFFFF;
+  padding: 2rem;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+}
+
+.detail-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #4F46E5;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ktp-image-box {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 0.5rem;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.ktp-image-box img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+}
+
+.info-group {
+  margin-bottom: 1.25rem;
+}
+
+.info-group label {
+  display: block;
+  font-size: 0.75rem;
+  color: #6B7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.info-group .info-value {
+  padding: 0.75rem 1rem;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #111827;
+  font-weight: 500;
+}
+
+.status-action-box {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.btn-status-action {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-status-action.tolak {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+.btn-status-action.tolak:hover {
+  background: #FCA5A5;
+}
+
+.btn-status-action.setuju {
+  background: #D1FAE5;
+  color: #065F46;
+}
+.btn-status-action.setuju:hover {
+  background: #6EE7B7;
+}
+
+.status-badge-large {
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.status-badge-large.menunggu {
+  background: #F3F4F6;
+  color: #4B5563;
+  border: 1px solid #D1D5DB;
+}
+.status-badge-large.ditolak {
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+}
+.status-badge-large.disetujui {
+  background: #D1FAE5;
+  color: #065F46;
+  border: 1px solid #6EE7B7;
+}
+
+/* Modal Penolakan */
+.modal-reject-container {
+  padding: 1rem;
+}
+.modal-reject-container h2 {
+  color: #EF4444;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.modal-reject-container p {
+  color: #111827;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+.modal-reject-container textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  min-height: 120px;
+  resize: vertical;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+.modal-reject-container textarea:focus {
+  border-color: #EF4444;
+  outline: none;
+  box-shadow: 0 0 0 3px #FEE2E2;
+}
+.modal-reject-actions {
+  display: flex;
+  gap: 1rem;
+}
+.modal-reject-actions button {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+.btn-reject-cancel {
+  background: #F3F4F6;
+  color: #374151;
+}
+.btn-reject-confirm {
+  background: #FEE2E2;
+  color: #EF4444;
+}
+.btn-reject-confirm:hover {
+  background: #FCA5A5;
 }

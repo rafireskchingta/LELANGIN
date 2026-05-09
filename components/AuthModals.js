@@ -89,6 +89,7 @@ export default function AuthModals() {
     try {
       if (loginEmail === 'adminlelangin@gmail.com' && loginPassword === '122026') {
         if (typeof window !== 'undefined') {
+          localStorage.setItem('isAdminLoggedIn', 'true');
           window.location.href = '/admin/dashboard';
         }
         return;
