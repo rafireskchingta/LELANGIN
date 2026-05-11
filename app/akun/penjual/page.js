@@ -14,6 +14,7 @@ export default function AkunPenjualPage() {
   const [sellerStatus, setSellerStatus] = useState(null);
   const [userId, setUserId] = useState(null);
   const [toast, setToast] = useState(null);
+  const [hasHistory, setHasHistory] = useState(false);
 
   // State KTP
   const [ktpFile, setKtpFile] = useState(null);
@@ -21,7 +22,10 @@ export default function AkunPenjualPage() {
   const [ktpUrl, setKtpUrl] = useState(null);
   const [ktpUploading, setKtpUploading] = useState(false);
   const [ktpDragOver, setKtpDragOver] = useState(false);
+  const [currentAppId, setCurrentAppId] = useState(null);
 
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [originalPenjual, setOriginalPenjual] = useState(null);
   const [penjual, setPenjual] = useState({
     username: '', nama: '', email: '', jenisKelamin: '',
     noTelp: '', tglLahirTgl: '', tglLahirBulan: '', tglLahirTahun: '',
@@ -52,15 +56,22 @@ export default function AkunPenjualPage() {
 
         if (profileError) throw profileError;
 
-        // Cek status penjual dari seller_applications
-        const { data: sellerApp } = await supabase
+        // Ambil data pengajuan penjual secara langsung (RLS sudah diperbaiki)
+        const { data: appsData, error: appsError, count: appsCount } = await supabase
           .from('seller_applications')
-          .select('*')
+          .select('*', { count: 'exact' })
           .eq('user_id', session.user.id)
-          .maybeSingle();
+          .order('created_at', { ascending: false });
+
+        if (appsError) throw appsError;
+
+        const sellerApp = appsData?.[0] || null;
 
         // Simpan status: null, 'menunggu', 'disetujui', 'ditolak'
         setSellerStatus(sellerApp?.status || null);
+        
+        // hasHistory: True jika pernah daftar sebelumnya (jumlah baris > 0)
+        setHasHistory(appsCount > 0);
 
         let tglLahirTgl = '', tglLahirBulan = '', tglLahirTahun = '';
         if (profile?.birth_date) {
@@ -72,7 +83,7 @@ export default function AkunPenjualPage() {
           }
         }
 
-        setPenjual({
+        const penjualObj = {
           username: profile?.username || '',
           nama: profile?.full_name || '',
           email: session.user.email || '',
@@ -83,7 +94,15 @@ export default function AkunPenjualPage() {
           namaBank: sellerApp?.nama_bank || '',
           noRekening: sellerApp?.no_rekening || '',
           namaPemilikRekening: sellerApp?.nama_pemilik || '',
-        });
+        };
+
+        setPenjual(penjualObj);
+        setOriginalPenjual(penjualObj);
+
+        // Jika belum ada status atau ditolak, buka edit mode otomatis agar bisa isi data
+        if (!sellerApp?.status || sellerApp?.status === 'ditolak') {
+          setIsEditMode(true);
+        }
 
         // Load KTP jika sudah ada
         if (sellerApp?.ktp_url) {
@@ -93,6 +112,9 @@ export default function AkunPenjualPage() {
             .createSignedUrl(sellerApp.ktp_url, 60 * 60);
           if (signed?.signedUrl) setKtpPreview(signed.signedUrl);
         }
+        
+        // Simpan ID pengajuan saat ini
+        if (sellerApp?.id) setCurrentAppId(sellerApp.id);
       } catch (err) {
         console.error(err);
         showToast('Gagal memuat data profil', 'error');
@@ -195,9 +217,21 @@ export default function AkunPenjualPage() {
     }
   };
 
+  // Batal edit
+  const handleBatal = () => {
+    if (originalPenjual) {
+      setPenjual(originalPenjual);
+      // Reset KTP preview jika ada perubahan file yang belum diupload
+      if (originalPenjual.ktp_url) {
+        // Preview akan terupdate otomatis jika ktpUrl ada
+      }
+    }
+    setIsEditMode(false);
+  };
+
   // Submit daftar penjual — update role + data bank
   const handleDaftarPenjual = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!userId) return;
     if (!penjual.alamat || !penjual.namaBank || !penjual.noRekening || !penjual.namaPemilikRekening) {
       showToast('Lengkapi semua field yang wajib diisi', 'error');
@@ -215,30 +249,74 @@ export default function AkunPenjualPage() {
     }
     setSubmitting(true);
     try {
-      // Upsert data ke seller_applications dengan status 'menunggu'
-      // Role di profiles TIDAK diubah — admin yang akan approve
-      const { data: appData, error: appError } = await supabase
-        .from('seller_applications')
-        .upsert({
-          user_id: userId,
-          lokasi: penjual.alamat,
-          ktp_url: finalKtpPath,
-          nama_bank: penjual.namaBank,
-          no_rekening: penjual.noRekening,
-          nama_pemilik: penjual.namaPemilikRekening,
-          status: 'menunggu',
-        }, { onConflict: 'user_id' })
-        .select();
+      let result;
+      
+      if (sellerStatus === 'disetujui' && currentAppId) {
+        // UPDATE baris yang sudah disetujui (Sesuai instruksi flow baru)
+        result = await supabase
+          .from('seller_applications')
+          .update({
+            lokasi: penjual.alamat,
+            ktp_url: finalKtpPath,
+            nama_bank: penjual.namaBank,
+            no_rekening: penjual.noRekening,
+            nama_pemilik: penjual.namaPemilikRekening,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', currentAppId);
+      } else {
+        // INSERT baris baru (Pengajuan Baru / Ulang setelah ditolak)
+        result = await supabase
+          .from('seller_applications')
+          .insert({
+            user_id: userId,
+            lokasi: penjual.alamat,
+            ktp_url: finalKtpPath,
+            nama_bank: penjual.namaBank,
+            no_rekening: penjual.noRekening,
+            nama_pemilik: penjual.namaPemilikRekening,
+            status: 'menunggu' // Selalu mulai dari menunggu
+          })
+          .select();
+        
+        if (!result.error && result.data?.[0]) {
+          setCurrentAppId(result.data[0].id);
+        }
+      }
 
-      console.log('[Daftar] seller_applications result:', appData, appError);
-      if (appError) throw appError;
+      if (result.error) throw result.error;
 
-      setSellerStatus('menunggu');
-      showToast('Pendaftaran penjual berhasil dikirim! Menunggu persetujuan admin.', 'success');
+      // Update profil user (data pribadi)
+      const tgl = (penjual.tglLahirTgl || '1').padStart(2, '0');
+      const bln = bulanMap[penjual.tglLahirBulan] || '01';
+      const thn = penjual.tglLahirTahun || '2000';
+
+      const { error: profileUpdateError } = await supabase
+        .from('profiles')
+        .update({
+          username: penjual.username,
+          full_name: penjual.nama,
+          gender: penjual.jenisKelamin,
+          phone_number: penjual.noTelp,
+          birth_date: `${thn}-${bln}-${tgl}`,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId);
+      
+      if (profileUpdateError) console.error("Error updating profile during seller save:", profileUpdateError);
+
+      setOriginalPenjual({ ...penjual });
+      setIsEditMode(false);
+
+      if (sellerStatus !== 'disetujui') {
+        setSellerStatus('menunggu');
+        setHasHistory(true);
+        showToast('Pendaftaran penjual berhasil dikirim! Menunggu persetujuan admin.', 'success');
+      } else {
+        showToast('Perubahan profil penjual berhasil disimpan.', 'success');
+      }
     } catch (err) {
-      const msg = err?.message || JSON.stringify(err);
-      console.error('[Daftar] Error:', JSON.stringify(err, null, 2));
-      showToast('Pendaftaran gagal: ' + msg, 'error');
+      showToast('Terjadi kesalahan: ' + err.message, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -296,13 +374,13 @@ export default function AkunPenjualPage() {
         <div className="form-horizontal-group">
           <label>Username</label>
           <div className="input-wrapper">
-            <input type="text" value={penjual.username} disabled />
+            <input type="text" value={penjual.username} disabled={!isEditMode || sellerStatus === 'menunggu'} onChange={handleChange('username')} />
           </div>
         </div>
         <div className="form-horizontal-group">
           <label>Nama</label>
           <div className="input-wrapper">
-            <input type="text" value={penjual.nama} disabled />
+            <input type="text" value={penjual.nama} disabled={!isEditMode || sellerStatus === 'menunggu'} onChange={handleChange('nama')} />
           </div>
         </div>
         <div className="form-horizontal-group">
@@ -314,34 +392,48 @@ export default function AkunPenjualPage() {
         <div className="form-horizontal-group">
           <label>Jenis Kelamin</label>
           <div className="input-wrapper">
-            <select disabled value={penjual.jenisKelamin}>
-              <option value="">Pilih</option>
-              <option value="Pria">Pria</option>
-              <option value="Wanita">Wanita</option>
-            </select>
+            <CustomSelect 
+              disabled={!isEditMode || sellerStatus === 'menunggu'}
+              options={[
+                { label: 'Pria', value: 'Pria' },
+                { label: 'Wanita', value: 'Wanita' }
+              ]}
+              value={penjual.jenisKelamin}
+              onChange={(val) => setPenjual(prev => ({ ...prev, jenisKelamin: val }))}
+              placeholder="Pilih"
+            />
           </div>
         </div>
         <div className="form-horizontal-group">
           <label>No Telp</label>
           <div className="input-wrapper">
-            <input type="tel" value={penjual.noTelp} disabled />
+            <input type="tel" value={penjual.noTelp} disabled={!isEditMode || sellerStatus === 'menunggu'} onChange={(e) => setPenjual(prev => ({ ...prev, noTelp: e.target.value.replace(/\D/g, '') }))} />
           </div>
         </div>
         <div className="form-horizontal-group">
           <label>Tanggal Lahir</label>
-          <div className="input-wrapper">
-            <select disabled value={penjual.tglLahirTgl}>
-              <option value="">Tgl</option>
-              {Array.from({ length: 31 }, (_, i) => <option key={i} value={String(i + 1)}>{i + 1}</option>)}
-            </select>
-            <select disabled value={penjual.tglLahirBulan}>
-              <option value="">Bulan</option>
-              {bulanArr.map(b => <option key={b} value={b}>{b}</option>)}
-            </select>
-            <select disabled value={penjual.tglLahirTahun}>
-              <option value="">Tahun</option>
-              {Array.from({ length: 30 }, (_, i) => <option key={i} value={String(1995 + i)}>{1995 + i}</option>)}
-            </select>
+          <div className="input-wrapper" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
+            <CustomSelect 
+              disabled={!isEditMode || sellerStatus === 'menunggu'}
+              options={Array.from({ length: 31 }, (_, i) => ({ label: String(i + 1), value: String(i + 1) }))}
+              value={penjual.tglLahirTgl}
+              onChange={(val) => setPenjual(prev => ({ ...prev, tglLahirTgl: val }))}
+              placeholder="Tgl"
+            />
+            <CustomSelect 
+              disabled={!isEditMode || sellerStatus === 'menunggu'}
+              options={bulanArr.map(b => ({ label: b, value: b }))}
+              value={penjual.tglLahirBulan}
+              onChange={(val) => setPenjual(prev => ({ ...prev, tglLahirBulan: val }))}
+              placeholder="Bulan"
+            />
+            <CustomSelect 
+              disabled={!isEditMode || sellerStatus === 'menunggu'}
+              options={Array.from({ length: 30 }, (_, i) => ({ label: String(1995 + i), value: String(1995 + i) }))}
+              value={penjual.tglLahirTahun}
+              onChange={(val) => setPenjual(prev => ({ ...prev, tglLahirTahun: val }))}
+              placeholder="Tahun"
+            />
           </div>
         </div>
         <div className="form-horizontal-group">
@@ -351,7 +443,7 @@ export default function AkunPenjualPage() {
               value={penjual.alamat}
               onChange={(val) => setPenjual(prev => ({ ...prev, alamat: val }))}
               placeholder="Pilih Provinsi"
-              disabled={sellerStatus === 'menunggu' || sellerStatus === 'disetujui'}
+              disabled={!isEditMode || sellerStatus === 'menunggu'}
               options={[
                 { value: 'Banten', label: 'Banten' },
                 { value: 'DKI Jakarta', label: 'DKI Jakarta' },
@@ -364,15 +456,6 @@ export default function AkunPenjualPage() {
           </div>
         </div>
 
-        {/* Link ke Akun Saya untuk edit data pribadi — hanya tampil jika disetujui */}
-        {sellerStatus === 'disetujui' && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
-            <Link href="/akun" style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <i className="ph ph-pencil-simple" style={{ fontSize: '0.9rem' }}></i>
-              Edit data pribadi di Akun Saya
-            </Link>
-          </div>
-        )}
 
         {/* === Upload KTP === */}
         <h3 className="sub-title" style={{ marginTop: '2.5rem' }}>Upload KTP</h3>
@@ -418,14 +501,17 @@ export default function AkunPenjualPage() {
                   )}
                   {/* Ganti foto */}
                   <label style={{
-                    cursor: 'pointer', fontSize: '0.82rem', color: 'var(--primary)',
-                    border: '1px solid var(--primary)', borderRadius: '6px',
-                    padding: '0.45rem 1rem', fontWeight: 500
+                    cursor: isEditMode && sellerStatus !== 'menunggu' ? 'pointer' : 'not-allowed', fontSize: '0.82rem', 
+                    color: isEditMode && sellerStatus !== 'menunggu' ? 'var(--primary)' : '#9CA3AF',
+                    border: `1px solid ${isEditMode && sellerStatus !== 'menunggu' ? 'var(--primary)' : '#E5E7EB'}`, 
+                    borderRadius: '6px',
+                    padding: '0.45rem 1rem', fontWeight: 500,
+                    opacity: isEditMode && sellerStatus !== 'menunggu' ? 1 : 0.6
                   }}>
                     Ganti Foto
                     <input
                       type="file"
-                      accept="image/jpeg,image/png,image/jpg,image/webp"
+                      disabled={!isEditMode || sellerStatus === 'menunggu'}
                       style={{ display: 'none' }}
                       onChange={handleKtpInputChange}
                     />
@@ -435,9 +521,15 @@ export default function AkunPenjualPage() {
                     <button
                       type="button"
                       onClick={handleHapusKtp}
+                      disabled={!isEditMode || sellerStatus === 'menunggu'}
                       style={{
-                        background: 'none', border: '1px solid #FCA5A5', borderRadius: '6px',
-                        padding: '0.45rem 1rem', fontSize: '0.82rem', color: '#DC2626', cursor: 'pointer'
+                        background: 'none', 
+                        border: `1px solid ${!isEditMode || sellerStatus === 'menunggu' ? '#E5E7EB' : '#FCA5A5'}`, 
+                        borderRadius: '6px',
+                        padding: '0.45rem 1rem', fontSize: '0.82rem', 
+                        color: !isEditMode || sellerStatus === 'menunggu' ? '#9CA3AF' : '#DC2626', 
+                        cursor: !isEditMode || sellerStatus === 'menunggu' ? 'not-allowed' : 'pointer',
+                        opacity: !isEditMode || sellerStatus === 'menunggu' ? 0.6 : 1
                       }}
                     >
                       Hapus
@@ -451,9 +543,9 @@ export default function AkunPenjualPage() {
                 htmlFor="ktp-file-input"
                 className={`upload-dropzone${ktpDragOver ? ' drag-over' : ''}`}
                 style={{ cursor: 'pointer', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem', padding: '1.5rem 2rem', textAlign: 'left', width: '100%' }}
-                onDragOver={(e) => { e.preventDefault(); setKtpDragOver(true); }}
+                onDragOver={(e) => { if (isEditMode && sellerStatus !== 'menunggu') { e.preventDefault(); setKtpDragOver(true); } }}
                 onDragLeave={() => setKtpDragOver(false)}
-                onDrop={handleKtpDrop}
+                onDrop={(e) => { if (isEditMode && sellerStatus !== 'menunggu') handleKtpDrop(e); }}
               >
                 <i className="ph ph-identification-card" style={{ fontSize: '2.5rem', flexShrink: 0, color: 'var(--primary)' }}></i>
                 <div>
@@ -468,6 +560,7 @@ export default function AkunPenjualPage() {
                   accept="image/jpeg,image/png,image/jpg,image/webp"
                   style={{ display: 'none' }}
                   onChange={handleKtpInputChange}
+                  disabled={!isEditMode || sellerStatus === 'menunggu'}
                 />
               </label>
             )}
@@ -483,7 +576,7 @@ export default function AkunPenjualPage() {
               value={penjual.namaBank}
               onChange={(val) => setPenjual(prev => ({ ...prev, namaBank: val }))}
               placeholder="Pilih Bank"
-              disabled={sellerStatus === 'menunggu'}
+              disabled={!isEditMode || sellerStatus === 'menunggu'}
               options={[
                 { value: 'Mandiri', label: 'Mandiri' },
                 { value: 'BCA', label: 'BCA' },
@@ -496,48 +589,42 @@ export default function AkunPenjualPage() {
         <div className="form-horizontal-group">
           <label>No Rekening <span className="required">*</span></label>
           <div className="input-wrapper">
-            <input type="text" inputMode="numeric" value={penjual.noRekening} onChange={(e) => setPenjual(prev => ({ ...prev, noRekening: e.target.value.replace(/\D/g, '') }))} required disabled={sellerStatus === 'menunggu'} />
+            <input type="text" inputMode="numeric" value={penjual.noRekening} onChange={(e) => setPenjual(prev => ({ ...prev, noRekening: e.target.value.replace(/\D/g, '') }))} required disabled={!isEditMode || sellerStatus === 'menunggu'} />
           </div>
         </div>
         <div className="form-horizontal-group">
           <label>Nama Pemilik<br />Rekening <span className="required">*</span></label>
           <div className="input-wrapper">
-            <input type="text" value={penjual.namaPemilikRekening} onChange={handleChange('namaPemilikRekening')} required disabled={sellerStatus === 'menunggu'} />
+            <input type="text" value={penjual.namaPemilikRekening} onChange={handleChange('namaPemilikRekening')} required disabled={!isEditMode || sellerStatus === 'menunggu'} />
           </div>
         </div>
 
-        {/* Belum daftar atau ditolak — tampilkan form submit */}
-        {(!sellerStatus || sellerStatus === 'ditolak') && (
-          <>
-            <div className="checkbox-list-inline" style={{ marginTop: '2rem' }}>
-              <label><input type="checkbox" required /> Saya menyetujui syarat dan ketentuan yang berlaku di Lelangin</label>
+        {/* Action Buttons: Edit / Batal + Simpan */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', marginTop: '3rem' }}>
+          {sellerStatus === 'menunggu' ? (
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '1rem', backgroundColor: '#FEF3C7', borderRadius: '8px', fontSize: '0.875rem', color: '#92400E', fontWeight: 500, gap: '0.5rem', alignItems: 'center' }}>
+              <i className="ph ph-hourglass-medium" style={{ fontSize: '1.1rem' }}></i>
+              Menunggu persetujuan admin. Semua data dikunci.
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '3rem' }}>
-              <button type="submit" disabled={submitting} className="btn-primary-full"
-                style={{ width: 'auto', padding: '0.8rem 2.5rem', borderRadius: '6px', margin: 0, fontSize: '1rem' }}>
-                {submitting ? 'Memproses...' : sellerStatus === 'ditolak' ? 'Ajukan Kembali' : 'Daftar Penjual'}
+          ) : isEditMode ? (
+            <>
+              <button type="button" onClick={handleBatal}
+                style={{ background: '#FFFFFF', border: '1px solid #D1D5DB', borderRadius: '6px', padding: '0.6rem 2.5rem', fontSize: '0.9rem', color: '#6B7280', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+                Batal
               </button>
-            </div>
-          </>
-        )}
-
-        {/* Menunggu — semua dikunci, tidak ada tombol */}
-        {sellerStatus === 'menunggu' && (
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '3rem', padding: '1rem', backgroundColor: '#FEF3C7', borderRadius: '8px', fontSize: '0.875rem', color: '#92400E', fontWeight: 500, gap: '0.5rem', alignItems: 'center' }}>
-            <i className="ph ph-hourglass-medium" style={{ fontSize: '1.1rem' }}></i>
-            Menunggu persetujuan admin. Semua data dikunci.
-          </div>
-        )}
-
-        {/* Disetujui — bisa edit data penjual */}
-        {sellerStatus === 'disetujui' && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '3rem' }}>
-            <button type="submit" disabled={submitting} className="btn-primary-full"
-              style={{ width: 'auto', padding: '0.8rem 2.5rem', borderRadius: '6px', margin: 0, fontSize: '1rem' }}>
-              {submitting ? 'Menyimpan...' : 'Simpan Perubahan'}
+              <button type="submit" disabled={submitting}
+                className="btn-primary-full"
+                style={{ width: 'auto', padding: '0.6rem 2.5rem', margin: 0, fontSize: '0.9rem', borderRadius: '6px' }}>
+                {submitting ? 'Memproses...' : (sellerStatus === 'disetujui' ? 'Simpan' : (hasHistory ? 'Ajukan Kembali' : 'Ajukan Pendaftaran'))}
+              </button>
+            </>
+          ) : (
+            <button type="button" onClick={() => setIsEditMode(true)}
+              style={{ background: '#FFFFFF', border: '1px solid var(--primary)', borderRadius: '6px', padding: '0.6rem 2.5rem', fontSize: '0.9rem', color: 'var(--primary)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+              Edit
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </form>
     </>
   );

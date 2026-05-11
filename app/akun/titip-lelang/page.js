@@ -38,12 +38,12 @@ export default function TitipLelangPage() {
 
         // Cek status penjual dari seller_applications
         const { data: sellerApp } = await supabase
-          .from('seller_applications')
-          .select('status')
-          .eq('user_id', session.user.id)
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
           .maybeSingle();
 
-        const userIsPenjual = sellerApp?.status === 'disetujui';
+        const userIsPenjual = sellerApp?.role === 'penjual';
         setIsPenjual(userIsPenjual);
 
         if (userIsPenjual) {

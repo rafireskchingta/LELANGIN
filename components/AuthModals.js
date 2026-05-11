@@ -8,7 +8,6 @@ import CustomSelect from './CustomSelect';
 export default function AuthModals() {
   const pathname = usePathname();
 
-  if (pathname.startsWith('/admin')) return null;
   // States for Login
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -25,6 +24,9 @@ export default function AuthModals() {
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regLoading, setRegLoading] = useState(false);
+
+  // Jangan render modals di halaman admin
+  if (pathname.startsWith('/admin')) return null;
 
   // Helper to show vanilla JS Toast from script.js
   const showToast = (msg, type = 'success') => {
@@ -87,14 +89,6 @@ export default function AuthModals() {
     setLoginLoading(true);
 
     try {
-      if (loginEmail === 'adminlelangin@gmail.com' && loginPassword === '122026') {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('isAdminLoggedIn', 'true');
-          window.location.href = '/admin/dashboard';
-        }
-        return;
-      }
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password: loginPassword,
@@ -109,12 +103,18 @@ export default function AuthModals() {
         .eq('id', data.user.id)
         .single();
 
-      // Temporary workaround to update Header until we fully migrate to React state
-      // We set localStorage to fake the isLoggedIn status for script.js
+      if (profileData?.role === 'admin') {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('isAdminLoggedIn', 'true');
+          window.location.href = '/admin/dashboard';
+        }
+        return;
+      }
+
       if (typeof window !== 'undefined') {
         localStorage.setItem('isLoggedIn', 'true');
         window.dispatchEvent(new Event('auth-change'));
-        
+
         const userObj = {
           id: data.user.id,
           email: data.user.email,
@@ -138,10 +138,10 @@ export default function AuthModals() {
         }
 
         userObj.avatar = (userObj.nama || 'U').charAt(0).toUpperCase();
-        
+
         // Simpan langsung ke localStorage, jangan mengandalkan window.DB
         localStorage.setItem('lelangin_user', JSON.stringify(userObj));
-        
+
         if (window.DB) window.DB.setUser(userObj);
         if (window.updateHeaderState) window.updateHeaderState();
       }

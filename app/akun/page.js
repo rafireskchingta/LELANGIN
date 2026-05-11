@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../src/lib/supabase';
+import CustomSelect from '../../components/CustomSelect';
 
 export default function AkunSayaPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function AkunSayaPage() {
     noTelp: '', tglLahirTgl: '', tglLahirBulan: '', tglLahirTahun: '', avatar: 'U'
   });
   const [toast, setToast] = useState(null);
+  const [dateError, setDateError] = useState(null);
 
   const bulanArr = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
   const bulanMap = { 'Januari': '01', 'Februari': '02', 'Maret': '03', 'April': '04', 'Mei': '05', 'Juni': '06', 'Juli': '07', 'Agustus': '08', 'September': '09', 'Oktober': '10', 'November': '11', 'Desember': '12' };
@@ -120,6 +122,14 @@ export default function AkunSayaPage() {
       const bln = bulanMap[user.tglLahirBulan] || '01';
       const thn = user.tglLahirTahun || '2000';
 
+      const dateObj = new Date(`${thn}-${bln}-${tgl}`);
+      if (dateObj.getMonth() + 1 !== parseInt(bln)) {
+        setDateError(`Tanggal ${user.tglLahirTgl} tidak valid untuk bulan ${user.tglLahirBulan}.`);
+        setSaving(false);
+        return;
+      }
+      setDateError(null);
+
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -150,6 +160,7 @@ export default function AkunSayaPage() {
   const handleBatal = () => {
     if (originalUser) setUser(originalUser);
     setIsEditMode(false);
+    setDateError(null);
   };
 
   return (
@@ -188,32 +199,56 @@ export default function AkunSayaPage() {
         <div className="form-horizontal-group">
           <label>Jenis Kelamin</label>
           <div className="input-wrapper">
-            <select disabled={!isEditMode} value={user.jenisKelamin || ''} onChange={(e) => setUser({ ...user, jenisKelamin: e.target.value })}>
-              <option value="" disabled>Pilih Jenis Kelamin</option>
-              <option value="Pria">Pria</option>
-              <option value="Wanita">Wanita</option>
-            </select>
+            <CustomSelect 
+              disabled={!isEditMode}
+              options={[
+                { label: 'Pria', value: 'Pria' },
+                { label: 'Wanita', value: 'Wanita' }
+              ]}
+              value={user.jenisKelamin}
+              onChange={(val) => setUser({ ...user, jenisKelamin: val })}
+              placeholder="Pilih Jenis Kelamin"
+            />
           </div>
         </div>
         <div className="form-horizontal-group">
           <label>No Telp</label>
           <div className="input-wrapper"><input type="tel" name="noTelp" inputMode="numeric" value={user.noTelp || ''} disabled={!isEditMode} onChange={(e) => setUser({ ...user, noTelp: e.target.value.replace(/\D/g, '') })} /></div>
         </div>
-        <div className="form-horizontal-group">
-          <label>Tanggal Lahir</label>
-          <div className="input-wrapper">
-            <select disabled={!isEditMode} value={user.tglLahirTgl || ''} onChange={(e) => setUser({ ...user, tglLahirTgl: e.target.value })}>
-              <option value="">Tgl</option>
-              {Array.from({ length: 31 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
-            </select>
-            <select disabled={!isEditMode} value={user.tglLahirBulan || ''} onChange={(e) => setUser({ ...user, tglLahirBulan: e.target.value })}>
-              <option value="">Bulan</option>
-              {bulanArr.map(b => <option key={b} value={b}>{b}</option>)}
-            </select>
-            <select disabled={!isEditMode} value={user.tglLahirTahun || ''} onChange={(e) => setUser({ ...user, tglLahirTahun: e.target.value })}>
-              <option value="">Tahun</option>
-              {Array.from({ length: 30 }, (_, i) => <option key={i} value={1995 + i}>{1995 + i}</option>)}
-            </select>
+        <div className="form-horizontal-group" style={{ alignItems: 'flex-start' }}>
+          <label style={{ marginTop: '0.6rem' }}>Tanggal Lahir</label>
+          <div style={{ flex: 1 }}>
+            <div className="input-wrapper" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', width: '100%' }}>
+              <CustomSelect 
+                disabled={!isEditMode}
+                error={!!dateError}
+                options={Array.from({ length: 31 }, (_, i) => ({ label: String(i + 1), value: String(i + 1) }))}
+                value={user.tglLahirTgl}
+                onChange={(val) => { setUser({ ...user, tglLahirTgl: val }); setDateError(null); }}
+                placeholder="Tgl"
+              />
+              <CustomSelect 
+                disabled={!isEditMode}
+                error={!!dateError}
+                options={bulanArr.map(b => ({ label: b, value: b }))}
+                value={user.tglLahirBulan}
+                onChange={(val) => { setUser({ ...user, tglLahirBulan: val }); setDateError(null); }}
+                placeholder="Bulan"
+              />
+              <CustomSelect 
+                disabled={!isEditMode}
+                error={!!dateError}
+                options={Array.from({ length: 30 }, (_, i) => ({ label: String(1995 + i), value: String(1995 + i) }))}
+                value={user.tglLahirTahun}
+                onChange={(val) => { setUser({ ...user, tglLahirTahun: val }); setDateError(null); }}
+                placeholder="Tahun"
+              />
+            </div>
+            {dateError && (
+              <div style={{ color: '#EF4444', fontSize: '0.8rem', marginTop: '0.5rem', fontWeight: 500 }}>
+                {dateError}
+              </div>
+            )}
           </div>
         </div>
 

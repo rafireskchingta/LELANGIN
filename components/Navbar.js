@@ -7,14 +7,14 @@ import { useState, useEffect, useRef } from 'react';
 export default function Navbar() {
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  
-  if (pathname.startsWith('/admin')) return null;
   const navRef = useRef(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
 
+  const isAdmin = pathname.startsWith('/admin');
   const isAkun = pathname.startsWith('/akun');
 
   useEffect(() => {
+    if (isAdmin) return; // Skip untuk halaman admin
     const checkLogin = () => {
       if (typeof window !== 'undefined') {
         const loggedInStatus = localStorage.getItem('isLoggedIn');
@@ -27,10 +27,11 @@ export default function Navbar() {
     // Dengarkan event kustom 'auth-change' jika diloginkan
     window.addEventListener('auth-change', checkLogin);
     return () => window.removeEventListener('auth-change', checkLogin);
-  }, []);
+  }, [isAdmin]);
 
   // Update sliding indicator kapanpun pathname berubah atau component di-mount
   useEffect(() => {
+    if (isAdmin) return; // Skip untuk halaman admin
     const updateIndicator = () => {
       // Cari elemen tag <a> yang memiliki class active, dan kecualikan tombol akun
       const activeLink = navRef.current?.querySelector('a.active:not(.btn-akun)');
@@ -54,7 +55,10 @@ export default function Navbar() {
       clearTimeout(timer);
       window.removeEventListener('resize', updateIndicator);
     };
-  }, [pathname]);
+  }, [pathname, isAdmin]);
+
+  // Jangan render navbar di halaman admin
+  if (isAdmin) return null;
 
   const handleMasukClick = () => {
     if (typeof document !== 'undefined') {

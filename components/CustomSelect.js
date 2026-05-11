@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 
-export default function CustomSelect({ options, value, onChange, placeholder = "Pilih", disabled = false }) {
+export default function CustomSelect({ options, value, onChange, placeholder = "Pilih", disabled = false, error = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -32,19 +32,19 @@ export default function CustomSelect({ options, value, onChange, placeholder = "
         style={{
           width: '100%',
           padding: '0.65rem 1rem',
-          border: '1px solid #E5E7EB',
+          border: '1px solid',
+          borderColor: error ? '#EF4444' : (isOpen ? '#818CF8' : '#E5E7EB'),
           borderRadius: '10px',
           fontSize: '0.85rem',
           color: value ? 'var(--text-main)' : '#9CA3AF',
-          backgroundColor: disabled ? '#F9FAFB' : '#FFFFFF',
+          backgroundColor: disabled ? '#E5E7EB' : '#FFFFFF',
           cursor: disabled ? 'not-allowed' : 'pointer',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           fontFamily: 'inherit',
           transition: 'all 0.2s ease',
-          boxShadow: isOpen ? '0 0 0 2px #E0E7FF' : 'none',
-          borderColor: isOpen ? '#818CF8' : '#E5E7EB',
+          boxShadow: isOpen ? '0 0 0 2px #E0E7FF' : (error ? '0 0 0 2px #FEE2E2' : 'none'),
           opacity: disabled ? 0.7 : 1
         }}
       >
