@@ -14,6 +14,8 @@ function JelajahiContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sortOrder, setSortOrder] = useState('Terbaru');
   const [isSortOpen, setIsSortOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchFavs = () => {
@@ -120,9 +122,15 @@ function JelajahiContent() {
           <div className="top-bar-jelajahi">
             <div className="search-box-j">
               <i className="ph ph-magnifying-glass"></i>
-              <input type="text" placeholder="Cari Barang Berdasarkan Kata Kunci" />
+              <input 
+                type="text" 
+                placeholder="Cari Barang Berdasarkan Kata Kunci" 
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') setSearchQuery(searchInput); }}
+              />
             </div>
-            <button className="btn-primary-j">Cari</button>
+            <button className="btn-primary-j" onClick={() => setSearchQuery(searchInput)}>Cari</button>
           </div>
 
           <div className="sort-bar">
@@ -141,7 +149,15 @@ function JelajahiContent() {
           </div>
 
           <div className="jelajahi-grid smooth-fade" key={activeCategory}>
-            {[1,2,3,4,5,6,7,8].map((i) => (
+            {(() => {
+              const title = 'Toshiba Front Loading Washing Machine TW-BK115G4F(SK) 10.5kg';
+              const items = [1,2,3,4,5,6,7,8].filter(i => !searchQuery || title.toLowerCase().includes(searchQuery.toLowerCase()));
+              
+              if (items.length === 0) {
+                return <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Tidak ada barang lelang yang sesuai dengan pencarian.</div>;
+              }
+
+              return items.map((i) => (
               <div key={i} onClick={() => setIsModalOpen(true)} className="auction-card card-jelajahi" style={{ textDecoration: 'none', color: 'inherit', display: 'block', cursor: 'pointer' }}>
                 <div className="badge-time"><i className="ph ph-clock"></i> 12 Hari</div>
                 <img src="/assets/washer.png" alt="Washing Machine" />
@@ -161,7 +177,7 @@ function JelajahiContent() {
                   <div><i className="ph ph-map-pin"></i> Sukajadi, Bandung</div>
                 </div>
               </div>
-            ))}
+            ))})()}
           </div>
         </section>
       </div>

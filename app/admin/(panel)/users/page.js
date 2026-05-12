@@ -3,16 +3,20 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { supabase } from '../../../../src/lib/supabase';
 import CustomSelect from '../../../../components/CustomSelect';
 
-export default function AdminUsersPage() {
+function AdminUsersContent() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [dateError, setDateError] = useState(null);
   const [mounted, setMounted] = useState(false);
+  const searchParams = useSearchParams();
+  const query = searchParams.get('q') || '';
 
   useEffect(() => {
     setMounted(true);
@@ -258,10 +262,18 @@ export default function AdminUsersPage() {
                   </tr>
                 ))}
               </>
-            ) : users.length === 0 ? (
-              <tr><td colSpan="8" style={{textAlign: 'center'}}>Tidak ada data pengguna.</td></tr>
-            ) : (
-              users.map((user, index) => (
+            ) : (() => {
+              const filteredUsers = users.filter(user => 
+                (user.full_name || '').toLowerCase().includes(query.toLowerCase()) || 
+                (user.username || '').toLowerCase().includes(query.toLowerCase()) ||
+                (user.email || '').toLowerCase().includes(query.toLowerCase())
+              );
+              
+              if (filteredUsers.length === 0) {
+                return <tr><td colSpan="8" style={{textAlign: 'center'}}>Tidak ada data pengguna{query ? ' yang cocok dengan pencarian' : ''}.</td></tr>;
+              }
+              
+              return filteredUsers.map((user, index) => (
                 <tr key={user.id}>
                   <td>{index + 1}.</td>
                   <td><strong>{user.full_name || 'Tanpa Nama'}</strong></td>
@@ -281,8 +293,8 @@ export default function AdminUsersPage() {
                     </div>
                   </td>
                 </tr>
-              ))
-            )}
+              ));
+            })()}
           </tbody>
         </table>
       </div>
@@ -530,5 +542,13 @@ export default function AdminUsersPage() {
         document.body
       )}
     </div>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AdminUsersContent />
+    </Suspense>
   );
 }

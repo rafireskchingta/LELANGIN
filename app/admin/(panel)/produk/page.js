@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { supabase } from '../../../../src/lib/supabase';
 
-export default function AdminProdukPage() {
+function AdminProdukContent() {
   const router = useRouter();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,6 +14,8 @@ export default function AdminProdukPage() {
 
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const query = searchParams.get('q') || '';
 
   useEffect(() => {
     fetchProducts();
@@ -64,9 +67,15 @@ export default function AdminProdukPage() {
     return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   };
 
-  const filteredProducts = activeTab === 'Semua' 
+  const filteredProductsByTab = activeTab === 'Semua' 
     ? products 
     : products.filter(p => (p.kategori || p.category)?.toLowerCase() === activeTab.toLowerCase());
+
+  const filteredProducts = filteredProductsByTab.filter(p => 
+    (p.nama || p.name || '').toLowerCase().includes(query.toLowerCase()) || 
+    (p.kategori || p.category || '').toLowerCase().includes(query.toLowerCase()) ||
+    (p.lokasi || p.location || '').toLowerCase().includes(query.toLowerCase())
+  );
 
   return (
     <div className="admin-produk-page">
@@ -123,7 +132,7 @@ export default function AdminProdukPage() {
           </>
         ) : filteredProducts.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '2rem', background: '#fff', borderRadius: '12px', border: '1px solid #E5E7EB' }}>
-            Tidak ada produk lelang.
+            Tidak ada produk lelang{query ? ' yang cocok dengan pencarian' : ''}.
           </div>
         ) : (
           filteredProducts.map((product) => (
@@ -251,5 +260,13 @@ export default function AdminProdukPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminProdukPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AdminProdukContent />
+    </Suspense>
   );
 }

@@ -1,12 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-  import { usePathname, useRouter } from 'next/navigation';
-  import { useEffect } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
 
-  export default function AdminPanelLayout({ children }) {
+  function AdminPanelLayoutContent({ children }) {
     const pathname = usePathname();
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+
+    useEffect(() => {
+      setSearchQuery(searchParams.get('q') || '');
+    }, [pathname, searchParams]);
 
     useEffect(() => {
       const isAdminLoggedIn = localStorage.getItem('isAdminLoggedIn');
@@ -28,6 +35,21 @@ import Link from 'next/link';
     { name: 'Daftar Produk', path: '/admin/produk', icon: 'ph-package' },
     { name: 'Transaksi Produk', path: '/admin/transaksi', icon: 'ph-truck' },
   ];
+  const hideSearchRoutes = ['/admin/dashboard'];
+  const isVerifikasiDetail = pathname.startsWith('/admin/verifikasi/') && pathname !== '/admin/verifikasi';
+  const shouldHideSearch = hideSearchRoutes.includes(pathname) || isVerifikasiDetail;
+
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set('q', value);
+    } else {
+      params.delete('q');
+    }
+    router.replace(`${pathname}?${params.toString()}`);
+  };
 
   return (
     <div className="admin-layout-wrapper">
@@ -70,10 +92,17 @@ import Link from 'next/link';
         {/* Topbar */}
         <header className="admin-topbar">
           <div className="topbar-left">
-            <div className="admin-topbar-search">
-              <i className="ph ph-magnifying-glass"></i>
-              <input type="text" placeholder="Cari data" />
-            </div>
+            {!shouldHideSearch && (
+              <div className="admin-topbar-search">
+                <i className="ph ph-magnifying-glass"></i>
+                <input 
+                  type="text" 
+                  placeholder="Cari data" 
+                  value={searchQuery}
+                  onChange={handleSearch}
+                />
+              </div>
+            )}
           </div>
           <div className="topbar-right">
             <div className="admin-role-badge">
@@ -88,5 +117,13 @@ import Link from 'next/link';
         </main>
       </div>
     </div>
+  );
+}
+
+export default function AdminPanelLayout({ children }) {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AdminPanelLayoutContent>{children}</AdminPanelLayoutContent>
+    </Suspense>
   );
 }

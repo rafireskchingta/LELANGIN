@@ -2,14 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { supabase } from '../../../../src/lib/supabase';
 
-export default function AdminVerifikasiPage() {
+function AdminVerifikasiContent() {
   const router = useRouter();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Semua');
+  const searchParams = useSearchParams();
+  const query = searchParams.get('q') || '';
 
   useEffect(() => {
     fetchApplications();
@@ -69,9 +72,15 @@ export default function AdminVerifikasiPage() {
     }
   };
 
-  const filteredApps = activeTab === 'Semua'
+  const filteredAppsByTab = activeTab === 'Semua'
     ? applications
     : applications.filter(app => (app.status || '').toLowerCase() === activeTab.toLowerCase());
+
+  const filteredApps = filteredAppsByTab.filter(app => 
+    (app.full_name || '').toLowerCase().includes(query.toLowerCase()) || 
+    (app.username || '').toLowerCase().includes(query.toLowerCase()) ||
+    (app.lokasi || '').toLowerCase().includes(query.toLowerCase())
+  );
 
   return (
     <div className="admin-verifikasi-page">
@@ -118,7 +127,7 @@ export default function AdminVerifikasiPage() {
                 ))}
               </>
             ) : filteredApps.length === 0 ? (
-              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Tidak ada pengajuan penjual.</td></tr>
+              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Tidak ada pengajuan penjual{query ? ' yang cocok dengan pencarian' : ''}.</td></tr>
             ) : (
               filteredApps.map((app, index) => {
                 const statusStr = (app.status || 'menunggu').toLowerCase();
@@ -161,5 +170,13 @@ export default function AdminVerifikasiPage() {
         </table>
       </div>
     </div>
+  );
+}
+
+export default function AdminVerifikasiPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AdminVerifikasiContent />
+    </Suspense>
   );
 }

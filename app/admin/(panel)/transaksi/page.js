@@ -1,11 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { supabase } from '../../../../src/lib/supabase';
 
-export default function AdminTransaksiPage() {
+function AdminTransaksiContent() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const query = searchParams.get('q') || '';
 
   useEffect(() => {
     fetchTransactions();
@@ -48,16 +52,16 @@ export default function AdminTransaksiPage() {
       </div>
 
       <div className="admin-table-container" style={{ marginTop: '2rem' }}>
-        <table className="admin-table admin-table-transaksi">
+        <table className="admin-table">
           <thead>
             <tr>
-              <th>ID_TRANSAKSI</th>
-              <th>ID_PRODUK</th>
+              <th>ID TRANSAKSI</th>
+              <th>ID PRODUK</th>
               <th>PEMENANG</th>
-              <th>PHONE</th>
+              <th>NO TELP</th>
               <th>STATUS</th>
               <th>HARGA TERTINGGI</th>
-              <th>TGL DIBUAT</th>
+              <th>TANGGAL DIBUAT</th>
             </tr>
           </thead>
           <tbody>
@@ -74,10 +78,18 @@ export default function AdminTransaksiPage() {
                   </tr>
                 ))}
               </>
-            ) : transactions.length === 0 ? (
-              <tr><td colSpan="7" style={{textAlign: 'center', padding: '2rem'}}>Tidak ada riwayat transaksi.</td></tr>
-            ) : (
-              transactions.map((trx, index) => {
+            ) : (() => {
+              const filteredTransactions = transactions.filter(trx => 
+                (trx.id_transaksi || '').toLowerCase().includes(query.toLowerCase()) || 
+                (trx.pemenang || '').toLowerCase().includes(query.toLowerCase()) ||
+                (trx.id_produk || '').toLowerCase().includes(query.toLowerCase())
+              );
+
+              if (filteredTransactions.length === 0) {
+                return <tr><td colSpan="7" style={{textAlign: 'center', padding: '2rem'}}>Tidak ada riwayat transaksi{query ? ' yang cocok dengan pencarian' : ''}.</td></tr>;
+              }
+
+              return filteredTransactions.map((trx, index) => {
                 const statusClass = (trx.status || '').toLowerCase() === 'selesai' ? 'selesai' : 'dikirim';
                 
                 return (
@@ -95,11 +107,19 @@ export default function AdminTransaksiPage() {
                     <td>{trx.tgl_dibuat || (trx.created_at ? new Date(trx.created_at).toISOString().split('T')[0].replace(/-/g, ' - ') : '-')}</td>
                   </tr>
                 );
-              })
-            )}
+              });
+            })()}
           </tbody>
         </table>
       </div>
     </div>
+  );
+}
+
+export default function AdminTransaksiPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AdminTransaksiContent />
+    </Suspense>
   );
 }

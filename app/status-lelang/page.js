@@ -162,136 +162,152 @@ function StatusLelangContent() {
             favorites.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>Belum ada produk favorit tersimpan.</div>
             ) : (
-              favorites.map(favId => (
-                <Link key={favId} href="/jelajahi/detail" className="status-card" style={{ textDecoration: 'none', color: 'inherit', position: 'relative' }}>
-                  <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10 }} onClick={(e) => toggleFavorite(favId, e)}>
-                    <i className="ph-fill ph-heart" style={{ color: 'var(--danger)', fontSize: '1.5rem', cursor: 'pointer' }}></i>
-                  </div>
-                  <img src="/assets/washer.png" alt="Produk Favorit" className="status-img" style={{ objectFit: 'cover' }} />
-                  <div className="status-info">
-                    <h3 className="status-title">Toshiba Front Loading Washing Machine TW-BK115G4FN(SK) 10.5kg (Item #{favId})</h3>
-                    <p className="status-location"><i className="ph ph-map-pin"></i> Tersimpan di Favorit</p>
-                  </div>
-                  <div className="status-bid-info">
-                     <p className="label">Harga Awal</p>
-                     <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 7.000.000</p>
-                  </div>
-                </Link>
-              ))
+              favorites.map(favId => {
+                const title = `Toshiba Front Loading Washing Machine TW-BK115G4FN(SK) 10.5kg (Item #${favId})`;
+                if (searchQuery && !title.toLowerCase().includes(searchQuery.toLowerCase())) return null;
+                return (
+                  <Link key={favId} href="/jelajahi/detail" className="status-card" style={{ textDecoration: 'none', color: 'inherit', position: 'relative' }}>
+                    <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10 }} onClick={(e) => toggleFavorite(favId, e)}>
+                      <i className="ph-fill ph-heart" style={{ color: 'var(--danger)', fontSize: '1.5rem', cursor: 'pointer' }}></i>
+                    </div>
+                    <img src="/assets/washer.png" alt="Produk Favorit" className="status-img" style={{ objectFit: 'cover' }} />
+                    <div className="status-info">
+                      <h3 className="status-title">{title}</h3>
+                      <p className="status-location"><i className="ph ph-map-pin"></i> Tersimpan di Favorit</p>
+                    </div>
+                    <div className="status-bid-info">
+                       <p className="label">Harga Awal</p>
+                       <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 7.000.000</p>
+                    </div>
+                  </Link>
+                );
+              })
             )
           ) : (
             <>
           {/* Item 1: Menunggu */}
-          <Link href="/status-lelang/detail-menunggu" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <img src="/assets/washer.png" alt="Washing Machine" className="status-img" />
-            <div className="status-info">
-              <h3 className="status-title">Toshiba Front Loading Washing Machine TW-BK115G4FN(SK) 10.5kg</h3>
-              <p className="status-location"><i className="ph ph-map-pin"></i> Cabang Ujungberung</p>
-            </div>
-            <div className="status-bid-info">
-              <p className="label">Penawaran Anda</p>
-              <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 7.500.000</p>
-              <p className="date">Hasil: 20 Maret 2024</p>
-            </div>
-            <div className="status-badge-container">
-              <span className="badge-status" style={{ background: '#E0E7FF', color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <i className="ph ph-clock"></i> Menunggu Hasil
-              </span>
-            </div>
-          </Link>
+          {(!searchQuery || 'Toshiba Front Loading Washing Machine TW-BK115G4FN(SK) 10.5kg'.toLowerCase().includes(searchQuery.toLowerCase())) && (
+            <Link href="/status-lelang/detail-menunggu" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <img src="/assets/washer.png" alt="Washing Machine" className="status-img" />
+              <div className="status-info">
+                <h3 className="status-title">Toshiba Front Loading Washing Machine TW-BK115G4FN(SK) 10.5kg</h3>
+                <p className="status-location"><i className="ph ph-map-pin"></i> Cabang Ujungberung</p>
+              </div>
+              <div className="status-bid-info">
+                <p className="label">Penawaran Anda</p>
+                <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 7.500.000</p>
+                <p className="date">Hasil: 20 Maret 2024</p>
+              </div>
+              <div className="status-badge-container">
+                <span className="badge-status" style={{ background: '#E0E7FF', color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <i className="ph ph-clock"></i> Menunggu Hasil
+                </span>
+              </div>
+            </Link>
+          )}
 
           {/* Item 2: Kalah */}
-          <Link href="/status-lelang/detail-kalah" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <img src="/assets/washer.png" alt="Pokemon Card" className="status-img" style={{ objectFit: 'cover' }} />
-            <div className="status-info">
-              <h3 className="status-title">Kartu Pokemon Charizard 1st Gen Holo Rare Mint Condition</h3>
-              <p className="status-location"><i className="ph ph-map-pin"></i> Cabang Gumaya</p>
-            </div>
-            <div className="status-bid-info">
-              <p className="label">Penawaran Anda</p>
-              <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 2.350.000</p>
-              <p className="date">Hasil Lelang: 18 Maret 2026</p>
-            </div>
-            <div className="status-badge-container">
-              <span className="badge-status" style={{ background: '#F3F4F6', color: '#4B5563', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <i className="ph ph-x-circle"></i> Anda Kalah
-              </span>
-            </div>
-          </Link>
+          {(!searchQuery || 'Kartu Pokemon Charizard 1st Gen Holo Rare Mint Condition'.toLowerCase().includes(searchQuery.toLowerCase())) && (
+            <Link href="/status-lelang/detail-kalah" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <img src="/assets/washer.png" alt="Pokemon Card" className="status-img" style={{ objectFit: 'cover' }} />
+              <div className="status-info">
+                <h3 className="status-title">Kartu Pokemon Charizard 1st Gen Holo Rare Mint Condition</h3>
+                <p className="status-location"><i className="ph ph-map-pin"></i> Cabang Gumaya</p>
+              </div>
+              <div className="status-bid-info">
+                <p className="label">Penawaran Anda</p>
+                <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 2.350.000</p>
+                <p className="date">Hasil Lelang: 18 Maret 2026</p>
+              </div>
+              <div className="status-badge-container">
+                <span className="badge-status" style={{ background: '#F3F4F6', color: '#4B5563', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <i className="ph ph-x-circle"></i> Anda Kalah
+                </span>
+              </div>
+            </Link>
+          )}
 
           {/* Item 3: Menang */}
-          <Link href="/status-lelang/detail-menang" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <img src="/assets/washer.png" alt="Kamera Leica" className="status-img" style={{ objectFit: 'cover' }} />
-            <div className="status-info">
-              <h3 className="status-title">Kamera Leica M3 Vintage Body Only</h3>
-              <p className="status-location"><i className="ph ph-map-pin"></i> Menteng, Jakarta Pusat</p>
-            </div>
-            <div className="status-bid-info">
-              <p className="label">Penawaran Anda</p>
-              <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 25.550.000</p>
-              <p className="date">Hasil Lelang: 15 Maret 2026</p>
-            </div>
-            <div className="status-badge-container">
-              <span className="badge-status badge-green" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <i className="ph ph-check-circle"></i> Anda Menang
-              </span>
-            </div>
-          </Link>
+          {(!searchQuery || 'Kamera Leica M3 Vintage Body Only'.toLowerCase().includes(searchQuery.toLowerCase())) && (
+            <Link href="/status-lelang/detail-menang" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <img src="/assets/washer.png" alt="Kamera Leica" className="status-img" style={{ objectFit: 'cover' }} />
+              <div className="status-info">
+                <h3 className="status-title">Kamera Leica M3 Vintage Body Only</h3>
+                <p className="status-location"><i className="ph ph-map-pin"></i> Menteng, Jakarta Pusat</p>
+              </div>
+              <div className="status-bid-info">
+                <p className="label">Penawaran Anda</p>
+                <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 25.550.000</p>
+                <p className="date">Hasil Lelang: 15 Maret 2026</p>
+              </div>
+              <div className="status-badge-container">
+                <span className="badge-status badge-green" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <i className="ph ph-check-circle"></i> Anda Menang
+                </span>
+              </div>
+            </Link>
+          )}
             </>
           )}
         </div>
       ) : (
         <div className="status-list smooth-fade" key="penjual" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Item 1: Berlangsung */}
-          <Link href="/jelajahi/detail" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <img src="/assets/washer.png" alt="Washing Machine" className="status-img" />
-            <div className="status-info">
-              <h3 className="status-title">Toshiba Front Loading Washing Machine TW-BK115G4FN(SK) 10.5kg</h3>
-              <p className="status-location"><i className="ph ph-map-pin"></i> Sukajadi, Bandung</p>
-            </div>
-            <div className="status-bid-info">
-              <p className="label">Penawaran Anda</p>
-              <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 7.500.000</p>
-              <p className="date">Hasil Lelang : 30 Maret 2026</p>
-            </div>
-            <div className="status-badge-container">
-              <span className="badge-info">Sedang Berlangsung</span>
-            </div>
-          </Link>
+          {(!searchQuery || 'Toshiba Front Loading Washing Machine TW-BK115G4FN(SK) 10.5kg'.toLowerCase().includes(searchQuery.toLowerCase())) && (
+            <Link href="/jelajahi/detail" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <img src="/assets/washer.png" alt="Washing Machine" className="status-img" />
+              <div className="status-info">
+                <h3 className="status-title">Toshiba Front Loading Washing Machine TW-BK115G4FN(SK) 10.5kg</h3>
+                <p className="status-location"><i className="ph ph-map-pin"></i> Sukajadi, Bandung</p>
+              </div>
+              <div className="status-bid-info">
+                <p className="label">Penawaran Anda</p>
+                <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 7.500.000</p>
+                <p className="date">Hasil Lelang : 30 Maret 2026</p>
+              </div>
+              <div className="status-badge-container">
+                <span className="badge-info">Sedang Berlangsung</span>
+              </div>
+            </Link>
+          )}
 
           {/* Item 2: Berlangsung */}
-          <Link href="/jelajahi/detail" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <img src="/assets/washer.png" alt="Pokemon Card" className="status-img" style={{ objectFit: 'cover' }} />
-            <div className="status-info">
-              <h3 className="status-title">Kartu Pokemon Charizard 1st Gen Holo</h3>
-              <p className="status-location"><i className="ph ph-map-pin"></i> Gubeng, Surabaya</p>
-            </div>
-            <div className="status-bid-info">
-              <p className="label">Penawaran Anda</p>
-              <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 2.350.000</p>
-              <p className="date">Hasil Lelang : 10 Maret 2026</p>
-            </div>
-            <div className="status-badge-container">
-              <span className="badge-info">Sedang Berlangsung</span>
-            </div>
-          </Link>
+          {(!searchQuery || 'Kartu Pokemon Charizard 1st Gen Holo'.toLowerCase().includes(searchQuery.toLowerCase())) && (
+            <Link href="/jelajahi/detail" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <img src="/assets/washer.png" alt="Pokemon Card" className="status-img" style={{ objectFit: 'cover' }} />
+              <div className="status-info">
+                <h3 className="status-title">Kartu Pokemon Charizard 1st Gen Holo</h3>
+                <p className="status-location"><i className="ph ph-map-pin"></i> Gubeng, Surabaya</p>
+              </div>
+              <div className="status-bid-info">
+                <p className="label">Penawaran Anda</p>
+                <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 2.350.000</p>
+                <p className="date">Hasil Lelang : 10 Maret 2026</p>
+              </div>
+              <div className="status-badge-container">
+                <span className="badge-info">Sedang Berlangsung</span>
+              </div>
+            </Link>
+          )}
 
           {/* Item 3: Selesai */}
-          <Link href="/status-lelang/detail-selesai" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <img src="/assets/washer.png" alt="Kamera Leica" className="status-img" style={{ objectFit: 'cover' }} />
-            <div className="status-info">
-              <h3 className="status-title">Kamera Leica M3 Vintage Body Only</h3>
-              <p className="status-location"><i className="ph ph-map-pin"></i> Menteng, Jakarta Pusat</p>
-            </div>
-            <div className="status-bid-info">
-              <p className="label">Penawaran Anda</p>
-              <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 25.550.000</p>
-              <p className="date">Hasil Lelang : 15 Maret 2026</p>
-            </div>
-            <div className="status-badge-container">
-              <span className="badge-status badge-green">Selesai</span>
-            </div>
-          </Link>
+          {(!searchQuery || 'Kamera Leica M3 Vintage Body Only'.toLowerCase().includes(searchQuery.toLowerCase())) && (
+            <Link href="/status-lelang/detail-selesai" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <img src="/assets/washer.png" alt="Kamera Leica" className="status-img" style={{ objectFit: 'cover' }} />
+              <div className="status-info">
+                <h3 className="status-title">Kamera Leica M3 Vintage Body Only</h3>
+                <p className="status-location"><i className="ph ph-map-pin"></i> Menteng, Jakarta Pusat</p>
+              </div>
+              <div className="status-bid-info">
+                <p className="label">Penawaran Anda</p>
+                <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 25.550.000</p>
+                <p className="date">Hasil Lelang : 15 Maret 2026</p>
+              </div>
+              <div className="status-badge-container">
+                <span className="badge-status badge-green">Selesai</span>
+              </div>
+            </Link>
+          )}
         </div>
       )}
       </div>
