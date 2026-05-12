@@ -17,6 +17,16 @@
   box-sizing: border-box;
 }
 
+/* Hide number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
 body {
   font-family: 'Outfit', sans-serif;
   color: var(--text-main);
@@ -233,11 +243,12 @@ body {
 .category-card {
   background-color: #F4F7FF;
   border-radius: 16px;
-  padding: 4rem 2rem;
+  padding: 3rem 2rem 2rem;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  margin-bottom: 1.5rem;
+  gap: 1rem;
   transition: transform 0.2s;
   cursor: pointer;
 }
@@ -1654,7 +1665,7 @@ body {
   border-radius: 8px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
   border-top: 4px solid var(--primary);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .akun-header-banner {
@@ -2777,8 +2788,8 @@ body:has(.admin-layout-wrapper) {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 2.5px solid rgba(255, 255, 255, 0.5);
-  color: white;
+  border: 2.5px solid #1F2937;
+  color: var(--text-main);
   text-decoration: none;
   margin-right: 1rem;
   font-size: 1.25rem;
@@ -2796,10 +2807,9 @@ body:has(.admin-layout-wrapper) {
 }
 
 .admin-subtitle {
-  color: #1D4ED8;
+  color: #6B7280;
   font-size: 0.85rem;
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  text-decoration: none;
   display: block;
   margin-top: 0.5rem;
 }

@@ -35,20 +35,20 @@ export default function HomePage() {
           <Link href="/jelajahi?kategori=Seni" className="category-wrap" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="category-card">
               <i className="ph ph-palette category-icon"></i>
+              <div className="category-name">Seni</div>
             </div>
-            <div className="category-name">Seni</div>
           </Link>
           <Link href="/jelajahi?kategori=Elektronik" className="category-wrap" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="category-card">
               <i className="ph ph-television category-icon"></i>
+              <div className="category-name">Elektronik</div>
             </div>
-            <div className="category-name">Elektronik</div>
           </Link>
           <Link href="/jelajahi?kategori=Hobi" className="category-wrap" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="category-card">
               <i className="ph ph-game-controller category-icon"></i>
+              <div className="category-name">Hobi</div>
             </div>
-            <div className="category-name">Hobi</div>
           </Link>
         </div>
       </section>

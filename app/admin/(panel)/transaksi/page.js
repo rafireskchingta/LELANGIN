@@ -62,7 +62,18 @@ export default function AdminTransaksiPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="7" style={{textAlign: 'center', padding: '2rem'}}>Memuat data transaksi...</td></tr>
+              <>
+                <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}>
+                    {Array.from({ length: 7 }).map((_, j) => (
+                      <td key={j}>
+                        <div style={{ height: '20px', borderRadius: '4px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </>
             ) : transactions.length === 0 ? (
               <tr><td colSpan="7" style={{textAlign: 'center', padding: '2rem'}}>Tidak ada riwayat transaksi.</td></tr>
             ) : (

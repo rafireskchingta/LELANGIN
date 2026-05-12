@@ -139,7 +139,14 @@ export default function AdminDetailVerifikasiPage({ params }) {
     }
   };
 
-  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Memuat data detail penjual...</div>;
+  if (loading) return (
+    <div style={{ backgroundColor: '#FAFAFA', borderRadius: '8px', minHeight: '400px', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', justifyContent: 'center', margin: '2rem' }}>
+      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+      <div style={{ width: '180px', height: '14px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+      <div style={{ width: '260px', height: '12px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+      <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
+    </div>
+  );
 
   const currentStatus = appData?.status || 'menunggu';
 
@@ -184,7 +191,7 @@ export default function AdminDetailVerifikasiPage({ params }) {
           width: '36px',
           height: '36px',
           borderRadius: '50%',
-          border: '1.5px solid rgba(255,255,255,0.4)',
+          border: '2.5px solid rgba(255,255,255,0.8)',
           color: 'white',
           textDecoration: 'none',
           fontSize: '1.1rem',
@@ -291,7 +298,7 @@ export default function AdminDetailVerifikasiPage({ params }) {
             <div className="info-value">{profileData?.full_name || '-'}</div>
           </div>
           <div className="info-group">
-            <label>USERNAME</label>
+            <label>NAMA AKUN</label>
             <div className="info-value">{profileData?.username || '-'}</div>
           </div>
           <div className="info-group">

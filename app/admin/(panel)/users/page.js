@@ -41,6 +41,11 @@ export default function AdminUsersPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editFormData, setEditFormData] = useState(null);
 
+  // Delete Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -63,19 +68,29 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Anda yakin ingin menghapus pengguna ini?')) return;
+  const openDeleteModal = (user) => {
+    setDeleteTarget(user);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
       const { error } = await supabase
         .from('profiles')
         .update({ deleted_at: new Date().toISOString() })
-        .eq('id', id);
+        .eq('id', deleteTarget.id);
 
       if (error) throw error;
-      setUsers(users.filter(u => u.id !== id));
+      setUsers(users.filter(u => u.id !== deleteTarget.id));
       showToast('Pengguna berhasil dihapus.');
+      setIsDeleteModalOpen(false);
+      setDeleteTarget(null);
     } catch (error) {
       showToast('Gagal menghapus pengguna: ' + error.message, 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -204,13 +219,13 @@ export default function AdminUsersPage() {
         document.body
       )}
       <div className="admin-page-header">
-        <h1 className="admin-page-title" style={{ marginBottom: 0 }}>Manajemen User</h1>
+        <h1 className="admin-page-title" style={{ marginBottom: 0 }}>Manajemen Pengguna</h1>
         <div className="admin-page-actions">
           <Link href="/admin/users/terhapus" className="btn-admin-outline">
             <i className="ph ph-archive-box"></i> Akun Terhapus
           </Link>
           <button onClick={() => setIsAddModalOpen(true)} className="btn-admin-primary">
-            <i className="ph ph-plus"></i> Tambah User
+            <i className="ph ph-plus"></i> Tambah Pengguna
           </button>
         </div>
       </div>
@@ -221,17 +236,28 @@ export default function AdminUsersPage() {
             <tr>
               <th>ID</th>
               <th>NAMA LENGKAP</th>
-              <th>USERNAME</th>
-              <th>ROLE</th>
+              <th>NAMA AKUN</th>
+              <th>PERAN</th>
               <th>EMAIL</th>
-              <th>GENDER</th>
-              <th>PHONE</th>
+              <th>JENIS KELAMIN</th>
+              <th>NO TELP</th>
               <th>AKSI</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="8" style={{textAlign: 'center'}}>Memuat data...</td></tr>
+              <>
+                <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}>
+                    {Array.from({ length: 8 }).map((_, j) => (
+                      <td key={j}>
+                        <div style={{ height: '20px', borderRadius: '4px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </>
             ) : users.length === 0 ? (
               <tr><td colSpan="8" style={{textAlign: 'center'}}>Tidak ada data pengguna.</td></tr>
             ) : (
@@ -251,7 +277,7 @@ export default function AdminUsersPage() {
                   <td>
                     <div className="admin-action-btns">
                       <button className="admin-action-btn" onClick={() => openEditModal(user)}><i className="ph ph-pencil-simple"></i></button>
-                      <button className="admin-action-btn" onClick={() => handleDelete(user.id)}><i className="ph ph-trash"></i></button>
+                      <button className="admin-action-btn" onClick={() => openDeleteModal(user)}><i className="ph ph-trash"></i></button>
                     </div>
                   </td>
                 </tr>
@@ -475,6 +501,29 @@ export default function AdminUsersPage() {
                   </div>
                 </form>
               )}
+            </div>
+          </div>
+
+          {/* Delete Confirmation Modal */}
+          <div className={`admin-modal-overlay ${isDeleteModalOpen ? 'active' : ''}`} onClick={(e) => { if (e.target.classList.contains('admin-modal-overlay')) { setIsDeleteModalOpen(false); setDeleteTarget(null); } }}>
+            <div className="admin-modal" style={{ maxWidth: '480px' }}>
+              <button className="admin-modal-close" onClick={() => { setIsDeleteModalOpen(false); setDeleteTarget(null); }}>
+                <i className="ph ph-x"></i>
+              </button>
+
+              <div className="admin-modal-header" style={{ marginBottom: '1.5rem' }}>
+                <h2 style={{ color: '#EF4444', fontSize: '1.6rem' }}>Ingin Menghapus Pengguna?</h2>
+                <p style={{ marginTop: '0.5rem', color: '#4B5563', fontWeight: 500, fontSize: '0.95rem', lineHeight: '1.5' }}>
+                  Akun <strong>{deleteTarget?.full_name || deleteTarget?.username || 'pengguna'}</strong> akan dipindahkan ke daftar Akun Terhapus dan dapat dikembalikan sewaktu-waktu.
+                </p>
+              </div>
+
+              <div className="modal-reject-actions" style={{ marginTop: '0.5rem' }}>
+                <button className="btn-reject-cancel" onClick={() => { setIsDeleteModalOpen(false); setDeleteTarget(null); }}>Kembali</button>
+                <button className="btn-reject-confirm" onClick={handleDelete} disabled={deleting}>
+                  {deleting ? 'Menghapus...' : 'Hapus Pengguna'}
+                </button>
+              </div>
             </div>
           </div>
         </>,

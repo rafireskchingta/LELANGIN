@@ -15,6 +15,7 @@ export default function AkunPenjualPage() {
   const [userId, setUserId] = useState(null);
   const [toast, setToast] = useState(null);
   const [hasHistory, setHasHistory] = useState(false);
+  const [showVerifPopup, setShowVerifPopup] = useState(false);
 
   // State KTP
   const [ktpFile, setKtpFile] = useState(null);
@@ -99,9 +100,11 @@ export default function AkunPenjualPage() {
         setPenjual(penjualObj);
         setOriginalPenjual(penjualObj);
 
-        // Jika belum ada status atau ditolak, buka edit mode otomatis agar bisa isi data
         if (!sellerApp?.status || sellerApp?.status === 'ditolak') {
           setIsEditMode(true);
+        }
+        if (sellerApp?.status === 'menunggu') {
+          setShowVerifPopup(true);
         }
 
         // Load KTP jika sudah ada
@@ -323,8 +326,7 @@ export default function AkunPenjualPage() {
   };
 
   return (
-    <>
-      {/* Toast notifikasi */}
+    <div style={{ position: 'relative', minHeight: '100%' }}>      {/* Toast notifikasi */}
       {toast && (
         <div style={{
           position: 'fixed', top: '1.5rem', right: '1.5rem', zIndex: 9999,
@@ -340,13 +342,41 @@ export default function AkunPenjualPage() {
         </div>
       )}
 
-      {/* Banner status pendaftaran */}
-      {sellerStatus === 'menunggu' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: '8px', padding: '0.75rem 1.1rem', marginBottom: '1.5rem', fontSize: '0.875rem', color: '#92400E', fontWeight: 500 }}>
-          <i className="ph ph-clock" style={{ fontSize: '1.1rem' }}></i>
-          Pendaftaran penjual sedang <strong>menunggu persetujuan admin</strong>
+      {/* Popup Verifikasi - floating card tanpa blur */}
+      {sellerStatus === 'menunggu' && showVerifPopup && (
+        <div style={{
+          position: 'absolute', top: '2.5rem', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 50, background: 'white', borderRadius: '14px', padding: '1.75rem 2rem',
+          maxWidth: '400px', width: '85%',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+          animation: 'fadeInScale 0.3s ease'
+        }}>
+          <button
+            onClick={() => setShowVerifPopup(false)}
+            style={{
+              position: 'absolute', top: '0.75rem', right: '1rem',
+              background: 'none', border: 'none', fontSize: '1.1rem',
+              color: '#6B7280', cursor: 'pointer', fontFamily: 'inherit',
+              lineHeight: 1
+            }}
+          >✕</button>
+          <h3 style={{ color: '#D97706', fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.6rem' }}>
+            Menunggu Verifikasi Admin!
+          </h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.6, margin: 0 }}>
+            Data profil penjual Anda sedang ditinjau. Anda akan mendapatkan akses penuh untuk menitipkan barang setelah pengajuan disetujui.
+          </p>
         </div>
       )}
+      <style>{`
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.92); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+
+      {/* Content wrapper - blurs when popup is showing */}
+      <div style={{ filter: sellerStatus === 'menunggu' && showVerifPopup ? 'blur(4px)' : 'none', transition: 'filter 0.3s ease', pointerEvents: sellerStatus === 'menunggu' && showVerifPopup ? 'none' : 'auto' }}>
       {sellerStatus === 'disetujui' && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: '8px', padding: '0.75rem 1.1rem', marginBottom: '1.5rem', fontSize: '0.875rem', color: '#065F46', fontWeight: 500 }}>
           <i className="ph ph-check-circle" style={{ fontSize: '1.1rem' }}></i>
@@ -602,10 +632,7 @@ export default function AkunPenjualPage() {
         {/* Action Buttons: Edit / Batal + Simpan */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', marginTop: '3rem' }}>
           {sellerStatus === 'menunggu' ? (
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '1rem', backgroundColor: '#FEF3C7', borderRadius: '8px', fontSize: '0.875rem', color: '#92400E', fontWeight: 500, gap: '0.5rem', alignItems: 'center' }}>
-              <i className="ph ph-hourglass-medium" style={{ fontSize: '1.1rem' }}></i>
-              Menunggu persetujuan admin. Semua data dikunci.
-            </div>
+            null
           ) : isEditMode ? (
             <>
               <button type="button" onClick={handleBatal}
@@ -626,6 +653,7 @@ export default function AkunPenjualPage() {
           )}
         </div>
       </form>
-    </>
+      </div>
+    </div>
   );
 }

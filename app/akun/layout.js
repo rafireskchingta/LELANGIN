@@ -8,7 +8,7 @@ import { supabase } from '../../src/lib/supabase';
 export default function AkunLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState({ username: '', nama: '', avatar: 'U' });
+  const [user, setUser] = useState({ username: '', nama: '', avatar: 'U', role: 'pembeli' });
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -43,14 +43,15 @@ export default function AkunLayout({ children }) {
 
         const { data: profile } = await supabase
           .from('profiles')
-          .select('username, full_name')
+          .select('username, full_name, role')
           .eq('id', session.user.id)
           .single();
 
         setUser({
           username: profile?.username || '',
           nama: profile?.full_name || session.user.email.split('@')[0],
-          avatar: (profile?.full_name || session.user.email).charAt(0).toUpperCase()
+          avatar: (profile?.full_name || session.user.email).charAt(0).toUpperCase(),
+          role: profile?.role || 'pembeli'
         });
         setLoaded(true);
       } catch (err) {
@@ -100,7 +101,9 @@ export default function AkunLayout({ children }) {
               <div className="sidebar-pic">{user.avatar}</div>
               <div className="sidebar-user">
                 <h3>{user.username || user.nama}</h3>
-                <Link href="/akun">Ubah Profil</Link>
+                <span style={{ fontSize: '0.75rem', color: user.role === 'penjual' ? '#059669' : 'var(--primary)', fontWeight: 600 }}>
+                  {user.role === 'penjual' ? 'Penjual' : 'Pembeli'}
+                </span>
               </div>
             </div>
             <ul className="sidebar-nav">

@@ -13,6 +13,12 @@ export default function TambahProdukPage() {
   const [dokumen, setDokumen] = useState("");
   const [kemasan, setKemasan] = useState("");
   const [aksesoris, setAksesoris] = useState("");
+  const [hargaAwal, setHargaAwal] = useState("");
+
+  const formatRibuan = (val) => {
+    const num = val.replace(/\D/g, '');
+    return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
 
   const kondisiFisikOptions = [
     { value: 'Sangat Baik', label: 'Sangat Baik' },
@@ -90,23 +96,23 @@ export default function TambahProdukPage() {
         </div></div>
 
         <h3 className="sub-title">Detail Lelang</h3>
-        <div className="form-horizontal-group"><label>Harga Awal <span className="required">*</span></label><div className="input-wrapper"><input type="number" required /></div></div>
+        <div className="form-horizontal-group"><label>Harga Awal <span className="required">*</span></label><div className="input-wrapper"><input type="text" inputMode="numeric" value={hargaAwal} onChange={(e) => setHargaAwal(formatRibuan(e.target.value))} placeholder="0" required /></div></div>
         <div className="form-horizontal-group" style={{ alignItems: 'center', flexWrap: 'nowrap' }}>
-          <label style={{ whiteSpace: 'nowrap', minWidth: '150px' }}>Tanggal Mulai <span className="required">*</span></label>
+          <label style={{ whiteSpace: 'nowrap', width: '140px', minWidth: '140px' }}>Tanggal Mulai <span className="required">*</span></label>
           <div className="input-wrapper" style={{ flex: 1, position: 'relative' }}>
             <CustomDatePicker placeholder="" />
           </div>
-          <label style={{ whiteSpace: 'nowrap', marginLeft: '2rem', minWidth: '120px' }}>Tanggal Selesai</label>
+          <label style={{ whiteSpace: 'nowrap', marginLeft: '1.5rem', width: '140px', minWidth: '140px' }}>Tanggal Selesai</label>
           <div className="input-wrapper" style={{ flex: 1, position: 'relative' }}>
             <CustomDatePicker placeholder="" alignRight={true} />
           </div>
         </div>
-        <div className="form-horizontal-group" style={{ alignItems: 'center', flexWrap: 'nowrap', marginTop: '1.5rem' }}>
-          <label style={{ whiteSpace: 'nowrap', minWidth: '150px' }}>Waktu Mulai <span className="required">*</span></label>
+        <div className="form-horizontal-group" style={{ alignItems: 'center', flexWrap: 'nowrap' }}>
+          <label style={{ whiteSpace: 'nowrap', width: '140px', minWidth: '140px' }}>Waktu Mulai <span className="required">*</span></label>
           <div className="input-wrapper" style={{ flex: 1, position: 'relative' }}>
             <CustomTimePicker placeholder="" />
           </div>
-          <label style={{ whiteSpace: 'nowrap', marginLeft: '2rem', minWidth: '120px' }}>waktu Selesai</label>
+          <label style={{ whiteSpace: 'nowrap', marginLeft: '1.5rem', width: '140px', minWidth: '140px' }}>Waktu Selesai</label>
           <div className="input-wrapper" style={{ flex: 1, position: 'relative' }}>
             <CustomTimePicker placeholder="" alignRight={true} />
           </div>

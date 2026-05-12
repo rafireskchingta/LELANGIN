@@ -121,7 +121,7 @@ export default function CustomTimePicker({ value, onChange, placeholder = "-- : 
                   width: '64px', 
                   height: '64px', 
                   textAlign: 'center',
-                  fontSize: '2rem',
+                  fontSize: '1.5rem',
                   fontWeight: 800,
                   color: '#374151',
                   outline: 'none'
@@ -158,7 +158,7 @@ export default function CustomTimePicker({ value, onChange, placeholder = "-- : 
                   width: '64px', 
                   height: '64px', 
                   textAlign: 'center',
-                  fontSize: '2rem',
+                  fontSize: '1.5rem',
                   fontWeight: 800,
                   color: '#374151',
                   outline: 'none'

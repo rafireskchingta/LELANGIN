@@ -1,9 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function DetailPage() {
   const router = useRouter();
+  const [bidValue, setBidValue] = useState('');
+
+  const formatRibuan = (val) => {
+    const num = val.replace(/\D/g, '');
+    return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
 
   return (
     <main className="page-container detail-page">
@@ -88,7 +95,7 @@ export default function DetailPage() {
             <form className="penawaran-form" id="formPenawaran">
               <div className="input-bid-group">
                 <span className="rp-label">Rp</span>
-                <input type="number" placeholder="Masukkan Nominal Penawaran Anda" required />
+                <input type="text" inputMode="numeric" value={bidValue} onChange={(e) => setBidValue(formatRibuan(e.target.value))} placeholder="Masukkan Nominal Penawaran Anda" required />
                 <button type="submit" className="btn-primary">Tawar</button>
               </div>
             </form>

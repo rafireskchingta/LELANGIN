@@ -11,6 +11,7 @@ function StatusLelangContent() {
   const [activeRole, setActiveRole] = useState(initRole);
   const [activeSubTab, setActiveSubTab] = useState('All');
   const [favorites, setFavorites] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const tabsRef = useRef(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
 
@@ -36,9 +37,11 @@ function StatusLelangContent() {
     window.dispatchEvent(new Event('favorites-updated'));
   };
 
+  // Animated indicator for category tabs
   useEffect(() => {
     const updateIndicator = () => {
-      const activeEl = tabsRef.current?.querySelector('.cara-tab.active');
+      if (!tabsRef.current) return;
+      const activeEl = tabsRef.current.querySelector('[data-active="true"]');
       if (activeEl) {
         setIndicatorStyle({
           left: activeEl.offsetLeft,
@@ -54,64 +57,107 @@ function StatusLelangContent() {
       clearTimeout(timer);
       window.removeEventListener('resize', updateIndicator);
     };
-  }, [activeRole]);
+  }, [activeSubTab, activeRole]);
+
+  const pembeliTabs = ['All', 'Favorit', 'Menang Lelang', 'Kalah Lelang', 'Dikirim', 'Selesai', 'Dibatalkan'];
+  const penjualTabs = ['All', 'Sedang Berlangsung', 'Selesai', 'Dibatalkan'];
+  const currentTabs = activeRole === 'pembeli' ? pembeliTabs : penjualTabs;
 
   return (
-    <main className="page-container" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+    <main className="page-container" style={{ maxWidth: 'none', padding: '0 5%', margin: '0 auto', minHeight: '80vh' }}>
 
-      <div className="status-banner" style={{ backgroundColor: 'var(--primary)', color: 'white', padding: '1.25rem 2rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1rem', marginBottom: '2rem' }}>
-        <i className="ph ph-clock" style={{ fontSize: '2rem' }}></i>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Status Penawaran Lelang</h2>
+      {/* Banner */}
+      <div style={{
+        background: 'linear-gradient(135deg, var(--primary) 0%, #7B83F5 50%, #A5AAFF 100%)',
+        color: 'white', padding: '1.5rem 2rem', borderRadius: '14px',
+        display: 'flex', alignItems: 'center', gap: '1rem',
+        marginTop: '1rem', marginBottom: '2rem',
+        boxShadow: '0 8px 24px rgba(90, 98, 243, 0.25)'
+      }}>
+        <i className="ph ph-clock" style={{ fontSize: '2.25rem', opacity: 0.9 }}></i>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>Status Penawaran Lelang</h2>
       </div>
 
-      {/* Tabs Role - Conditional Rendering */}
-      <div className="cara-tabs" ref={tabsRef} style={{ marginBottom: '2rem', position: 'relative' }}>
-        <div
-          className={`cara-tab ${activeRole === 'pembeli' ? 'active' : ''}`}
-          style={{ flex: 1, textAlign: 'center', cursor: 'pointer' }}
-          onClick={() => setActiveRole('pembeli')}
-        >Pembeli</div>
-        <div
-          className={`cara-tab ${activeRole === 'penjual' ? 'active' : ''}`}
-          style={{ flex: 1, textAlign: 'center', cursor: 'pointer' }}
-          onClick={() => setActiveRole('penjual')}
-        >Penjual</div>
-        
-        {/* Animated Slide Indicator */}
-        <div className="cara-indicator" style={indicatorStyle}></div>
+      {/* Role Toggle + Search */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+        {/* Pembeli / Penjual Toggle */}
+        <div style={{ display: 'inline-flex', border: '1.5px solid #D1D5DB', borderRadius: '999px', overflow: 'hidden' }}>
+          <button
+            onClick={() => { setActiveRole('pembeli'); setActiveSubTab('All'); }}
+            style={{
+              padding: '0.5rem 1.5rem', fontSize: '0.9rem', fontWeight: 600,
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              borderRadius: '999px',
+              background: activeRole === 'pembeli' ? 'var(--primary)' : 'transparent',
+              color: activeRole === 'pembeli' ? 'white' : 'var(--text-main)',
+              transition: 'all 0.25s ease'
+            }}
+          >Pembeli</button>
+          <button
+            onClick={() => { setActiveRole('penjual'); setActiveSubTab('All'); }}
+            style={{
+              padding: '0.5rem 1.5rem', fontSize: '0.9rem', fontWeight: 600,
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              borderRadius: '999px',
+              background: activeRole === 'penjual' ? 'var(--primary)' : 'transparent',
+              color: activeRole === 'penjual' ? 'white' : 'var(--text-main)',
+              transition: 'all 0.25s ease'
+            }}
+          >Penjual</button>
+        </div>
+
+        {/* Search Bar */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '0.5rem',
+          border: '1px solid #D1D5DB', borderRadius: '8px',
+          padding: '0.5rem 1rem', minWidth: '260px', flex: '0 1 320px',
+          background: 'white'
+        }}>
+          <i className="ph ph-magnifying-glass" style={{ color: '#9CA3AF', fontSize: '1.1rem' }}></i>
+          <input
+            type="text"
+            placeholder="Cari produk kamu disini..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ border: 'none', outline: 'none', width: '100%', fontFamily: 'inherit', fontSize: '0.9rem', color: 'var(--text-main)', background: 'transparent' }}
+          />
+        </div>
       </div>
 
-      {/* Sub Tabs (Pills) */}
-      <div className="status-pills" style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
-        {activeRole === 'pembeli' ? (
-          <>
-            <button className={`status-pill ${activeSubTab === 'All' ? 'active' : ''}`} onClick={() => setActiveSubTab('All')}>All</button>
-            <button className={`status-pill ${activeSubTab === 'Favorit' ? 'active' : ''}`} onClick={() => setActiveSubTab('Favorit')}>Favorit</button>
-            <button className={`status-pill ${activeSubTab === 'Menang Lelang' ? 'active' : ''}`} onClick={() => setActiveSubTab('Menang Lelang')}>Menang Lelang</button>
-            <button className="status-pill">Kalah Lelang</button>
-            <button className="status-pill">Dikirim</button>
-            <button className="status-pill">Selesai</button>
-            <button className="status-pill">Dibatalkan</button>
-          </>
-        ) : (
-          <>
-            <button className="status-pill active">All</button>
-            <button className="status-pill">Sedang Berlangsung</button>
-            <button className="status-pill">Selesai</button>
-            <button className="status-pill">Dibatalkan</button>
-          </>
-        )}
+      {/* Category Tabs - Full Width with Animated Indicator */}
+      <div ref={tabsRef} style={{
+        display: 'flex', borderBottom: '2px solid #E5E7EB',
+        position: 'relative', marginBottom: '2rem'
+      }}>
+        {currentTabs.map(tab => (
+          <button
+            key={tab}
+            data-active={activeSubTab === tab ? 'true' : 'false'}
+            onClick={() => setActiveSubTab(tab)}
+            style={{
+              flex: 1, padding: '0.75rem 0.5rem',
+              background: 'none', border: 'none',
+              color: activeSubTab === tab ? 'var(--primary)' : 'var(--text-muted)',
+              fontWeight: activeSubTab === tab ? 600 : 500,
+              fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'inherit',
+              whiteSpace: 'nowrap', transition: 'color 0.3s ease'
+            }}
+          >{tab}</button>
+        ))}
+        {/* Sliding Indicator */}
+        <div style={{
+          position: 'absolute', bottom: '-2px', height: '2.5px',
+          backgroundColor: 'var(--primary)', borderRadius: '2px',
+          transition: 'left 0.35s cubic-bezier(0.4, 0, 0.2, 1), width 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s',
+          left: indicatorStyle.left, width: indicatorStyle.width, opacity: indicatorStyle.opacity,
+          pointerEvents: 'none'
+        }}></div>
       </div>
 
-      {/* Search Box */}
-      <div className="search-box-j" style={{ marginBottom: '2rem', borderRadius: '8px' }}>
-        <i className="ph ph-magnifying-glass" style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}></i>
-        <input type="text" placeholder="Cari produk kamu disini" style={{ border: 'none', outline: 'none', width: '100%', padding: '0.5rem', fontFamily: 'inherit', fontSize: '0.95rem' }} />
-      </div>
-
-      {/* Conditional Rendering: Pembeli vs Penjual */}
+      {/* Product List */}
+      <div style={{ minHeight: '400px' }}>
       {activeRole === 'pembeli' ? (
-        <div className="status-list smooth-fade" key={`pembeli-${activeSubTab}`} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="status-list smooth-fade" key={`pembeli-${activeSubTab}`} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {activeSubTab === 'Favorit' ? (
             favorites.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>Belum ada produk favorit tersimpan.</div>
@@ -144,11 +190,13 @@ function StatusLelangContent() {
             </div>
             <div className="status-bid-info">
               <p className="label">Penawaran Anda</p>
-              <p className="value price-green">Rp 7.500.000</p>
-              <p className="date">Hasil Lelang: 20 Maret 2026</p>
+              <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 7.500.000</p>
+              <p className="date">Hasil: 20 Maret 2024</p>
             </div>
             <div className="status-badge-container">
-              <span className="badge-status badge-gray">Menunggu Hasil</span>
+              <span className="badge-status" style={{ background: '#E0E7FF', color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <i className="ph ph-clock"></i> Menunggu Hasil
+              </span>
             </div>
           </Link>
 
@@ -156,16 +204,18 @@ function StatusLelangContent() {
           <Link href="/status-lelang/detail-kalah" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
             <img src="/assets/washer.png" alt="Pokemon Card" className="status-img" style={{ objectFit: 'cover' }} />
             <div className="status-info">
-              <h3 className="status-title">Kartu Pokemon Charizard 1st Gen Holo</h3>
+              <h3 className="status-title">Kartu Pokemon Charizard 1st Gen Holo Rare Mint Condition</h3>
               <p className="status-location"><i className="ph ph-map-pin"></i> Cabang Gumaya</p>
             </div>
             <div className="status-bid-info">
               <p className="label">Penawaran Anda</p>
-              <p className="value price-red">Rp 2.350.000</p>
+              <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 2.350.000</p>
               <p className="date">Hasil Lelang: 18 Maret 2026</p>
             </div>
             <div className="status-badge-container">
-              <span className="badge-status badge-red">Anda Kalah</span>
+              <span className="badge-status" style={{ background: '#F3F4F6', color: '#4B5563', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <i className="ph ph-x-circle"></i> Anda Kalah
+              </span>
             </div>
           </Link>
 
@@ -178,18 +228,20 @@ function StatusLelangContent() {
             </div>
             <div className="status-bid-info">
               <p className="label">Penawaran Anda</p>
-              <p className="value price-green">Rp 25.550.000</p>
+              <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 25.550.000</p>
               <p className="date">Hasil Lelang: 15 Maret 2026</p>
             </div>
             <div className="status-badge-container">
-              <span className="badge-status badge-green">Anda Menang</span>
+              <span className="badge-status badge-green" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <i className="ph ph-check-circle"></i> Anda Menang
+              </span>
             </div>
           </Link>
             </>
           )}
         </div>
       ) : (
-        <div className="status-list smooth-fade" key="penjual" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="status-list smooth-fade" key="penjual" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {/* Item 1: Berlangsung */}
           <Link href="/jelajahi/detail" className="status-card" style={{ textDecoration: 'none', color: 'inherit' }}>
             <img src="/assets/washer.png" alt="Washing Machine" className="status-img" />
@@ -199,7 +251,7 @@ function StatusLelangContent() {
             </div>
             <div className="status-bid-info">
               <p className="label">Penawaran Anda</p>
-              <p className="value text-green" style={{ fontWeight: 700, fontSize: '1.25rem' }}>Rp 7.500.000</p>
+              <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 7.500.000</p>
               <p className="date">Hasil Lelang : 30 Maret 2026</p>
             </div>
             <div className="status-badge-container">
@@ -216,7 +268,7 @@ function StatusLelangContent() {
             </div>
             <div className="status-bid-info">
               <p className="label">Penawaran Anda</p>
-              <p className="value text-green" style={{ fontWeight: 700, fontSize: '1.25rem' }}>Rp 2.350.000</p>
+              <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 2.350.000</p>
               <p className="date">Hasil Lelang : 10 Maret 2026</p>
             </div>
             <div className="status-badge-container">
@@ -233,7 +285,7 @@ function StatusLelangContent() {
             </div>
             <div className="status-bid-info">
               <p className="label">Penawaran Anda</p>
-              <p className="value text-green" style={{ fontWeight: 700, fontSize: '1.25rem' }}>Rp 25.550.000</p>
+              <p className="value" style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-main)' }}>Rp 25.550.000</p>
               <p className="date">Hasil Lelang : 15 Maret 2026</p>
             </div>
             <div className="status-badge-container">
@@ -242,6 +294,7 @@ function StatusLelangContent() {
           </Link>
         </div>
       )}
+      </div>
     </main>
   );
 }

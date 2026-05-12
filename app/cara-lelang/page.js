@@ -93,7 +93,7 @@ export default function CaraLelangPage() {
 
       {/* Content - Conditional Rendering */}
       <div className="cara-content-section smooth-fade" key={activeTab}>
-        <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)', marginTop: '2rem', marginBottom: '1.5rem' }}>{stepsTitle}</h3>
+        <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#000', marginTop: '1.2rem', marginBottom: '0.8rem' }}>{stepsTitle}</h3>
         <div className="grid-steps" style={{ marginTop: '1rem' }}>
           {steps.map((step) => (
             <div key={step.num} className="step-box">
@@ -106,7 +106,7 @@ export default function CaraLelangPage() {
           ))}
         </div>
 
-        <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)', marginTop: '3rem', marginBottom: '1.5rem' }}>{benefitsTitle}</h3>
+        <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#000', marginTop: '1.5rem', marginBottom: '0.8rem' }}>{benefitsTitle}</h3>
         <div className="grid-benefits" style={{ marginTop: '1rem' }}>
           {benefits.map((item, i) => (
             <div key={i} className="benefit-item">

@@ -97,7 +97,30 @@ export default function AdminProdukPage() {
 
       <div className="admin-products-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '2rem' }}>Memuat produk...</div>
+          <>
+            <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', background: '#FFFFFF', 
+                border: '1px solid #E5E7EB', borderRadius: '12px', padding: '1.25rem', gap: '1rem'
+              }}>
+                <div style={{
+                  width: '48px', height: '48px', borderRadius: '8px',
+                  background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite'
+                }}></div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ width: '200px', height: '16px', borderRadius: '4px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+                  <div style={{ width: '150px', height: '12px', borderRadius: '4px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+                  <div style={{ width: '100px', height: '14px', borderRadius: '4px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+                </div>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <div style={{ width: '60px', height: '24px', borderRadius: '16px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+                </div>
+              </div>
+            ))}
+          </>
         ) : filteredProducts.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '2rem', background: '#fff', borderRadius: '12px', border: '1px solid #E5E7EB' }}>
             Tidak ada produk lelang.
