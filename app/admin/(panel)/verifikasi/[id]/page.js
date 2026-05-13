@@ -139,15 +139,6 @@ export default function AdminDetailVerifikasiPage({ params }) {
     }
   };
 
-  if (loading) return (
-    <div style={{ backgroundColor: '#FAFAFA', borderRadius: '8px', minHeight: '400px', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', justifyContent: 'center', margin: '2rem' }}>
-      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-      <div style={{ width: '180px', height: '14px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-      <div style={{ width: '260px', height: '12px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-      <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
-    </div>
-  );
-
   const currentStatus = appData?.status || 'menunggu';
 
   // Warna bar header berdasarkan status
@@ -208,143 +199,176 @@ export default function AdminDetailVerifikasiPage({ params }) {
 
       {/* Konten utama — scrollable */}
       <div className="detail-verifikasi-layout" style={{ borderTopLeftRadius: 0, borderTopRightRadius: 0, borderTop: 'none' }}>
-        {/* Kolom Kiri */}
-        <div>
-          <h3 className="detail-section-title">KARTU TANDA PENDUDUK</h3>
-          <div className="ktp-image-box">
-            {ktpPreview ? (
-              <img src={ktpPreview} alt="KTP Penjual" />
-            ) : (
-              <div style={{ padding: '4rem 2rem', textAlign: 'center', color: '#9CA3AF', border: '2px dashed #E5E7EB', borderRadius: '8px' }}>
-                <i className="ph ph-image-broken" style={{ fontSize: '2rem' }}></i>
-                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem' }}>Gambar KTP tidak tersedia atau belum diunggah.</p>
-              </div>
-            )}
-          </div>
 
-          <h3 className="detail-section-title">INFORMASI PEMBAYARAN</h3>
-          <div className="info-group">
-            <label>NAMA BANK</label>
-            <div className="info-value">{appData?.nama_bank || '-'}</div>
-          </div>
-          <div className="info-group">
-            <label>NO REKENING</label>
-            <div className="info-value">{appData?.no_rekening || '-'}</div>
-          </div>
-          <div className="info-group">
-            <label>NAMA PEMILIK REKENING</label>
-            <div className="info-value">{appData?.nama_pemilik || '-'}</div>
-          </div>
+        {loading ? (
+          /* SKELETON LOADING BARU (MIRIP LAYOUT ASLI 2 KOLOM) */
+          <div style={{ width: '100%', gridColumn: '1 / -1', display: 'flex', gap: '3rem', padding: '1rem 0' }}>
+            <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
 
-          <h3 className="detail-section-title" style={{ marginTop: '2.5rem' }}>INFORMASI PENGAJUAN</h3>
-          <div className="info-group">
-            <label>WAKTU PENGAJUAN</label>
-            <div className="info-value">
-              {appData?.created_at ? (() => {
-                const date = new Date(appData.created_at);
-                const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = months[date.getMonth()];
-                const year = date.getFullYear();
-                const hours = date.getHours().toString().padStart(2, '0');
-                const minutes = date.getMinutes().toString().padStart(2, '0');
-                return `${day} - ${month} - ${year}, ${hours} : ${minutes}`;
-              })() : '-'}
+            {/* Skeleton Kolom Kiri (Area KTP) */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ width: '180px', height: '20px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+              <div style={{ width: '100%', height: '220px', borderRadius: '8px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+
+              <div style={{ width: '160px', height: '20px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', marginTop: '2rem' }}></div>
+              <div style={{ width: '100%', height: '14px', borderRadius: '4px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+              <div style={{ width: '80%', height: '14px', borderRadius: '4px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+            </div>
+
+            {/* Skeleton Kolom Kanan (Area Info Profil) */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div style={{ width: '160px', height: '20px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ width: '80px', height: '12px', borderRadius: '4px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+                  <div style={{ width: i % 2 === 0 ? '100%' : '75%', height: '16px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+                </div>
+              ))}
             </div>
           </div>
-
-          {/* Status Indicator — Menunggu, Disetujui, Ditolak */}
-          <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        ) : (
+          /* DATA ASLI MUNCUL DI SINI JIKA SUDAH SELESAI LOADING */
+          <>
+            {/* Kolom Kiri */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', color: '#6B7280', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.75rem' }}>STATUS</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {/* Menunggu */}
-                <span className={`status-badge-large ${currentStatus === 'menunggu' ? 'menunggu active-status' : ''}`}
-                  style={currentStatus !== 'menunggu' ? { background: 'transparent', border: '1px solid #D1D5DB', color: '#9CA3AF' } : {}}>
-                  Menunggu
-                </span>
-                {/* Disetujui */}
-                <span className={`status-badge-large ${currentStatus === 'disetujui' ? 'disetujui active-status' : ''}`}
-                  style={currentStatus !== 'disetujui' ? { background: 'transparent', border: '1px solid #D1D5DB', color: '#9CA3AF' } : {}}>
-                  Disetujui
-                </span>
-                {/* Ditolak */}
-                <span className={`status-badge-large ${currentStatus === 'ditolak' ? 'ditolak active-status' : ''}`}
-                  style={currentStatus !== 'ditolak' ? { background: 'transparent', border: '1px solid #D1D5DB', color: '#9CA3AF' } : {}}>
-                  Ditolak
-                </span>
+              <h3 className="detail-section-title">KARTU TANDA PENDUDUK</h3>
+              <div className="ktp-image-box">
+                {ktpPreview ? (
+                  <img src={ktpPreview} alt="KTP Penjual" />
+                ) : (
+                  <div style={{ padding: '4rem 2rem', textAlign: 'center', color: '#9CA3AF', border: '2px dashed #E5E7EB', borderRadius: '8px' }}>
+                    <i className="ph ph-image-broken" style={{ fontSize: '2rem' }}></i>
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem' }}>Gambar KTP tidak tersedia atau belum diunggah.</p>
+                  </div>
+                )}
+              </div>
+
+              <h3 className="detail-section-title">INFORMASI PEMBAYARAN</h3>
+              <div className="info-group">
+                <label>NAMA BANK</label>
+                <div className="info-value">{appData?.nama_bank || '-'}</div>
+              </div>
+              <div className="info-group">
+                <label>NO REKENING</label>
+                <div className="info-value">{appData?.no_rekening || '-'}</div>
+              </div>
+              <div className="info-group">
+                <label>NAMA PEMILIK REKENING</label>
+                <div className="info-value">{appData?.nama_pemilik || '-'}</div>
+              </div>
+
+              <h3 className="detail-section-title" style={{ marginTop: '2.5rem' }}>INFORMASI PENGAJUAN</h3>
+              <div className="info-group">
+                <label>WAKTU PENGAJUAN</label>
+                <div className="info-value">
+                  {appData?.created_at ? (() => {
+                    const date = new Date(appData.created_at);
+                    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const month = months[date.getMonth()];
+                    const year = date.getFullYear();
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                    return `${day} - ${month} - ${year}, ${hours} : ${minutes}`;
+                  })() : '-'}
+                </div>
+              </div>
+
+              {/* Status Indicator — Menunggu, Disetujui, Ditolak */}
+              <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#6B7280', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.75rem' }}>STATUS</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {/* Menunggu */}
+                    <span className={`status-badge-large ${currentStatus === 'menunggu' ? 'menunggu active-status' : ''}`}
+                      style={currentStatus !== 'menunggu' ? { background: 'transparent', border: '1px solid #D1D5DB', color: '#9CA3AF' } : {}}>
+                      Menunggu
+                    </span>
+                    {/* Disetujui */}
+                    <span className={`status-badge-large ${currentStatus === 'disetujui' ? 'disetujui active-status' : ''}`}
+                      style={currentStatus !== 'disetujui' ? { background: 'transparent', border: '1px solid #D1D5DB', color: '#9CA3AF' } : {}}>
+                      Disetujui
+                    </span>
+                    {/* Ditolak */}
+                    <span className={`status-badge-large ${currentStatus === 'ditolak' ? 'ditolak active-status' : ''}`}
+                      style={currentStatus !== 'ditolak' ? { background: 'transparent', border: '1px solid #D1D5DB', color: '#9CA3AF' } : {}}>
+                      Ditolak
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action buttons — hanya tampil jika status menunggu */}
+                {currentStatus === 'menunggu' && (
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1.9rem' }}>
+                    <button className="btn-status-action setuju" onClick={() => setIsApproveModalOpen(true)} disabled={processing} style={{ padding: '0.5rem 2rem' }}>
+                      Setuju
+                    </button>
+                    <button className="btn-status-action tolak" onClick={() => setIsRejectModalOpen(true)} disabled={processing} style={{ padding: '0.5rem 2rem' }}>
+                      Tolak
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Action buttons — hanya tampil jika status menunggu */}
-            {currentStatus === 'menunggu' && (
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1.9rem' }}>
-                <button className="btn-status-action setuju" onClick={() => setIsApproveModalOpen(true)} disabled={processing} style={{ padding: '0.5rem 2rem' }}>
-                  Setuju
-                </button>
-                <button className="btn-status-action tolak" onClick={() => setIsRejectModalOpen(true)} disabled={processing} style={{ padding: '0.5rem 2rem' }}>
-                  Tolak
-                </button>
+            {/* Kolom Kanan */}
+            <div>
+              <h3 className="detail-section-title">PROFIL PENJUAL</h3>
+              <div className="info-group">
+                <label>NAMA</label>
+                <div className="info-value">{profileData?.full_name || '-'}</div>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Kolom Kanan */}
-        <div>
-          <h3 className="detail-section-title">PROFIL PENJUAL</h3>
-          <div className="info-group">
-            <label>NAMA</label>
-            <div className="info-value">{profileData?.full_name || '-'}</div>
-          </div>
-          <div className="info-group">
-            <label>NAMA AKUN</label>
-            <div className="info-value">{profileData?.username || '-'}</div>
-          </div>
-          <div className="info-group">
-            <label>EMAIL</label>
-            <div className="info-value">{profileData?.email || '-'}</div>
-          </div>
-          <div className="info-group">
-            <label>JENIS KELAMIN</label>
-            <div className="info-value">{profileData?.gender || '-'}</div>
-          </div>
-          <div className="info-group">
-            <label>NO TELP</label>
-            <div className="info-value">{profileData?.phone_number || '-'}</div>
-          </div>
-          <div className="info-group">
-            <label>TANGGAL LAHIR</label>
-            <div className="info-value">
-              {profileData?.birth_date ? new Date(profileData.birth_date).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, ' - ') : '-'}
-            </div>
-          </div>
-          <div className="info-group">
-            <label>LOKASI</label>
-            <div className="info-value" style={{ minHeight: '40px', lineHeight: '1.6' }}>
-              {appData?.lokasi || '-'}
-            </div>
-          </div>
-
-          {/* Alasan penolakan - selalu tampil untuk ditolak, kosong untuk disetujui */}
-          {currentStatus === 'ditolak' && (
-            <div className="info-group" style={{ marginTop: '2.5rem' }}>
-              <label style={{ color: '#DC2626' }}>ALASAN PENOLAKAN</label>
-              <div className="info-value" style={{ background: '#FEF2F2', borderColor: '#FCA5A5', color: '#991B1B' }}>
-                {savedRejectReason || appData?.catatan_admin || 'Tidak ada alasan tersimpan.'}
+              <div className="info-group">
+                <label>NAMA AKUN</label>
+                <div className="info-value">{profileData?.username || '-'}</div>
               </div>
-            </div>
-          )}
-
-          {currentStatus === 'disetujui' && (
-            <div className="info-group" style={{ marginTop: '2.5rem' }}>
-              <label style={{ color: '#6B7280' }}>ALASAN PENOLAKAN</label>
-              <div className="info-value" style={{ color: '#9CA3AF', fontStyle: 'italic' }}>
-                -
+              <div className="info-group">
+                <label>EMAIL</label>
+                <div className="info-value">{profileData?.email || '-'}</div>
               </div>
+              <div className="info-group">
+                <label>JENIS KELAMIN</label>
+                <div className="info-value">{profileData?.gender || '-'}</div>
+              </div>
+              <div className="info-group">
+                <label>NO TELP</label>
+                <div className="info-value">{profileData?.phone_number || '-'}</div>
+              </div>
+              <div className="info-group">
+                <label>TANGGAL LAHIR</label>
+                <div className="info-value">
+                  {profileData?.birth_date ? new Date(profileData.birth_date).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, ' - ') : '-'}
+                </div>
+              </div>
+              <div className="info-group">
+                <label>LOKASI</label>
+                <div className="info-value" style={{ minHeight: '40px', lineHeight: '1.6' }}>
+                  {appData?.lokasi || '-'}
+                </div>
+              </div>
+
+              {/* Alasan penolakan - selalu tampil untuk ditolak, kosong untuk disetujui */}
+              {currentStatus === 'ditolak' && (
+                <div className="info-group" style={{ marginTop: '2.5rem' }}>
+                  <label style={{ color: '#DC2626' }}>ALASAN PENOLAKAN</label>
+                  <div className="info-value" style={{ background: '#FEF2F2', borderColor: '#FCA5A5', color: '#991B1B' }}>
+                    {savedRejectReason || appData?.catatan_admin || 'Tidak ada alasan tersimpan.'}
+                  </div>
+                </div>
+              )}
+
+              {currentStatus === 'disetujui' && (
+                <div className="info-group" style={{ marginTop: '2.5rem' }}>
+                  <label style={{ color: '#6B7280' }}>ALASAN PENOLAKAN</label>
+                  <div className="info-value" style={{ color: '#9CA3AF', fontStyle: 'italic' }}>
+                    -
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       {/* Modals via Portal — render langsung ke document.body */}
@@ -370,7 +394,7 @@ export default function AdminDetailVerifikasiPage({ params }) {
                   className={rejectError ? 'error-state' : ''}
                   placeholder="Berikan alasan menolak akun"
                   value={rejectReason}
-                  onChange={(e) => { setRejectReason(e.target.value); if(e.target.value.trim()) setRejectError(false); }}
+                  onChange={(e) => { setRejectReason(e.target.value); if (e.target.value.trim()) setRejectError(false); }}
                 ></textarea>
                 {rejectError && (
                   <div style={{ color: '#EF4444', fontSize: '0.8rem', marginTop: '-0.5rem', marginBottom: '1rem', fontWeight: 500, animation: 'fadeIn 0.3s ease' }}>

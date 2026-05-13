@@ -28,6 +28,7 @@ export default function CustomSelect({ options, value, onChange, placeholder = "
   return (
     <div ref={dropdownRef} style={{ position: 'relative', width: '100%', fontFamily: 'inherit' }}>
       <div 
+        className={error ? 'error-shake' : ''}
         onClick={() => { if (!disabled) setIsOpen(!isOpen); }}
         style={{
           width: '100%',

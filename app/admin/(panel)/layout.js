@@ -37,7 +37,8 @@ import { useEffect, useState, Suspense } from 'react';
   ];
   const hideSearchRoutes = ['/admin/dashboard'];
   const isVerifikasiDetail = pathname.startsWith('/admin/verifikasi/') && pathname !== '/admin/verifikasi';
-  const shouldHideSearch = hideSearchRoutes.includes(pathname) || isVerifikasiDetail;
+  const isEditProduk = pathname.startsWith('/admin/produk/edit/');
+  const shouldHideSearch = hideSearchRoutes.includes(pathname) || isVerifikasiDetail || isEditProduk;
 
   const handleSearch = (e) => {
     const value = e.target.value;

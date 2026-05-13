@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import { supabase } from '../../../../src/lib/supabase';
+import { supabase } from '../../../../src/lib/supabase'; // Sesuaikan path jika error
 
 function AdminProdukContent() {
   const router = useRouter();
@@ -12,7 +12,12 @@ function AdminProdukContent() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Semua');
 
+  // --- State Baru untuk Filter & Sorting ---
+  const [statusFilter, setStatusFilter] = useState('Semua');
+  const [sortOrder, setSortOrder] = useState('terbaru');
+  
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [activeImageUrl, setActiveImageUrl] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
@@ -24,18 +29,21 @@ function AdminProdukContent() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
+      // Mengambil data produk beserta nama penjualnya
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          profiles(full_name)
+        `)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.warn('Error fetching products from Supabase:', error.message);
-      }
+      if (error) throw error;
+
       setProducts(data || []);
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error('Error fetching products:', error.message);
     } finally {
       setLoading(false);
     }
@@ -59,6 +67,7 @@ function AdminProdukContent() {
 
   const openDetailModal = (product) => {
     setSelectedProduct(product);
+    setActiveImageUrl(product.image_urls?.[0] || null);
     setIsDetailModalOpen(true);
   };
 
@@ -67,15 +76,32 @@ function AdminProdukContent() {
     return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   };
 
-  const filteredProductsByTab = activeTab === 'Semua' 
-    ? products 
-    : products.filter(p => (p.kategori || p.category)?.toLowerCase() === activeTab.toLowerCase());
+  // --- Logika Filter & Sorting Dinamis ---
+  let resultProducts = activeTab === 'Semua'
+    ? products
+    : products.filter(p => (p.kategori)?.toLowerCase() === activeTab.toLowerCase());
 
-  const filteredProducts = filteredProductsByTab.filter(p => 
-    (p.nama || p.name || '').toLowerCase().includes(query.toLowerCase()) || 
-    (p.kategori || p.category || '').toLowerCase().includes(query.toLowerCase()) ||
-    (p.lokasi || p.location || '').toLowerCase().includes(query.toLowerCase())
+  // 1. Filter Pencarian (Search text)
+  resultProducts = resultProducts.filter(p =>
+    (p.nama_produk || '').toLowerCase().includes(query.toLowerCase()) ||
+    (p.kategori || '').toLowerCase().includes(query.toLowerCase()) ||
+    (p.lokasi || '').toLowerCase().includes(query.toLowerCase())
   );
+
+  // 2. Filter Status
+  if (statusFilter !== 'Semua') {
+    resultProducts = resultProducts.filter(p => 
+      (p.status || 'aktif').toLowerCase() === statusFilter.toLowerCase()
+    );
+  }
+
+  // 3. Sorting (Terbaru / Terlama)
+  const filteredProducts = resultProducts.sort((a, b) => {
+    const dateA = new Date(a.created_at || a.waktu_mulai);
+    const dateB = new Date(b.created_at || b.waktu_mulai);
+    
+    return sortOrder === 'terbaru' ? dateB - dateA : dateA - dateB;
+  });
 
   return (
     <div className="admin-produk-page">
@@ -84,8 +110,8 @@ function AdminProdukContent() {
         <div className="admin-page-actions" style={{ alignItems: 'center' }}>
           <div className="tabs-container" style={{ margin: 0, gap: '0.5rem' }}>
             {['Semua', 'Seni', 'Hobi', 'Elektronik'].map((tab) => (
-              <button 
-                key={tab} 
+              <button
+                key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`btn-admin-outline ${activeTab === tab ? 'active-tab' : ''}`}
                 style={{
@@ -104,28 +130,40 @@ function AdminProdukContent() {
         </div>
       </div>
 
+      {/* --- KONTROL FILTER & SORT BARU --- */}
+      <div className="filter-controls" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', marginTop: '1rem' }}>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid #D1D5DB', background: '#FFF', color: '#374151', outline: 'none', cursor: 'pointer', fontFamily: 'inherit', minWidth: '160px' }}
+        >
+          <option value="Semua">Semua Status</option>
+          <option value="menunggu">Menunggu</option>
+          <option value="aktif">Aktif</option>
+          <option value="selesai">Selesai</option>
+          <option value="dibatalkan">Dibatalkan</option>
+        </select>
+
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+          style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid #D1D5DB', background: '#FFF', color: '#374151', outline: 'none', cursor: 'pointer', fontFamily: 'inherit', minWidth: '180px' }}
+        >
+          <option value="terbaru">Ditambahkan Terbaru</option>
+          <option value="terlama">Ditambahkan Terlama</option>
+        </select>
+      </div>
+
       <div className="admin-products-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {loading ? (
           <>
             <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} style={{
-                display: 'flex', alignItems: 'center', background: '#FFFFFF', 
-                border: '1px solid #E5E7EB', borderRadius: '12px', padding: '1.25rem', gap: '1rem'
-              }}>
-                <div style={{
-                  width: '48px', height: '48px', borderRadius: '8px',
-                  background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite'
-                }}></div>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '1.25rem', gap: '1rem' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <div style={{ width: '200px', height: '16px', borderRadius: '4px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
                   <div style={{ width: '150px', height: '12px', borderRadius: '4px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-                  <div style={{ width: '100px', height: '14px', borderRadius: '4px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-                </div>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <div style={{ width: '60px', height: '24px', borderRadius: '16px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
                 </div>
               </div>
             ))}
@@ -137,32 +175,41 @@ function AdminProdukContent() {
         ) : (
           filteredProducts.map((product) => (
             <div key={product.id} className="admin-product-card" onClick={() => openDetailModal(product)} style={{
-              display: 'flex', alignItems: 'center', background: '#FFFFFF', 
+              display: 'flex', alignItems: 'center', background: '#FFFFFF',
               border: '1px solid #E5E7EB', borderRadius: '12px', padding: '1.25rem', gap: '1rem', cursor: 'pointer', transition: 'all 0.2s'
             }}>
               <div className="product-icon" style={{
                 width: '48px', height: '48px', borderRadius: '8px', border: '1px solid #E5E7EB',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#6B7280'
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#6B7280', overflow: 'hidden'
               }}>
-                <i className="ph ph-package"></i>
+                {product.image_urls && product.image_urls.length > 0 ? (
+                  <img src={product.image_urls[0]} alt="Produk" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <i className="ph ph-package"></i>
+                )}
               </div>
               <div className="product-info" style={{ flex: 1 }}>
                 <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1rem', fontWeight: 600, color: '#111827' }}>
-                  {product.nama || product.name || 'Nama Produk'}
+                  {product.nama_produk || '-'}
                 </h3>
                 <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem', color: '#6B7280' }}>
-                  {product.kategori || product.category || 'Kategori'} - {product.lokasi || product.location || 'Lokasi'}
+                  {product.kategori || '-'} - {product.lokasi || '-'}
                 </p>
                 <div style={{ color: '#4F46E5', fontWeight: 600, fontSize: '0.9rem' }}>
-                  {formatRupiah(product.harga_awal || product.price || 0)}
+                  {formatRupiah(product.harga_awal || 0)}
                 </div>
               </div>
               <div className="product-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }} onClick={(e) => e.stopPropagation()}>
                 <span className="admin-badge" style={{
-                  background: (product.status?.toLowerCase() === 'selesai' || product.status?.toLowerCase() === 'selesai') ? '#E5E7EB' : '#EEF2FF',
-                  color: (product.status?.toLowerCase() === 'selesai' || product.status?.toLowerCase() === 'selesai') ? '#4B5563' : '#4F46E5'
+                  background: (product.status?.toLowerCase() === 'selesai') ? '#E5E7EB' : 
+                              (product.status?.toLowerCase() === 'menunggu') ? '#FEF3C7' : 
+                              (product.status?.toLowerCase() === 'dibatalkan') ? '#FEE2E2' : '#EEF2FF',
+                  color: (product.status?.toLowerCase() === 'selesai') ? '#4B5563' : 
+                         (product.status?.toLowerCase() === 'menunggu') ? '#92400E' : 
+                         (product.status?.toLowerCase() === 'dibatalkan') ? '#991B1B' : '#4F46E5',
+                  padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600'
                 }}>
-                  {product.status || 'AKTIF'}
+                  {(product.status || 'aktif').toUpperCase()}
                 </span>
                 <button className="admin-action-btn" onClick={() => router.push(`/admin/produk/edit/${product.id}`)} style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '8px', padding: '0.4rem', color: '#374151' }}>
                   <i className="ph ph-pencil-simple"></i>
@@ -177,7 +224,7 @@ function AdminProdukContent() {
       </div>
 
       {/* Detail Produk Modal */}
-      <div className={`admin-modal-overlay ${isDetailModalOpen ? 'active' : ''}`} onClick={(e) => { if(e.target.classList.contains('admin-modal-overlay')) setIsDetailModalOpen(false) }}>
+      <div className={`admin-modal-overlay ${isDetailModalOpen ? 'active' : ''}`} onClick={(e) => { if (e.target.classList.contains('admin-modal-overlay')) setIsDetailModalOpen(false) }}>
         <div className="admin-modal modal-large">
           <button className="admin-modal-close" onClick={() => setIsDetailModalOpen(false)} style={{ right: '1.5rem' }}>
             <i className="ph ph-x" style={{ background: '#F3F4F6', padding: '0.4rem', borderRadius: '8px', fontSize: '1rem' }}></i>
@@ -194,61 +241,81 @@ function AdminProdukContent() {
                 <div className="product-id-badge">
                   <i className="ph ph-package"></i> ID PRODUK : {selectedProduct.id.substring(0, 5).toUpperCase()}
                 </div>
-                <h2 className="product-detail-title">{selectedProduct.nama || selectedProduct.name || 'Nama Produk'}</h2>
+                <h2 className="product-detail-title">{selectedProduct.nama_produk || '-'}</h2>
                 <div className="product-detail-img-box">
-                  <img src={selectedProduct.image_url || "/assets/washer.png"} alt={selectedProduct.nama || 'Produk'} style={{ height: '300px', objectFit: 'cover' }} />
+                  <img
+                    src={activeImageUrl || "/assets/placeholder.png"}
+                    alt={selectedProduct.nama_produk || 'Produk'}
+                    style={{ height: '300px', width: '100%', objectFit: 'cover', borderRadius: '8px', transition: 'all 0.3s ease' }}
+                  />
                 </div>
+                {/* Galeri Mini */}
+                {selectedProduct.image_urls && selectedProduct.image_urls.length > 1 && (
+                  <div className="product-detail-gallery" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                    {selectedProduct.image_urls.map((url, i) => (
+                      <img 
+                        key={i} 
+                        src={url} 
+                        alt={`Foto ${i + 1}`} 
+                        onClick={() => setActiveImageUrl(url)}
+                        style={{ 
+                          height: '60px', width: '60px', objectFit: 'cover', borderRadius: '6px', 
+                          border: activeImageUrl === url ? '2px solid #4F46E5' : '1px solid #E5E7EB',
+                          cursor: 'pointer', opacity: activeImageUrl === url ? 1 : 0.6,
+                          transition: 'all 0.2s ease'
+                        }} 
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-              
+
               <div className="product-detail-right" style={{ marginTop: '3.5rem' }}>
                 <div className="detail-item">
                   <label>STATUS LELANG</label>
-                  <span className="admin-badge" style={{ display: 'inline-block', width: 'max-content', background: '#EEF2FF', color: '#4F46E5', fontSize: '0.75rem', marginTop: '0.25rem' }}>{selectedProduct.status || 'AKTIF'}</span>
+                  <span className="admin-badge" style={{ display: 'inline-block', width: 'max-content', background: '#EEF2FF', color: '#4F46E5', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                    {(selectedProduct.status || 'aktif').toUpperCase()}
+                  </span>
                 </div>
                 <div className="detail-item">
                   <label>KATEGORI</label>
-                  <span>{selectedProduct.kategori || selectedProduct.category || '-'}</span>
+                  <span>{selectedProduct.kategori || '-'}</span>
                 </div>
-                
                 <div className="detail-item">
                   <label>PENJUAL/PEMILIK</label>
-                  <span>{selectedProduct.penjual_nama || 'Bagas Aksara'}</span>
+                  <span>{selectedProduct.profiles?.full_name || '-'}</span>
                 </div>
                 <div className="detail-item">
                   <label>MODEL</label>
                   <span>{selectedProduct.model || '-'}</span>
                 </div>
-
                 <div className="detail-item">
                   <label>KONDISI BARANG</label>
-                  <span>{selectedProduct.kondisi_fisik || 'Bekas - Mulus'}</span>
+                  <span>{selectedProduct.kondisi_fisik || '-'}</span>
                 </div>
                 <div className="detail-item">
                   <label>LOKASI BARANG</label>
-                  <span>{selectedProduct.lokasi || selectedProduct.location || '-'}</span>
+                  <span>{selectedProduct.lokasi || '-'}</span>
                 </div>
-
                 <div className="detail-item">
                   <label>MERK</label>
-                  <span>{selectedProduct.merk || 'Apple'}</span>
+                  <span>{selectedProduct.merk || '-'}</span>
                 </div>
                 <div className="detail-item">
                   <label>TAHUN PRODUKSI</label>
-                  <span>{selectedProduct.tahun_produksi || '2021'}</span>
+                  <span>{selectedProduct.tahun_produksi || '-'}</span>
                 </div>
-
                 <div className="detail-item">
                   <label>WAKTU MULAI</label>
-                  <span>{selectedProduct.waktu_mulai ? new Date(selectedProduct.waktu_mulai).toLocaleString() : '2023-12-23 10:00'}</span>
+                  <span>{selectedProduct.waktu_mulai ? new Date(selectedProduct.waktu_mulai).toLocaleString() : '-'}</span>
                 </div>
                 <div className="detail-item">
                   <label>WAKTU SELESAI</label>
-                  <span>{selectedProduct.waktu_selesai ? new Date(selectedProduct.waktu_selesai).toLocaleString() : '2023-12-23 11:00'}</span>
+                  <span>{selectedProduct.waktu_selesai ? new Date(selectedProduct.waktu_selesai).toLocaleString() : '-'}</span>
                 </div>
-
                 <div className="harga-terakhir-box">
-                  <label>HARGA TERAKHIR</label>
-                  <span>{formatRupiah(selectedProduct.harga_awal || selectedProduct.price || 0)}</span>
+                  <label>HARGA AWAL</label>
+                  <span>{formatRupiah(selectedProduct.harga_awal || 0)}</span>
                 </div>
 
                 <div style={{ gridColumn: '1 / -1', marginTop: 'auto' }}>

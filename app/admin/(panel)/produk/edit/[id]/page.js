@@ -1,26 +1,32 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '../../../../../../src/lib/supabase';
 
 export default function AdminEditProdukPage({ params }) {
   const router = useRouter();
-  const { id } = params;
+  const unwrappedParams = use(params);
+  const { id } = unwrappedParams;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
+
+  // State disesuaikan dengan DATABASE_SCHEMA
   const [formData, setFormData] = useState({
-    nama: '',
+    nama_produk: '',
     merk: '',
     tahun_produksi: '',
     kategori: '',
     model: '',
     harga_awal: '',
     lokasi: '',
-    status: 'AKTIF'
+    status: 'aktif'
   });
+
+  const [imageUrls, setImageUrls] = useState([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (id) fetchProduct();
@@ -35,33 +41,28 @@ export default function AdminEditProdukPage({ params }) {
         .eq('id', id)
         .single();
 
-      if (error) {
-        console.warn('Error fetching product from Supabase, using fallback for demo:', error.message);
-        // Fallback demo data
+      // HAPUS FALLBACK PALSU DI SINI
+      if (error) throw error;
+
+      if (data) {
         setFormData({
-          nama: 'IPhone 13 Pro',
-          merk: 'Apple',
-          tahun_produksi: '2021',
-          kategori: 'Elektronik',
-          model: '13 Pro (128GB)',
-          harga_awal: '14500000',
-          lokasi: 'DKI Jakarta',
-          status: 'AKTIF'
-        });
-      } else if (data) {
-        setFormData({
-          nama: data.nama || data.name || '',
+          nama_produk: data.nama_produk || '',
           merk: data.merk || '',
           tahun_produksi: data.tahun_produksi || '',
-          kategori: data.kategori || data.category || '',
+          kategori: data.kategori || '',
           model: data.model || '',
-          harga_awal: data.harga_awal || data.price || '',
-          lokasi: data.lokasi || data.location || '',
-          status: data.status || 'AKTIF'
+          harga_awal: data.harga_awal || '',
+          lokasi: data.lokasi || '',
+          status: data.status || 'aktif'
         });
+
+        if (data.image_urls && data.image_urls.length > 0) {
+          setImageUrls(data.image_urls);
+        }
       }
     } catch (error) {
-      console.error('Error in fetch:', error);
+      console.error('Error in fetch:', error.message);
+      alert('Gagal mengambil data produk: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -76,28 +77,59 @@ export default function AdminEditProdukPage({ params }) {
     setFormData(prev => ({ ...prev, status }));
   };
 
+  const handleImageUpload = async (e) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    setUploadingImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `admin-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `products/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+
+      setImageUrls(prev => [...prev, publicUrl]);
+    } catch (err) {
+      alert('Gagal mengunggah gambar: ' + err.message);
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const removeImage = (indexToRemove) => {
+    setImageUrls(prev => prev.filter((_, index) => index !== indexToRemove));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
       const { error } = await supabase
         .from('products')
         .update({
-          nama: formData.nama,
+          nama_produk: formData.nama_produk,
           merk: formData.merk,
           tahun_produksi: formData.tahun_produksi,
           kategori: formData.kategori,
           model: formData.model,
           harga_awal: formData.harga_awal,
           lokasi: formData.lokasi,
-          status: formData.status
+          status: formData.status,
+          image_urls: imageUrls
         })
         .eq('id', id);
 
-      if (error) {
-        // Just simulate success if there's no table during demo
-        console.warn('Update failed (maybe no table), but simulating success.', error.message);
-      }
-      
+      if (error) throw error;
+
       alert('Informasi produk berhasil diperbarui!');
       router.push('/admin/produk');
     } catch (error) {
@@ -112,7 +144,6 @@ export default function AdminEditProdukPage({ params }) {
       <div style={{ backgroundColor: '#FAFAFA', borderRadius: '8px', minHeight: '400px', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', justifyContent: 'center', margin: '2rem' }}>
         <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
         <div style={{ width: '180px', height: '14px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-        <div style={{ width: '260px', height: '12px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
         <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
       </div>
     );
@@ -139,10 +170,10 @@ export default function AdminEditProdukPage({ params }) {
           {/* Kolom Kiri: INFORMASI DASAR */}
           <div>
             <h3 className="admin-edit-section-title">INFORMASI DASAR</h3>
-            
+
             <div className="form-group-edit">
               <label>NAMA PRODUK</label>
-              <input type="text" name="nama" value={formData.nama} onChange={handleChange} />
+              <input type="text" name="nama_produk" value={formData.nama_produk} onChange={handleChange} />
             </div>
 
             <div style={{ display: 'flex', gap: '1rem' }}>
@@ -164,20 +195,60 @@ export default function AdminEditProdukPage({ params }) {
             <div className="form-group-edit">
               <label>STATUS LELANG</label>
               <div className="status-lelang-group">
-                <button className={`status-lelang-btn ${formData.status === 'AKTIF' ? 'active' : ''}`} onClick={() => setStatus('AKTIF')}>AKTIF</button>
-                <button className={`status-lelang-btn ${formData.status === 'SELESAI' ? 'active' : ''}`} onClick={() => setStatus('SELESAI')}>SELESAI</button>
-                <button className={`status-lelang-btn ${formData.status === 'DRAFT' ? 'active' : ''}`} onClick={() => setStatus('DRAFT')}>DRAFT</button>
+                <button className={`status-lelang-btn ${formData.status === 'aktif' ? 'active' : ''}`} onClick={() => setStatus('aktif')}>AKTIF</button>
+                <button className={`status-lelang-btn ${formData.status === 'selesai' ? 'active' : ''}`} onClick={() => setStatus('selesai')}>SELESAI</button>
+                <button className={`status-lelang-btn ${formData.status === 'dibatalkan' ? 'active' : ''}`} onClick={() => setStatus('dibatalkan')}>DIBATALKAN</button>
               </div>
             </div>
 
             <div className="form-group-edit" style={{ marginTop: '2rem' }}>
-              <label>FOTO PRODUK TERPILIH</label>
-              <div className="foto-produk-group">
-                <img src="/assets/washer.png" alt="Produk" className="foto-produk-preview" />
-                <div className="foto-produk-upload">
-                  <i className="ph ph-package"></i>
-                  Ganti Foto
+              <label>FOTO PRODUK</label>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                {imageUrls.map((url, index) => (
+                  <div key={index} style={{ position: 'relative', width: '150px', height: '150px' }}>
+                    <img 
+                      src={url || "/assets/placeholder.png"} 
+                      alt={`Produk ${index+1}`} 
+                      className="foto-produk-preview" 
+                      style={{ objectFit: 'cover', width: '100%', height: '100%', borderRadius: '8px', border: '1px solid #E5E7EB' }} 
+                    />
+                    <button 
+                      onClick={() => removeImage(index)}
+                      style={{
+                        position: 'absolute', top: '6px', right: '6px',
+                        width: '24px', height: '24px', borderRadius: '50%',
+                        backgroundColor: 'rgba(239, 68, 68, 0.9)', color: 'white',
+                        border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', zIndex: 10
+                      }}
+                    >
+                      <i className="ph ph-x" style={{ fontSize: '14px', fontWeight: 'bold' }}></i>
+                    </button>
+                  </div>
+                ))}
+                
+                <div 
+                  className="foto-produk-upload" 
+                  onClick={() => !uploadingImage && fileInputRef.current?.click()}
+                  style={{ 
+                    width: '150px', height: '150px', display: 'flex', flexDirection: 'column', 
+                    justifyContent: 'center', alignItems: 'center', cursor: uploadingImage ? 'not-allowed' : 'pointer',
+                    opacity: uploadingImage ? 0.6 : 1
+                  }}
+                >
+                  {uploadingImage ? (
+                    <>
+                      <i className="ph ph-spinner" style={{ animation: 'spin 1s linear infinite' }}></i>
+                      <span>Mengunggah...</span>
+                    </>
+                  ) : (
+                    <>
+                      <i className="ph ph-upload-simple"></i>
+                      <span>Tambah Foto</span>
+                    </>
+                  )}
                 </div>
+                <input type="file" ref={fileInputRef} onChange={handleImageUpload} style={{ display: 'none' }} accept="image/*" />
               </div>
             </div>
           </div>
@@ -185,7 +256,7 @@ export default function AdminEditProdukPage({ params }) {
           {/* Kolom Kanan: SPESIFIKASI DETAIL */}
           <div>
             <h3 className="admin-edit-section-title">SPESIFIKASI DETAIL</h3>
-            
+
             <div style={{ display: 'flex', gap: '1rem' }}>
               <div className="form-group-edit" style={{ flex: 1 }}>
                 <label>MERK</label>

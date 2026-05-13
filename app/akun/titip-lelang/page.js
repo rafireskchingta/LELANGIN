@@ -52,6 +52,7 @@ export default function TitipLelangPage() {
             .from('products')
             .select('id, nama_produk, kategori, harga_awal, status, waktu_selesai')
             .eq('seller_id', session.user.id)
+            .eq('status', 'aktif')
             .order('created_at', { ascending: false });
 
           if (produkError) {
@@ -145,7 +146,7 @@ export default function TitipLelangPage() {
           {/* Action bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
             <p style={{ margin: 0, fontSize: '0.875rem', color: '#6B7280' }}>
-              {produkList.length} produk terdaftar
+              {produkList.length} produk aktif
               {selected.length > 0 && ` · ${selected.length} dipilih`}
             </p>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -176,9 +177,9 @@ export default function TitipLelangPage() {
           ) : (
             <>
               {/* Tabel produk */}
-              <div style={{ overflowX: 'auto' }}>
+              <div style={{ overflowX: 'auto', maxHeight: '450px', overflowY: 'auto', borderBottom: '1px solid #E5E7EB' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-                  <thead>
+                  <thead style={{ position: 'sticky', top: 0, backgroundColor: '#FAFAFA', zIndex: 10 }}>
                     <tr style={{ borderBottom: '2px solid #E5E7EB' }}>
                       <th style={{ padding: '0.6rem 0.5rem', width: '32px' }}></th>
                       <th style={{ padding: '0.6rem 0.75rem', textAlign: 'left', color: '#374151', fontWeight: 600 }}>Nama Produk</th>

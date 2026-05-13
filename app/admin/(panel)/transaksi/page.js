@@ -20,21 +20,27 @@ function AdminTransaksiContent() {
     try {
       const { data, error } = await supabase
         .from('transactions')
-        .select('*')
+        .select(`
+          id,
+          product_id,
+          winner_id,
+          phone_number,
+          status_transaksi,
+          created_at,
+          products(nama_produk, current_price, harga_awal),
+          profiles(full_name, phone_number)
+        `)
         .order('created_at', { ascending: false });
 
-      if (error || !data || data.length === 0) {
-        console.warn('Error fetching transactions or table empty. Using dummy data for UI display.');
-        setTransactions([
-          { id_transaksi: 'T001', id_produk: 'P001', pemenang: 'Jibran Aditya', phone: '+628665341732', status: 'Dikirim', harga: 14500000, tgl_dibuat: '2024 - 12 - 13' },
-          { id_transaksi: 'T002', id_produk: 'P002', pemenang: 'Adriel Ananda', phone: '+62845424532', status: 'Dikirim', harga: 2500000, tgl_dibuat: '2026 - 12 - 31' },
-          { id_transaksi: 'T003', id_produk: 'P003', pemenang: 'Safira Zahra', phone: '+62896383828', status: 'Selesai', harga: 7300000, tgl_dibuat: '2021 - 12 - 12' }
-        ]);
+      if (error) {
+        console.error('Error fetching transactions:', error.message);
+        setTransactions([]);
       } else {
-        setTransactions(data);
+        setTransactions(data || []);
       }
     } catch (error) {
       console.error('Error:', error);
+      setTransactions([]);
     } finally {
       setLoading(false);
     }
@@ -43,6 +49,35 @@ function AdminTransaksiContent() {
   const formatRupiah = (angka) => {
     if (!angka) return 'Rp 0';
     return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'selesai': return 'Selesai';
+      case 'dikirim': return 'Dikirim';
+      case 'diproses': return 'Diproses';
+      case 'menunggu_pembayaran': return 'Menunggu';
+      case 'dibatalkan': return 'Dibatalkan';
+      default: return status || '-';
+    }
+  };
+
+  const getStatusClass = (status) => {
+    switch (status) {
+      case 'selesai': return 'selesai';
+      case 'dikirim': return 'dikirim';
+      case 'diproses': return 'dikirim';
+      default: return 'selesai';
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+    return `${y} - ${m} - ${d}`;
   };
 
   return (
@@ -56,7 +91,7 @@ function AdminTransaksiContent() {
           <thead>
             <tr>
               <th>ID TRANSAKSI</th>
-              <th>ID PRODUK</th>
+              <th>NAMA PRODUK</th>
               <th>PEMENANG</th>
               <th>NO TELP</th>
               <th>STATUS</th>
@@ -79,32 +114,40 @@ function AdminTransaksiContent() {
                 ))}
               </>
             ) : (() => {
-              const filteredTransactions = transactions.filter(trx => 
-                (trx.id_transaksi || '').toLowerCase().includes(query.toLowerCase()) || 
-                (trx.pemenang || '').toLowerCase().includes(query.toLowerCase()) ||
-                (trx.id_produk || '').toLowerCase().includes(query.toLowerCase())
-              );
+              const filteredTransactions = transactions.filter(trx => {
+                const productName = trx.products?.nama_produk || '';
+                const winnerName = trx.profiles?.full_name || '';
+                const idShort = trx.id?.substring(0, 8) || '';
+                return productName.toLowerCase().includes(query.toLowerCase()) || 
+                  winnerName.toLowerCase().includes(query.toLowerCase()) ||
+                  idShort.toLowerCase().includes(query.toLowerCase());
+              });
 
               if (filteredTransactions.length === 0) {
                 return <tr><td colSpan="7" style={{textAlign: 'center', padding: '2rem'}}>Tidak ada riwayat transaksi{query ? ' yang cocok dengan pencarian' : ''}.</td></tr>;
               }
 
               return filteredTransactions.map((trx, index) => {
-                const statusClass = (trx.status || '').toLowerCase() === 'selesai' ? 'selesai' : 'dikirim';
+                const statusClass = getStatusClass(trx.status_transaksi);
+                const statusLabel = getStatusLabel(trx.status_transaksi);
+                const harga = trx.products?.current_price || trx.products?.harga_awal || 0;
+                const winnerName = trx.profiles?.full_name || '-';
+                const phone = trx.phone_number || trx.profiles?.phone_number || '-';
+                const productName = trx.products?.nama_produk || '-';
                 
                 return (
-                  <tr key={index}>
-                    <td style={{ color: '#4F46E5', fontWeight: 600 }}>{trx.id_transaksi || trx.id?.substring(0, 8)}</td>
-                    <td style={{ color: '#4F46E5', fontWeight: 600 }}>{trx.id_produk || 'P00' + (index + 1)}</td>
-                    <td><strong>{trx.pemenang || 'Nama Pemenang'}</strong></td>
-                    <td>{trx.phone || '-'}</td>
+                  <tr key={trx.id || index}>
+                    <td style={{ color: '#4F46E5', fontWeight: 600 }}>{trx.id?.substring(0, 8).toUpperCase() || '-'}</td>
+                    <td style={{ color: '#4F46E5', fontWeight: 600 }}>{productName}</td>
+                    <td><strong>{winnerName}</strong></td>
+                    <td>{phone}</td>
                     <td>
                       <span className={`status-badge ${statusClass}`}>
-                        {trx.status || 'Dikirim'}
+                        {statusLabel}
                       </span>
                     </td>
-                    <td>{formatRupiah(trx.harga || trx.amount || 0)}</td>
-                    <td>{trx.tgl_dibuat || (trx.created_at ? new Date(trx.created_at).toISOString().split('T')[0].replace(/-/g, ' - ') : '-')}</td>
+                    <td>{formatRupiah(harga)}</td>
+                    <td>{formatDate(trx.created_at)}</td>
                   </tr>
                 );
               });

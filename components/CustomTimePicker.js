@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 
-export default function CustomTimePicker({ value, onChange, placeholder = "-- : --", alignRight = false }) {
+export default function CustomTimePicker({ value, onChange, placeholder = "-- : --", alignRight = false, error = false }) {
   const [isOpen, setIsOpen] = useState(false);
   
   // Initialize with current time or provided value
@@ -56,13 +56,15 @@ export default function CustomTimePicker({ value, onChange, placeholder = "-- : 
   return (
     <div className="custom-timepicker-container" ref={dropdownRef} style={{ position: 'relative', width: '100%' }}>
       <div 
-        className="custom-timepicker-input" 
+        className={`custom-timepicker-input ${error ? 'error-shake' : ''}`} 
         onClick={() => setIsOpen(!isOpen)}
         style={{
           width: '100%',
           padding: '0.65rem 1rem',
-          border: '1px solid #E5E7EB',
+          border: '1px solid',
+          borderColor: error ? '#EF4444' : '#E5E7EB',
           borderRadius: '6px',
+          boxShadow: error ? '0 0 0 2px #FEE2E2' : 'none',
           fontSize: '0.85rem',
           color: confirmedValue ? 'var(--text-main)' : '#9CA3AF',
           backgroundColor: '#FFFFFF',
@@ -118,13 +120,14 @@ export default function CustomTimePicker({ value, onChange, placeholder = "-- : 
                   background: '#E0E7FF', 
                   border: '1px solid #818CF8', 
                   borderRadius: '12px', 
-                  width: '64px', 
+                  width: '72px', 
                   height: '64px', 
                   textAlign: 'center',
                   fontSize: '1.5rem',
                   fontWeight: 800,
                   color: '#374151',
-                  outline: 'none'
+                  outline: 'none',
+                  padding: 0
                 }}
               />
               <i className="ph-bold ph-caret-down" onClick={handleIncrementHour} style={{ cursor: 'pointer', color: '#374151', fontSize: '1.2rem' }}></i>
@@ -155,13 +158,14 @@ export default function CustomTimePicker({ value, onChange, placeholder = "-- : 
                   background: '#F8FAFC', 
                   border: '1px solid #818CF8', 
                   borderRadius: '12px', 
-                  width: '64px', 
+                  width: '72px', 
                   height: '64px', 
                   textAlign: 'center',
                   fontSize: '1.5rem',
                   fontWeight: 800,
                   color: '#374151',
-                  outline: 'none'
+                  outline: 'none',
+                  padding: 0
                 }}
               />
               <i className="ph-bold ph-caret-down" onClick={handleIncrementMinute} style={{ cursor: 'pointer', color: '#374151', fontSize: '1.2rem' }}></i>

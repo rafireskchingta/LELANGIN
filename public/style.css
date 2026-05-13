@@ -21,10 +21,13 @@
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
+  appearance: none;
   margin: 0;
 }
+
 input[type="number"] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 body {
@@ -2440,8 +2443,31 @@ body:has(.admin-layout-wrapper) {
 .admin-content-container {
   padding: 2.5rem;
   flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Template wrapper fills container */
+.admin-content-container > .page-transition-enter {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+/* Dashboard inside template: no scroll on parent, fill height */
+.admin-content-container > .page-transition-enter:has(.admin-dashboard) {
+  overflow: hidden;
+}
+
+.admin-content-container > .page-transition-enter > .admin-dashboard {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .admin-page-title {
@@ -2449,6 +2475,14 @@ body:has(.admin-layout-wrapper) {
   font-weight: 700;
   color: #111827;
   margin-bottom: 2rem;
+}
+
+/* Dashboard Layout */
+.admin-dashboard {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
 /* Dashboard Stats */
@@ -2518,6 +2552,8 @@ body:has(.admin-layout-wrapper) {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
+  flex: 1;
+  min-height: 0;
 }
 
 .admin-panel-card {
@@ -2527,17 +2563,24 @@ body:has(.admin-layout-wrapper) {
   padding: 1.5rem;
 }
 
+.admin-panel-card.admin-panel-card-stretch {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.activity-list-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
 .panel-card-title {
   font-size: 1.1rem;
   font-weight: 700;
   color: #111827;
   margin-bottom: 1.5rem;
-}
-
-.panel-card-title.underline-blue {
-  color: #1D4ED8;
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  flex-shrink: 0;
 }
 
 .activity-list,
@@ -2566,7 +2609,7 @@ body:has(.admin-layout-wrapper) {
 
 .activity-content p {
   margin: 0 0 0.25rem 0;
-  color: #374151;
+  color: #111827;
   font-size: 0.9rem;
   line-height: 1.4;
 }
@@ -3647,4 +3690,26 @@ textarea {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes error-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.error-shake {
+  animation: error-shake 0.3s ease-in-out;
+  border-color: #EF4444 !important;
+  box-shadow: 0 0 0 2px #FEE2E2 !important;
+}
+
+@keyframes slideUpToast {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDownToast {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }

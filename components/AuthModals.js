@@ -103,6 +103,12 @@ export default function AuthModals() {
         .eq('id', data.user.id)
         .single();
 
+      if (profileData?.deleted_at) {
+        // Jika akun sudah di-soft-delete
+        await supabase.auth.signOut();
+        throw new Error('Akun ini telah dihapus. Silakan hubungi admin jika ini adalah sebuah kesalahan.');
+      }
+
       if (profileData?.role === 'admin') {
         if (typeof window !== 'undefined') {
           localStorage.setItem('isAdminLoggedIn', 'true');
@@ -160,18 +166,7 @@ export default function AuthModals() {
     setRegLoading(true);
 
     try {
-      // 1. Daftar Auth Supabase
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: regEmail,
-        password: regPassword,
-      });
-
-      if (authError) throw authError;
-
-      const userId = authData?.user?.id;
-      if (!userId) throw new Error('Pendaftaran gagal. Silakan coba lagi.');
-
-      // Konversi bulan string ke angka
+      // Konversi bulan string ke angka untuk birth_date
       const bulanMap = {
         'Januari': '01', 'Februari': '02', 'Maret': '03', 'April': '04',
         'Mei': '05', 'Juni': '06', 'Juli': '07', 'Agustus': '08',
@@ -182,29 +177,31 @@ export default function AuthModals() {
       const bln = bulanMap[regBulan] || '01';
       const thn = regTahun || '2000';
       const birthDate = `${thn}-${bln}-${tgl}`;
+      const genderFormatted = regGender.charAt(0).toUpperCase() + regGender.slice(1);
 
-      // 2. Simpan profil tambahan ke tabel 'profiles'
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: userId,
+      // 1. Daftar Auth Supabase dengan Metadata (Trigger DB akan membuat profil otomatis)
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: regEmail,
+        password: regPassword,
+        options: {
+          data: {
             full_name: regFullName,
             username: regUsername,
-            gender: regGender.charAt(0).toUpperCase() + regGender.slice(1), // Menjadikan 'Pria' atau 'Wanita'
+            gender: genderFormatted,
             phone_number: regPhone,
             birth_date: birthDate,
             email: regEmail,
-            role: 'pembeli' // Sesuaikan jika enum Anda berbeda
+            role: 'pembeli'
           }
-        ]);
+        }
+      });
 
-      if (profileError) {
-        console.error('Profile Insert Error Details:', profileError);
-        showToast('Gagal menyimpan profil: ' + (profileError.message || profileError.details || JSON.stringify(profileError)), 'error');
-        return; // Jangan buka Success Modal jika profil gagal disimpan
-      }
+      if (authError) throw authError;
 
+      const userId = authData?.user?.id;
+      if (!userId) throw new Error('Pendaftaran gagal. Silakan coba lagi.');
+
+      // 2. Berhasil! (Insert manual dihapus karena sudah ditangani Trigger Database)
       openSuccessModal();
     } catch (error) {
       showToast('Pendaftaran gagal: ' + error.message, 'error');
@@ -262,13 +259,33 @@ export default function AuthModals() {
           <p>Daftarkan akun Anda</p>
         </div>
         <form className="modal-form" id="registerForm" onSubmit={handleRegister}>
+          {/* Honeypot fields to trap browser autofill and prevent it from filling the real username field */}
+          <div style={{ position: 'absolute', opacity: 0, height: 0, width: 0, overflow: 'hidden' }}>
+            <input type="email" name="dummy_email" tabIndex="-1" autoComplete="email" />
+            <input type="text" name="dummy_username" tabIndex="-1" autoComplete="username" />
+            <input type="password" name="dummy_password" tabIndex="-1" autoComplete="current-password" />
+          </div>
           <div className="form-group">
             <label>Nama Lengkap</label>
-            <input type="text" required value={regFullName} onChange={(e) => setRegFullName(e.target.value)} />
+            <input
+              type="text"
+              name="reg_fullname"
+              autoComplete="off"
+              required
+              value={regFullName}
+              onChange={(e) => setRegFullName(e.target.value)}
+            />
           </div>
           <div className="form-group">
             <label>Nama Akun (Username)</label>
-            <input type="text" required value={regUsername} onChange={(e) => setRegUsername(e.target.value)} />
+            <input
+              type="text"
+              name="reg_username"
+              autoComplete="off"
+              required
+              value={regUsername}
+              onChange={(e) => setRegUsername(e.target.value)}
+            />
           </div>
           <div className="form-group">
             <label>Jenis Kelamin</label>
@@ -305,11 +322,25 @@ export default function AuthModals() {
           </div>
           <div className="form-group">
             <label>Email</label>
-            <input type="email" required value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
+            <input
+              type="email"
+              name="email"
+              autoComplete="email"
+              required
+              value={regEmail}
+              onChange={(e) => setRegEmail(e.target.value)}
+            />
           </div>
           <div className="form-group">
             <label>Kata Sandi</label>
-            <input type="password" required value={regPassword} onChange={(e) => setRegPassword(e.target.value)} />
+            <input
+              type="password"
+              name="reg_password"
+              autoComplete="new-password"
+              required
+              value={regPassword}
+              onChange={(e) => setRegPassword(e.target.value)}
+            />
           </div>
           <button type="submit" className="btn-primary-full" disabled={regLoading}>
             {regLoading ? 'Memproses...' : 'Buat Akun'}
