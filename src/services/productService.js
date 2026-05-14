@@ -76,23 +76,19 @@ export async function fetchProducts(options = {}) {
       query = query.ilike('nama_produk', `%${search}%`);
     }
 
+    // FIX B-01 & B-02: Terapkan sorting SEBELUM eksekusi query, hapus duplikat ilike
+    if (sortBy === 'terbaru') {
+      query = query.order('waktu_mulai', { ascending: false });
+    } else if (sortBy === 'terlama') {
+      query = query.order('waktu_mulai', { ascending: true });
+    }
+
     // Execute query
     let { data, error } = await query;
 
     if (error) {
       console.error('Error fetching products:', error.message);
       return [];
-    }
-
-    if (search) {
-      query = query.ilike('nama_produk', `%${search}%`);
-    }
-
-    // PERBAIKAN: Gunakan fitur order bawaan Supabase
-    if (sortBy === 'terbaru') {
-      query = query.order('waktu_mulai', { ascending: false });
-    } else if (sortBy === 'terlama') {
-      query = query.order('waktu_mulai', { ascending: true });
     }
 
     return data || [];
@@ -140,7 +136,6 @@ export async function fetchProductDetail(productId) {
         created_at
       `)
       .eq('id', productId)
-      .eq('status', 'aktif')
       .filter('deleted_at', 'is', null)
       .single();
 
