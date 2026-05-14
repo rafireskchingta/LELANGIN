@@ -17,7 +17,7 @@ function StatusLelangContent() {
 
   // State Data Popup
   const [selectedItem, setSelectedItem] = useState(null);
-  const [activeModalImage, setActiveModalImage] = useState('/assets/placeholder.png');
+  const [activeModalImage, setActiveModalImage] = useState('https://placehold.co/600x400?text=No+Image');
   const [modalBids, setModalBids] = useState([]);
 
   // --- 2. STATE DATA UTAMA ---
@@ -80,7 +80,7 @@ function StatusLelangContent() {
       const unique = [];
       const seen = new Set();
       dataArray.forEach(item => {
-        const prod = item.products;
+        const prod = item?.products;
         if (prod && !seen.has(prod.id)) {
           seen.add(prod.id);
           unique.push(prod);
@@ -90,6 +90,11 @@ function StatusLelangContent() {
     };
 
     const fetchTabData = async () => {
+      console.log("--- FETCHING DATA ---");
+      console.log("Role:", activeRole);
+      console.log("Tab:", activeTab);
+      console.log("User ID:", currentUser?.id);
+
       setLoading(true);
       let fetchedData = [];
 
@@ -104,11 +109,32 @@ function StatusLelangContent() {
               break;
             case 'Sedang Diikuti':
               const { data: activeBids } = await supabase.from('bids').select('products(*)').eq('bidder_id', currentUser.id);
-              fetchedData = extractUniqueProducts(activeBids).filter(p => p && new Date(p.waktu_selesai) > new Date());
+              const followedProds = extractUniqueProducts(activeBids);
+              console.log("Followed Prods Dates:", followedProds.map(p => p.waktu_selesai));
+              fetchedData = followedProds.filter(p => p && new Date(p.waktu_selesai) > new Date());
               break;
             case 'Menang Lelang':
-              const { data: winningBids } = await supabase.from('bids').select('products(*)').eq('bidder_id', currentUser.id).eq('is_winning_bid', true);
-              fetchedData = extractUniqueProducts(winningBids);
+            case 'Kalah Lelang':
+              // 1. Ambil semua produk yang pernah saya bid
+              const { data: myTotalBids } = await supabase.from('bids').select('product_id, products(*)').eq('bidder_id', currentUser.id);
+              const myUniqueProds = extractUniqueProducts(myTotalBids);
+              
+              // 2. Untuk setiap produk tersebut, cari bid tertingginya
+              const prodIds = myUniqueProds.map(p => p.id);
+              const { data: topBids } = await supabase.from('bids').select('product_id, bidder_id, amount').in('product_id', prodIds).order('amount', { ascending: false });
+              
+              // Map untuk menyimpan penawar tertinggi tiap produk
+              const topBidderMap = {};
+              (topBids || []).forEach(b => {
+                if (!topBidderMap[b.product_id]) {
+                  topBidderMap[b.product_id] = b.bidder_id;
+                }
+              });
+
+              fetchedData = myUniqueProds.filter(p => {
+                const isTop = topBidderMap[p.id] === currentUser.id;
+                return activeTab === 'Menang Lelang' ? isTop : !isTop;
+              });
               break;
             case 'Selesai':
             case 'Dibatalkan':
@@ -251,6 +277,7 @@ function StatusLelangContent() {
       </div>
 
       <div style={{ minHeight: '400px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {console.log("Rendering Items Count:", items.length)}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '3rem' }}>Memuat...</div>
         ) : items.length === 0 ? (
@@ -258,18 +285,18 @@ function StatusLelangContent() {
         ) : (
           items.map((item) => (
             <div key={item.id} onClick={() => handleOpenModal(item)} className="status-card" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', background: 'white', borderRadius: '12px', border: '1px solid #E5E7EB', cursor: 'pointer' }}>
-              <img src={item.image_urls?.[0] || '/assets/placeholder.png'} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
+              <img src={item.image_urls?.[0] || 'https://placehold.co/150x150?text=No+Image'} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
               <div style={{ flex: 1 }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>{item.nama_produk}</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{item.lokasi}</p>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: '#111827' }}>{item.nama_produk}</h3>
+                <p style={{ color: '#6B7280', fontSize: '0.85rem' }}>{item.lokasi}</p>
                 <div style={{ display: 'flex', gap: '2rem', marginTop: '0.5rem' }}>
                   <div>
-                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>Harga Terakhir</p>
+                    <p style={{ fontSize: '0.7rem', color: '#6B7280', margin: 0 }}>Harga Terakhir</p>
                     <p style={{ fontWeight: 800, color: 'var(--primary)', margin: 0 }}>Rp {formatRupiah(item.current_price || item.harga_awal)}</p>
                   </div>
                   <div>
-                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>Berakhir</p>
-                    <p style={{ fontWeight: 600, margin: 0 }}>{formatTanggalPukul(item.waktu_selesai)}</p>
+                    <p style={{ fontSize: '0.7rem', color: '#6B7280', margin: 0 }}>Berakhir</p>
+                    <p style={{ fontWeight: 600, margin: 0, color: '#374151' }}>{formatTanggalPukul(item.waktu_selesai)}</p>
                   </div>
                 </div>
               </div>
