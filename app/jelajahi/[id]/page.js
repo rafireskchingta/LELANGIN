@@ -127,7 +127,7 @@ export default function DetailPage() {
       const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
 
       if (hari > 0) {
-        setTimeLeft(`${hari} Hari : ${jam} Jam : ${menit} Menit`);
+        setTimeLeft(`${hari} Hari : ${jam} Jam : ${menit} Menit : ${detik} Detik`);
       } else {
         setTimeLeft(`${jam} Jam : ${menit} Menit : ${detik} Detik`);
       }
@@ -384,7 +384,18 @@ export default function DetailPage() {
                 {timeLeft}
               </div>
               <div className="progress-bar" style={{ background: '#E5E7EB', height: '8px', borderRadius: '4px', marginTop: '0.5rem', overflow: 'hidden' }}>
-                <div className="progress-fill" style={{ width: timeLeft === 'Waktu Habis' ? '100%' : '75%', background: '#EF4444', height: '100%' }}></div>
+                {/* FIX B-07: Hitung progress nyata dari waktu mulai dan selesai */}
+                <div className="progress-fill" style={{
+                  width: (() => {
+                    if (timeLeft === 'Waktu Habis') return '100%';
+                    if (!product?.waktu_mulai || !product?.waktu_selesai) return '0%';
+                    const total = new Date(product.waktu_selesai) - new Date(product.waktu_mulai);
+                    const elapsed = new Date() - new Date(product.waktu_mulai);
+                    const pct = Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
+                    return `${pct}%`;
+                  })(),
+                  background: '#EF4444', height: '100%', transition: 'width 1s linear'
+                }}></div>
               </div>
             </div>
 

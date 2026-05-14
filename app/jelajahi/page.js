@@ -167,6 +167,16 @@ function JelajahiContent() {
     setModalBids(bidsData || []);
   };
 
+  // --- TIMER STATE UNTUK REAL-TIME COUNTDOWN ---
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000); // Update setiap 1 detik agar detik tampil
+    return () => clearInterval(timer);
+  }, []);
+
   // --- 9. FUNGSI FORMATTER ---
   const formatRupiah = (angka) => {
     if (!angka) return '0';
@@ -181,10 +191,11 @@ function JelajahiContent() {
     const hari = Math.floor(selisihMs / (1000 * 60 * 60 * 24));
     const jam = Math.floor((selisihMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
+    const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
 
-    if (hari > 0) return `${hari} Hari : ${jam} Jam : ${menit} Menit`;
-    if (jam > 0) return `${jam} Jam : ${menit} Menit`;
-    return `${menit} Menit`;
+    if (hari > 0) return `${hari} Hari : ${jam} Jam : ${menit} Menit : ${detik} Detik`;
+    if (jam > 0) return `${jam} Jam : ${menit} Menit : ${detik} Detik`;
+    return `${menit} Menit : ${detik} Detik`;
   };
 
   return (

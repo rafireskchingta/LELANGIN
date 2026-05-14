@@ -19,6 +19,28 @@ function StatusLelangContent() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [activeModalImage, setActiveModalImage] = useState('https://placehold.co/600x400?text=No+Image');
   const [modalBids, setModalBids] = useState([]);
+  const [countdown, setCountdown] = useState('');
+  const [tick, setTick] = useState(0); // State untuk memaksa re-render setiap detik
+
+  // Harus didefinisikan sebelum useEffect yang memanggilnya
+  const calculateTimeLeft = (waktuSelesai) => {
+    if (!waktuSelesai) return 'Waktu Habis';
+    const selisihMs = new Date(waktuSelesai) - new Date();
+    if (selisihMs <= 0) return 'Waktu Habis';
+    const hari = Math.floor(selisihMs / (1000 * 60 * 60 * 24));
+    const jam = Math.floor((selisihMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
+    const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
+    if (hari > 0) return `${hari} Hari : ${jam} Jam : ${menit} Menit : ${detik} Detik`;
+    return `${jam} Jam : ${menit} Menit : ${detik} Detik`;
+  };
+
+  // Tick setiap detik agar timer di modal auto-update
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const timer = setInterval(() => setTick(t => t + 1), 1000);
+    return () => clearInterval(timer);
+  }, [isModalOpen]);
 
   // --- 2. STATE DATA UTAMA ---
   const [currentUser, setCurrentUser] = useState(null);
@@ -90,11 +112,6 @@ function StatusLelangContent() {
     };
 
     const fetchTabData = async () => {
-      console.log("--- FETCHING DATA ---");
-      console.log("Role:", activeRole);
-      console.log("Tab:", activeTab);
-      console.log("User ID:", currentUser?.id);
-
       setLoading(true);
       let fetchedData = [];
 
@@ -110,7 +127,6 @@ function StatusLelangContent() {
             case 'Sedang Diikuti':
               const { data: activeBids } = await supabase.from('bids').select('products(*)').eq('bidder_id', currentUser.id);
               const followedProds = extractUniqueProducts(activeBids);
-              console.log("Followed Prods Dates:", followedProds.map(p => p.waktu_selesai));
               fetchedData = followedProds.filter(p => p && new Date(p.waktu_selesai) > new Date());
               break;
             case 'Menang Lelang':
@@ -213,7 +229,7 @@ function StatusLelangContent() {
   // MODAL
   const handleOpenModal = async (item) => {
     setSelectedItem(item);
-    setActiveModalImage(item.image_urls?.[0] || '/assets/placeholder.png');
+    setActiveModalImage(item.image_urls?.[0] || 'https://placehold.co/600x400?text=No+Image');
     setIsModalOpen(true);
     setIsModalHistoryOpen(false);
 
@@ -223,7 +239,7 @@ function StatusLelangContent() {
 
   const [now, setNow] = useState(new Date());
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000);
+    const timer = setInterval(() => setNow(new Date()), 1000); // Update setiap 1 detik
     return () => clearInterval(timer);
   }, []);
 
@@ -238,16 +254,7 @@ function StatusLelangContent() {
     return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + ' pukul ' + date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
   };
 
-  const calculateTimeLeft = (waktuSelesai) => {
-    if (!waktuSelesai) return 'Waktu Habis';
-    const selisihMs = new Date(waktuSelesai) - now;
-    if (selisihMs <= 0) return 'Waktu Habis';
-    const hari = Math.floor(selisihMs / (1000 * 60 * 60 * 24));
-    const jam = Math.floor((selisihMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
-    if (hari > 0) return `${hari} Hari : ${jam} Jam : ${menit} Menit`;
-    return `${jam} Jam : ${menit} Menit`;
-  };
+
 
   return (
     <main className="page-container" style={{ padding: '0 5%', margin: '0 auto', minHeight: '80vh' }}>
@@ -277,7 +284,6 @@ function StatusLelangContent() {
       </div>
 
       <div style={{ minHeight: '400px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {console.log("Rendering Items Count:", items.length)}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '3rem' }}>Memuat...</div>
         ) : items.length === 0 ? (
@@ -345,8 +351,22 @@ function StatusLelangContent() {
                 </div>
                 <div style={{ marginTop: '1.5rem' }}>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Lelang Berakhir: <strong>{formatTanggalPukul(selectedItem.waktu_selesai)}</strong></p>
-                  <div style={{ background: '#FEF2F2', padding: '1rem', borderRadius: '8px', color: '#DC2626', fontWeight: 700, textAlign: 'center' }}>
-                    Sisa Waktu: {calculateTimeLeft(selectedItem.waktu_selesai)}
+                  <div style={{ padding: '1rem', textAlign: 'center' }}>
+                    <p style={{ margin: 0, color: '#1F2937', fontWeight: 700 }}>Sisa Waktu Lelang :</p>
+                    <div style={{ color: '#EF4444', fontSize: '1.5rem', fontWeight: 800, marginTop: '0.5rem' }}>
+                      {calculateTimeLeft(selectedItem.waktu_selesai)}
+                      {/* tick={tick} memaksa re-render setiap detik */}
+                      <span style={{display:'none'}}>{tick}</span>
+                    </div>
+                    {/* PROGRESS BAR DINAMIS */}
+                    <div style={{ width: '100%', height: '8px', background: '#E5E7EB', borderRadius: '4px', marginTop: '1.5rem', overflow: 'hidden' }}>
+                      <div style={{ 
+                        width: `${Math.max(0, Math.min(100, (new Date(selectedItem.waktu_selesai) - new Date()) / (new Date(selectedItem.waktu_selesai) - new Date(selectedItem.created_at || Date.now() - 86400000)) * 100))}%`, 
+                        height: '100%', 
+                        background: '#EF4444', 
+                        transition: 'width 1s linear' 
+                      }}></div>
+                    </div>
                   </div>
                 </div>
                 <button className="btn-primary-full" style={{ marginTop: '1.5rem' }} onClick={() => router.push(`/jelajahi/${selectedItem.id}`)}>Lihat Detail Penuh</button>
