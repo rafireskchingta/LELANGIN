@@ -338,8 +338,8 @@ function JelajahiContent() {
                     <div><i className="ph ph-map-pin"></i> Sukajadi, Bandung</div>
                   </div>
                 </div>
-              ))
-            )}
+              ));
+            })()}
           </div>
         </section>
       </div>
