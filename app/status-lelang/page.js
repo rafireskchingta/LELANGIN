@@ -254,6 +254,7 @@ function StatusLelangContent() {
   // Penentuan Status Badge Dinamis
   const getDynamicStatus = (item) => {
     if (item.status === 'dibatalkan') return { label: 'Dibatalkan', bg: '#FEF2F2', color: '#DC2626' };
+    if (item.status === 'menunggu') return { label: 'Menunggu', bg: '#E0E7FF', color: 'var(--primary)' };
     
     if (activeTab !== 'Semua') {
       if (activeTab === 'Menang Lelang' || activeTab === 'Selesai' || activeTab === 'Dikirim') return { label: activeTab, bg: '#ECFDF5', color: '#059669' };
@@ -262,7 +263,7 @@ function StatusLelangContent() {
     }
 
     const isFinished = new Date(item.waktu_selesai) <= currentTime;
-    if (isFinished) {
+    if (isFinished || item.status === 'selesai') {
       return { label: 'Selesai', bg: '#ECFDF5', color: '#059669' };
     } else {
       return { label: 'Berlangsung', bg: '#E0E7FF', color: 'var(--primary)' };
