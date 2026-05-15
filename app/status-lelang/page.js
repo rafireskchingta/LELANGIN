@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../../src/lib/supabase';
 import { fetchProductBids } from '../../src/services/productService';
@@ -9,6 +10,11 @@ function StatusLelangContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initRole = searchParams.get('role') || 'pembeli';
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // --- 1. STATE UI ---
   const [activeRole, setActiveRole] = useState(initRole);
@@ -272,6 +278,7 @@ function StatusLelangContent() {
   };
 
   return (
+    <>
     <main className="page-container" style={{ padding: '0 5%', margin: '0 auto', minHeight: '80vh' }}>
 
       {/* Banner Utama */}
@@ -392,9 +399,11 @@ function StatusLelangContent() {
           ))
         )}
       </div>
+    </main>
 
       {/* --- MODAL QUICK VIEW --- */}
-      <div className={`modal-overlay ${isModalOpen ? 'active' : ''}`} onClick={(e) => { if (e.target.classList.contains('modal-overlay')) setIsModalOpen(false) }}>
+      {mounted && typeof document !== 'undefined' && createPortal(
+        <div className={`modal-overlay ${isModalOpen ? 'active' : ''}`} onClick={(e) => { if (e.target.classList.contains('modal-overlay')) setIsModalOpen(false) }}>
         <div className={`modal modal-lg ${isModalOpen ? 'active' : ''}`} style={{ overflowY: 'auto', maxHeight: '90vh', padding: '2rem' }}>
           <button className="modal-close" onClick={() => setIsModalOpen(false)} style={{ zIndex: 10, position: 'absolute', top: '1.5rem', right: '1.5rem' }}><i className="ph ph-x"></i></button>
 
@@ -531,8 +540,8 @@ function StatusLelangContent() {
           )}
         </div>
       </div>
-
-    </main>
+      , document.body)}
+    </>
   );
 }
 

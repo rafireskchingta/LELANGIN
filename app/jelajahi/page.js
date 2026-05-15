@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, Suspense, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 // Import supabase untuk koneksi user dan favorit
@@ -11,6 +12,11 @@ function JelajahiContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialCategory = searchParams.get('kategori') || 'Semua';
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // --- 1. STATE UI ---
   const [isFilterOpen, setIsFilterOpen] = useState(true);
@@ -207,6 +213,7 @@ function JelajahiContent() {
   };
 
   return (
+    <>
     <main className="page-container">
       <div className="page-header mt-2">
         <h2><i className="ph ph-books"></i> Jelajahi Lelang</h2>
@@ -353,9 +360,11 @@ function JelajahiContent() {
           </div>
         </section>
       </div>
+    </main>
 
       {/* --- ITEM DETAIL MODAL (QUICK VIEW) --- */}
-      <div className={`modal-overlay ${isModalOpen ? 'active' : ''}`} id="itemDetailOverlay" onClick={(e) => { if (e.target.id === 'itemDetailOverlay') setIsModalOpen(false) }}>
+      {mounted && typeof document !== 'undefined' && createPortal(
+        <div className={`modal-overlay ${isModalOpen ? 'active' : ''}`} id="itemDetailOverlay" onClick={(e) => { if (e.target.id === 'itemDetailOverlay') setIsModalOpen(false) }}>
         <div className={`modal modal-lg ${isModalOpen ? 'active' : ''}`} id="itemDetailModal" style={{ overflowY: 'auto', maxHeight: '90vh' }}>
           <button className="modal-close" onClick={() => setIsModalOpen(false)} style={{ zIndex: 10 }}><i className="ph ph-x"></i></button>
 
@@ -502,7 +511,8 @@ function JelajahiContent() {
           )}
         </div>
       </div>
-    </main>
+      , document.body)}
+    </>
   );
 }
 
