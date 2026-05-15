@@ -255,8 +255,10 @@ function StatusLelangContent() {
                 });
                 fetchedData = myProds.filter(p => {
                   if (!p) return false;
-                  const s = (p.status || '').toLowerCase();
-                  const isOver = s === 'selesai' || new Date(p.waktu_selesai) <= new Date();
+                  const s = (p.status || '').toLowerCase().trim();
+                  const isFinalStatus = ['selesai', 'dikirim', 'sampai', 'proses', 'komplain'].includes(s);
+                  const isTimeExpired = new Date(p.waktu_selesai) <= new Date();
+                  const isOver = isFinalStatus || isTimeExpired;
                   const isWinner = topBidderMap[p.id] === currentUser.id;
                   
                   console.log(`[FINAL CHECK] Produk: ${p.nama_produk} | Status Asli DB: "${p.status}" | Selesai: ${isOver} | isWinner: ${isWinner}`);
