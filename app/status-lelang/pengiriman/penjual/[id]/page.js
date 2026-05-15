@@ -20,7 +20,7 @@ export default function PengirimanPenjualPage() {
       if (productId) {
         const productData = await fetchProductDetail(productId);
         setProduct(productData);
-        
+
         const trxData = await fetchTransaction(productId);
         setTransaction(trxData);
       }
@@ -62,8 +62,8 @@ export default function PengirimanPenjualPage() {
 
   return (
     <main className="page-container" style={{ padding: '2rem 5%', maxWidth: '800px', margin: '0 auto' }}>
-      <button 
-        onClick={() => router.back()} 
+      <button
+        onClick={() => router.back()}
         style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}
       >
         <i className="ph ph-arrow-left"></i> Kembali
@@ -111,11 +111,11 @@ export default function PengirimanPenjualPage() {
               <p style={{ fontSize: '0.85rem', color: '#4B5563', marginBottom: '1rem', textAlign: 'center' }}>
                 <i className="ph ph-info"></i> Dengan menekan tombol di bawah, sistem akan **otomatis membuatkan nomor resi** dan memberitahu pembeli bahwa barang sedang dikirim.
               </p>
-              <button 
+              <button
                 onClick={handleConfirmShipping} disabled={isSubmitting}
-                style={{ 
-                  width: '100%', padding: '1.25rem', borderRadius: '999px', border: 'none', 
-                  background: '#10B981', color: 'white', fontWeight: 800, fontSize: '1.1rem', 
+                style={{
+                  width: '100%', padding: '1.25rem', borderRadius: '999px', border: 'none',
+                  background: '#10B981', color: 'white', fontWeight: 800, fontSize: '1.1rem',
                   cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1,
                   boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)', transition: 'all 0.3s'
                 }}

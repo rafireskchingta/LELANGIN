@@ -231,6 +231,31 @@ function JelajahiContent() {
         }}>
           {timeLeft.replace('Dimulai Dalam: ', '')}
         </div>
+
+        {/* Progress Bar Dinamis */}
+        {!isExpired && !isSoon && (
+          <div style={{ width: '100%', height: '6px', background: '#E5E7EB', borderRadius: '10px', marginTop: '1rem', overflow: 'hidden' }}>
+            <div style={{ 
+              width: `${Math.max(0, Math.min(100, (new Date(item.waktu_selesai) - currentTime) / (new Date(item.waktu_selesai) - new Date(item.created_at || Date.now() - 86400000)) * 100))}%`, 
+              height: '100%', 
+              background: '#EF4444', 
+              transition: 'width 1s linear' 
+            }}></div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const CardTimer = ({ product }) => {
+    const [currentTime, setCurrentTime] = useState(new Date());
+    useEffect(() => {
+      const t = setInterval(() => setCurrentTime(new Date()), 1000);
+      return () => clearInterval(t);
+    }, []);
+    return (
+      <div className="badge-time">
+        <i className="ph ph-clock"></i> {calculateTimeLeft(product.waktu_selesai, product.waktu_mulai)}
       </div>
     );
   };
@@ -356,9 +381,7 @@ function JelajahiContent() {
             ) : (
               products.map((product) => (
                 <div key={product.id} onClick={() => openModal(product)} className="auction-card card-jelajahi" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', cursor: 'pointer', height: '100%' }}>
-                  <div className="badge-time">
-                    <i className="ph ph-clock"></i> {calculateTimeLeft(product.waktu_selesai, product.waktu_mulai)}
-                  </div>
+                  <CardTimer product={product} />
                   <img src={product.image_urls?.[0] || '/assets/placeholder.png'} alt={product.nama_produk} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem', marginTop: '1rem' }}>
                     <div className="auction-price" style={{ marginBottom: 0, fontSize: '1.25rem', color: 'var(--primary)' }}>

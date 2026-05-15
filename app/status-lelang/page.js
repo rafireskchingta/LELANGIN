@@ -100,6 +100,31 @@ function StatusLelangContent() {
         }}>
           {timeLeft.replace('Dimulai Dalam: ', '')}
         </div>
+        
+        {/* Progress Bar Dinamis */}
+        {!isExpired && !isSoon && (
+          <div style={{ width: '100%', height: '6px', background: '#E5E7EB', borderRadius: '10px', marginTop: '1rem', overflow: 'hidden' }}>
+            <div style={{ 
+              width: `${Math.max(0, Math.min(100, (new Date(item.waktu_selesai) - currentTime) / (new Date(item.waktu_selesai) - new Date(item.created_at || Date.now() - 86400000)) * 100))}%`, 
+              height: '100%', 
+              background: '#EF4444', 
+              transition: 'width 1s linear' 
+            }}></div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const CardTimer = ({ item }) => {
+    const [currentTime, setCurrentTime] = useState(new Date());
+    useEffect(() => {
+      const t = setInterval(() => setCurrentTime(new Date()), 1000);
+      return () => clearInterval(t);
+    }, []);
+    return (
+      <div style={{ fontSize: '0.75rem', color: '#EF4444', fontWeight: 600, minWidth: '150px', textAlign: 'right' }}>
+        {calculateTimeLeft(item.waktu_selesai, item.waktu_mulai)}
       </div>
     );
   };
@@ -461,9 +486,7 @@ function StatusLelangContent() {
                   )}
                 </span>
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#EF4444', fontWeight: 600, minWidth: '150px', textAlign: 'right' }}>
-                {calculateTimeLeft(item.waktu_selesai, item.waktu_mulai)}
-              </div>
+              <CardTimer item={item} />
             </div>
           ))
         )}

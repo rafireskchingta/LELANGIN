@@ -34,14 +34,14 @@ export default function PembayaranPage() {
       if (productId) {
         const productData = await fetchProductDetail(productId);
         setProduct(productData);
-        
+
         // Cek jika sudah ada transaksi sebelumnya
         const { data: existingTrx } = await supabase
           .from('transactions')
           .select('*')
           .eq('product_id', productId)
           .maybeSingle();
-        
+
         if (existingTrx) {
           setFormData({
             recipient_name: existingTrx.recipient_name || '',
@@ -79,7 +79,7 @@ export default function PembayaranPage() {
       };
 
       const result = await upsertTransaction(trxData);
-      
+
       if (result) {
         if (typeof window !== 'undefined' && window.showToast) {
           window.showToast('Alamat berhasil disimpan! Silakan lakukan pembayaran.', 'success');
@@ -98,8 +98,8 @@ export default function PembayaranPage() {
 
   return (
     <main className="page-container" style={{ padding: '2rem 5%', maxWidth: '800px', margin: '0 auto' }}>
-      <button 
-        onClick={() => router.back()} 
+      <button
+        onClick={() => router.back()}
         style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}
       >
         <i className="ph ph-arrow-left"></i> Kembali
@@ -113,7 +113,7 @@ export default function PembayaranPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div className="form-group">
               <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.9rem' }}>Nama Penerima</label>
-              <input 
+              <input
                 type="text" name="recipient_name" value={formData.recipient_name} onChange={handleInputChange}
                 placeholder="Nama Lengkap" required
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #D1D5DB' }}
@@ -121,7 +121,7 @@ export default function PembayaranPage() {
             </div>
             <div className="form-group">
               <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.9rem' }}>Nomor Telepon</label>
-              <input 
+              <input
                 type="text" name="phone_number" value={formData.phone_number} onChange={handleInputChange}
                 placeholder="Contoh: 0812xxxx" required
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #D1D5DB' }}
@@ -132,7 +132,7 @@ export default function PembayaranPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div className="form-group">
               <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.9rem' }}>Provinsi (Pulau Jawa)</label>
-              <select 
+              <select
                 name="provinsi" value={formData.provinsi} onChange={handleInputChange} required
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #D1D5DB', background: 'white' }}
               >
@@ -147,7 +147,7 @@ export default function PembayaranPage() {
             </div>
             <div className="form-group">
               <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.9rem' }}>Kota/Kabupaten</label>
-              <input 
+              <input
                 type="text" name="kota" value={formData.kota} onChange={handleInputChange}
                 placeholder="Masukkan Nama Kota" required
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #D1D5DB' }}
@@ -157,7 +157,7 @@ export default function PembayaranPage() {
 
           <div className="form-group">
             <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.9rem' }}>Alamat Lengkap</label>
-            <textarea 
+            <textarea
               name="alamat_lengkap" value={formData.alamat_lengkap} onChange={handleInputChange}
               placeholder="Nama jalan, nomor rumah, RT/RW, Kecamatan" required
               style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #D1D5DB', minHeight: '100px', fontFamily: 'inherit' }}
@@ -167,7 +167,7 @@ export default function PembayaranPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
             <div className="form-group">
               <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.9rem' }}>Kode Pos</label>
-              <input 
+              <input
                 type="number" name="kode_pos" value={formData.kode_pos} onChange={handleInputChange}
                 placeholder="Contoh: 12345" required
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #D1D5DB' }}
@@ -175,7 +175,7 @@ export default function PembayaranPage() {
             </div>
             <div className="form-group">
               <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.9rem' }}>Catatan Tambahan (Opsional)</label>
-              <input 
+              <input
                 type="text" name="detail_lainnya" value={formData.detail_lainnya} onChange={handleInputChange}
                 placeholder="Warna pagar, patokan, dll"
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #D1D5DB' }}
@@ -191,11 +191,11 @@ export default function PembayaranPage() {
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>*Pembayaran dapat dilakukan melalui Transfer Bank/E-Wallet setelah alamat disimpan.</p>
           </div>
 
-          <button 
+          <button
             type="submit" disabled={isSubmitting}
-            style={{ 
-              width: '100%', padding: '1rem', borderRadius: '999px', border: 'none', 
-              background: 'var(--primary)', color: 'white', fontWeight: 700, fontSize: '1rem', 
+            style={{
+              width: '100%', padding: '1rem', borderRadius: '999px', border: 'none',
+              background: 'var(--primary)', color: 'white', fontWeight: 700, fontSize: '1rem',
               cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1,
               marginTop: '1rem', transition: 'all 0.2s'
             }}
