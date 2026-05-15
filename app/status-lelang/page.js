@@ -63,6 +63,89 @@ function StatusLelangContent() {
   const penjualTabs = ['All', 'Sedang Berlangsung', 'Selesai', 'Dibatalkan'];
   const currentTabs = activeRole === 'pembeli' ? pembeliTabs : penjualTabs;
 
+  // BUKA MODAL QUICK VIEW
+  const handleOpenModal = async (item) => {
+    setSelectedItem(item);
+    setActiveModalImage(item.image_urls?.[0] || '/assets/placeholder.png');
+    setIsModalOpen(true);
+    setIsModalHistoryOpen(false);
+
+    const { data: bidsData } = await supabase.from('bids').select('*, profiles(username)').eq('product_id', item.id).order('amount', { ascending: false });
+    setModalBids(bidsData || []);
+  };
+
+  // FORMATTER
+  const formatRupiah = (angka) => {
+    if (!angka) return '0';
+    return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  const formatTanggalPukul = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    const optionsTanggal = { day: 'numeric', month: 'long', year: 'numeric' };
+    const tanggal = date.toLocaleDateString('id-ID', optionsTanggal);
+    const waktu = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
+    return `${tanggal} pukul ${waktu}`;
+  };
+
+  const calculateTimeLeft = (waktuSelesai) => {
+    if (!waktuSelesai) return 'Waktu Habis';
+    const selisihMs = new Date(waktuSelesai) - currentTime;
+    if (selisihMs <= 0) return 'Waktu Habis';
+
+    const hari = Math.floor(selisihMs / (1000 * 60 * 60 * 24));
+    const jam = Math.floor((selisihMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
+    const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
+
+    if (hari > 0) return `${hari} Hari : ${jam} Jam : ${menit} Menit`;
+    if (jam > 0) return `${jam} Jam : ${menit} Menit`;
+    return `${menit} Menit : ${detik} Detik`;
+  };
+
+  // Penentuan Warna Harga Khusus Pembeli
+  const getPriceColor = () => {
+    if (activeRole === 'pembeli') {
+      if (activeTab === 'Menang Lelang') return '#10B981'; // Hijau
+      if (activeTab === 'Kalah Lelang') return '#EF4444'; // Merah
+    } else {
+      if (activeTab === 'Selesai') return '#10B981';
+      if (activeTab === 'Dibatalkan') return '#EF4444';
+    }
+    return 'var(--text-main)'; // Hitam Netral
+  };
+
+  // Penentuan Teks Info Harga
+  const getPriceLabel = () => {
+    if (activeRole === 'pembeli') {
+      if (activeTab === 'Menang Lelang' || activeTab === 'Kalah Lelang') return 'Penawaran Anda';
+      return 'Harga Terakhir';
+    } else {
+      if (activeTab === 'Selesai') return 'Terjual Seharga';
+      return 'Bid Tertinggi Saat Ini';
+    }
+  };
+
+  // Penentuan Status Badge Dinamis
+  const getDynamicStatus = (item) => {
+    if (item.status === 'dibatalkan') return { label: 'Dibatalkan', bg: '#FEF2F2', color: '#DC2626' };
+    if (item.status === 'menunggu') return { label: 'Menunggu', bg: '#E0E7FF', color: 'var(--primary)' };
+    
+    if (activeTab !== 'Semua') {
+      if (activeTab === 'Menang Lelang' || activeTab === 'Selesai' || activeTab === 'Dikirim') return { label: activeTab, bg: '#ECFDF5', color: '#059669' };
+      if (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan') return { label: activeTab, bg: '#FEF2F2', color: '#DC2626' };
+      return { label: activeTab, bg: '#E0E7FF', color: 'var(--primary)' };
+    }
+
+    const isFinished = new Date(item.waktu_selesai) <= currentTime;
+    if (isFinished || item.status === 'selesai') {
+      return { label: 'Selesai', bg: '#ECFDF5', color: '#059669' };
+    } else {
+      return { label: 'Berlangsung', bg: '#E0E7FF', color: 'var(--primary)' };
+    }
+  };
+
   return (
     <main className="page-container" style={{ maxWidth: 'none', padding: '0 5%', margin: '0 auto', minHeight: '80vh' }}>
 
