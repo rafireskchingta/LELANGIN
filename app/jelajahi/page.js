@@ -192,9 +192,13 @@ function JelajahiContent() {
     const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
     const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
 
-    if (hari > 0) return `${hari} Hari : ${jam} Jam : ${menit} Menit`;
-    if (jam > 0) return `${jam} Jam : ${menit} Menit`;
-    return `${menit} Menit : ${detik} Detik`;
+    if (hari > 0) return `${hari} Hari`;
+    if (jam > 0) return `${jam} Jam`;
+    if (menit > 0) return `${menit} Menit`;
+    
+    // Format detik jadi 2 digit agar layout tidak melompat (misal: "09 Detik")
+    const detikStr = String(detik).padStart(2, '0');
+    return `${detikStr} Detik`;
   };
 
   return (
@@ -309,37 +313,38 @@ function JelajahiContent() {
             </div>
           </div>
 
-          <div className="jelajahi-grid smooth-fade" key={activeCategory}>
-            {(() => {
-              const title = 'Toshiba Front Loading Washing Machine TW-BK115G4F(SK) 10.5kg';
-              const items = [1, 2, 3, 4, 5, 6, 7, 8].filter(i => !searchQuery || title.toLowerCase().includes(searchQuery.toLowerCase()));
-
-              if (items.length === 0) {
-                return <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Tidak ada barang lelang yang sesuai dengan pencarian.</div>;
-              }
-
-              return items.map((i) => (
-                <div key={i} onClick={() => setIsModalOpen(true)} className="auction-card card-jelajahi" style={{ textDecoration: 'none', color: 'inherit', display: 'block', cursor: 'pointer' }}>
-                  <div className="badge-time"><i className="ph ph-clock"></i> 12 Hari</div>
-                  <img src="/assets/washer.png" alt="Washing Machine" />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                    <div className="auction-price" style={{ marginBottom: 0, fontSize: '1.25rem' }}>Rp 7.000.000</div>
+          {/* Grid Auto-fill Responsive */}
+          <div className="jelajahi-grid smooth-fade" key={activeCategory} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem', width: '100%' }}>
+            {loading ? (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Memuat data produk...</div>
+            ) : products.length === 0 ? (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Tidak ada barang lelang yang sesuai dengan pencarian/filter.</div>
+            ) : (
+              products.map((product) => (
+                <div key={product.id} onClick={() => openModal(product)} className="auction-card card-jelajahi" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', cursor: 'pointer', height: '100%' }}>
+                  <div className="badge-time"><i className="ph ph-clock"></i> {calculateTimeLeft(product.waktu_selesai)}</div>
+                  <img src={product.image_urls?.[0] || '/assets/placeholder.png'} alt={product.nama_produk} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem', marginTop: '1rem' }}>
+                    <div className="auction-price" style={{ marginBottom: 0, fontSize: '1.25rem', color: 'var(--primary)' }}>
+                      Rp {formatRupiah(product.current_price || product.harga_awal)}
+                    </div>
                     <i
-                      className={`${favorites.includes(i) ? 'ph-fill' : 'ph'} ph-heart`}
-                      style={{ color: favorites.includes(i) ? 'var(--danger)' : 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s', fontSize: '1.25rem' }}
-                      onClick={(e) => toggleFavorite(i, e)}
+                      className={`${favorites.includes(product.id) ? 'ph-fill' : 'ph'} ph-heart`}
+                      style={{ color: favorites.includes(product.id) ? 'var(--danger)' : 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s', fontSize: '1.25rem' }}
+                      onClick={(e) => toggleFavorite(product.id, e)}
                     ></i>
                   </div>
-                  <div className="auction-title" style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>Toshiba Front Loading Washing
-                    Machine TW-BK115G4F(SK) 10.5kg</div>
-                  <div className="auction-meta">
-                    <div>2025 | Washing Machine</div>
-                    <div><i className="ph ph-calendar"></i> 12 Maret 2026</div>
-                    <div><i className="ph ph-map-pin"></i> Sukajadi, Bandung</div>
+                  <div className="auction-title" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600, flexGrow: 1 }}>
+                    {product.nama_produk}
+                  </div>
+                  <div className="auction-meta" style={{ fontSize: '0.8rem', color: '#6B7280', marginTop: 'auto' }}>
+                    <div>{product.tahun_produksi} | {product.merk}</div>
+                    <div><i className="ph ph-calendar"></i> {new Date(product.waktu_selesai).toLocaleDateString('id-ID')}</div>
+                    <div><i className="ph ph-map-pin"></i> {product.lokasi}</div>
                   </div>
                 </div>
-              ));
-            })()}
+              ))
+            )}
           </div>
         </section>
       </div>
