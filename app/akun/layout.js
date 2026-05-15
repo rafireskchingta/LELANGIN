@@ -72,8 +72,20 @@ export default function AkunLayout({ children }) {
     e.preventDefault();
     localStorage.removeItem('lelangin_user');
     localStorage.removeItem('isLoggedIn');
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('Supabase signout failed, continuing local logout', err);
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('sb-')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+    }
     window.dispatchEvent(new Event('auth-change'));
-    await supabase.auth.signOut();
 
     if (typeof window !== 'undefined' && window.showToast) {
       window.showToast('Berhasil keluar!', 'info');

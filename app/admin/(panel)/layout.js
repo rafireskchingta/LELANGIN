@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
+import { supabase } from '../../../src/lib/supabase';
 
   function AdminPanelLayoutContent({ children }) {
     const pathname = usePathname();
@@ -16,10 +17,30 @@ import { useEffect, useState, Suspense } from 'react';
     }, [pathname, searchParams]);
 
     useEffect(() => {
-      const isAdminLoggedIn = localStorage.getItem('isAdminLoggedIn');
-      if (!isAdminLoggedIn) {
-        router.push('/');
-      }
+      // FIX B-04: Verifikasi session Supabase + role admin, bukan hanya localStorage
+      const verifyAdmin = async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            router.push('/');
+            return;
+          }
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+          if (!profile || profile.role !== 'admin') {
+            router.push('/');
+            return;
+          }
+          // Simpan flag lokal hanya sebagai cache UI, bukan sumber kebenaran
+          localStorage.setItem('isAdminLoggedIn', 'true');
+        } catch {
+          router.push('/');
+        }
+      };
+      verifyAdmin();
     }, [router]);
 
     const handleLogout = (e) => {

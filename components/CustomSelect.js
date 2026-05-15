@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 
-export default function CustomSelect({ options, value, onChange, placeholder = "Pilih", disabled = false, error = false }) {
+export default function CustomSelect({ options = [], value, onChange, placeholder = "Pilih", disabled = false, error = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 

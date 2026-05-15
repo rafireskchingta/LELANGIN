@@ -21,6 +21,9 @@ export default function AkunPenjualPage() {
   const [ktpFile, setKtpFile] = useState(null);
   const [ktpPreview, setKtpPreview] = useState(null);
   const [ktpUrl, setKtpUrl] = useState(null);
+  // FIX B-13: Simpan nilai KTP asli untuk restore saat batal
+  const [originalKtpPreview, setOriginalKtpPreview] = useState(null);
+  const [originalKtpUrl, setOriginalKtpUrl] = useState(null);
   const [ktpUploading, setKtpUploading] = useState(false);
   const [ktpDragOver, setKtpDragOver] = useState(false);
   const [currentAppId, setCurrentAppId] = useState(null);
@@ -110,10 +113,14 @@ export default function AkunPenjualPage() {
         // Load KTP jika sudah ada
         if (sellerApp?.ktp_url) {
           setKtpUrl(sellerApp.ktp_url);
+          setOriginalKtpUrl(sellerApp.ktp_url); // FIX B-13
           const { data: signed } = await supabase.storage
             .from('ktp-uploads')
             .createSignedUrl(sellerApp.ktp_url, 60 * 60);
-          if (signed?.signedUrl) setKtpPreview(signed.signedUrl);
+          if (signed?.signedUrl) {
+            setKtpPreview(signed.signedUrl);
+            setOriginalKtpPreview(signed.signedUrl); // FIX B-13
+          }
         }
         
         // Simpan ID pengajuan saat ini
@@ -224,11 +231,11 @@ export default function AkunPenjualPage() {
   const handleBatal = () => {
     if (originalPenjual) {
       setPenjual(originalPenjual);
-      // Reset KTP preview jika ada perubahan file yang belum diupload
-      if (originalPenjual.ktp_url) {
-        // Preview akan terupdate otomatis jika ktpUrl ada
-      }
     }
+    // FIX B-13: Restore KTP preview dan URL ke nilai asli sebelum edit
+    setKtpFile(null);
+    setKtpPreview(originalKtpPreview);
+    setKtpUrl(originalKtpUrl);
     setIsEditMode(false);
   };
 
@@ -459,7 +466,7 @@ export default function AkunPenjualPage() {
             />
             <CustomSelect 
               disabled={!isEditMode || sellerStatus === 'menunggu'}
-              options={Array.from({ length: 30 }, (_, i) => ({ label: String(1995 + i), value: String(1995 + i) }))}
+              options={Array.from({ length: 66 }, (_, i) => ({ label: String(1950 + i), value: String(1950 + i) }))}
               value={penjual.tglLahirTahun}
               onChange={(val) => setPenjual(prev => ({ ...prev, tglLahirTahun: val }))}
               placeholder="Tahun"

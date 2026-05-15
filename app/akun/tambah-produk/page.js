@@ -145,9 +145,18 @@ export default function TambahProdukPage() {
       }
     }
 
-    // Prioritize "lengkapi field" if text fields are missing
-    if (Object.keys(errors).some(k => !['images', 'tglMulai', 'waktuMulai', 'tglSelesai', 'waktuSelesai'].includes(k)) || (!tglMulai || !waktuMulai || !tglSelesai || !waktuSelesai)) {
-      mainErrorMsg = 'Mohon lengkapi semua field bertanda *';
+    // FIX B-06: Pisahkan prioritas pesan - field kosong vs error logika tanggal
+    // Hanya override mainErrorMsg dengan pesan field kosong jika field non-tanggal kosong
+    const hasEmptyNonDateFields = Object.keys(errors).some(k =>
+      !['images', 'tglMulai', 'waktuMulai', 'tglSelesai', 'waktuSelesai'].includes(k)
+    );
+    const hasMissingDateFields = !tglMulai || !waktuMulai || !tglSelesai || !waktuSelesai;
+
+    if (hasEmptyNonDateFields || hasMissingDateFields) {
+      // Hanya timpa jika belum ada pesan error logika tanggal yang lebih spesifik
+      if (!mainErrorMsg || hasMissingDateFields) {
+        mainErrorMsg = 'Mohon lengkapi semua field bertanda *';
+      }
     }
 
     // Show combined errors
@@ -195,39 +204,47 @@ export default function TambahProdukPage() {
 
       // 3. Insert Product
       const numericHarga = parseInt(hargaAwal.replace(/\./g, ''), 10);
+      const productData = {
+        seller_id: userId,
+        nama_produk: namaProduk,
+        kategori: kategori,
+        kondisi: kondisi,
+        merk: merk,
+        model: model,
+        warna: warna,
+        tahun_produksi: parseInt(tahunProduk, 10),
+        daya_listrik: dayaListrik,
+        kapasitas: kapasitas,
+        tegangan: tegangan,
+        kondisi_fisik: kondisiFisik,
+        kelengkapan: kelengkapan,
+        estetika_tampilan: estetika,
+        dokumen_pendukung: dokumen,
+        kemasan_box: kemasan,
+        aksesoris_tambahan: aksesoris,
+        harga_awal: numericHarga,
+        current_price: numericHarga,
+        waktu_mulai: startDateTime.toISOString(),
+        waktu_selesai: endDateTime.toISOString(),
+        image_urls: uploadedUrls,
+        lokasi: sellerLokasi,
+        status: 'menunggu'
+      };
+
+      console.log("[TambahProduk] DATA YANG DIKIRIM KE DB:", productData);
       
-      const { error: insertError } = await supabase
+      const { data: insertedData, error: insertError } = await supabase
         .from('products')
-        .insert({
-          seller_id: userId,
-          nama_produk: namaProduk,
-          kategori: kategori,
-          kondisi: kondisi,
-          merk: merk,
-          model: model,
-          warna: warna,
-          tahun_produksi: parseInt(tahunProduk, 10),
-          daya_listrik: dayaListrik,
-          kapasitas: kapasitas,
-          tegangan: tegangan,
-          kondisi_fisik: kondisiFisik,
-          kelengkapan: kelengkapan,
-          estetika_tampilan: estetika,
-          dokumen_pendukung: dokumen,
-          kemasan_box: kemasan,
-          aksesoris_tambahan: aksesoris,
-          harga_awal: numericHarga,
-          current_price: numericHarga,
-          waktu_mulai: startDateTime.toISOString(),
-          waktu_selesai: endDateTime.toISOString(),
-          image_urls: uploadedUrls,
-          lokasi: sellerLokasi,
-          status: 'menunggu'
-        });
+        .insert(productData);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("[TambahProduk] Gagal Simpan:", insertError);
+        throw insertError;
+      }
+      console.log("[TambahProduk] Berhasil Simpan Data:", insertedData);
 
-      alert('Berhasil menambah produk! Produk dalam status "Menunggu" persetujuan Admin.');
+      // FIX B-05: Gunakan showToast konsisten, bukan alert() native
+      showToast('Berhasil menambah produk! Produk dalam status "Menunggu" persetujuan Admin.', 'success');
       router.push('/status-lelang?role=penjual');
 
     } catch (error) {

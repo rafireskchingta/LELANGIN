@@ -113,7 +113,26 @@ export default function DetailPage() {
     if (!product?.waktu_selesai) return;
 
     const timer = setInterval(() => {
-      const selisihMs = new Date(product.waktu_selesai) - new Date();
+      const now = new Date();
+      const start = product.waktu_mulai ? new Date(product.waktu_mulai) : null;
+      const end = new Date(product.waktu_selesai);
+
+      if (start && now < start) {
+        const selisihMs = start - now;
+        const hari = Math.floor(selisihMs / (1000 * 60 * 60 * 24));
+        const jam = Math.floor((selisihMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
+        const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
+
+        if (hari > 0) {
+          setTimeLeft(`Dimulai Dalam: ${hari} Hari : ${jam} Jam : ${menit} Menit : ${detik} Detik`);
+        } else {
+          setTimeLeft(`Dimulai Dalam: ${jam} Jam : ${menit} Menit : ${detik} Detik`);
+        }
+        return;
+      }
+
+      const selisihMs = end - now;
 
       if (selisihMs <= 0) {
         setTimeLeft('Waktu Habis');
@@ -134,7 +153,7 @@ export default function DetailPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [product?.waktu_selesai]);
+  }, [product?.waktu_selesai, product?.waktu_mulai]);
 
   // --- LOGIKA BID ---
   const handleSubmitBid = async (e) => {
@@ -142,6 +161,13 @@ export default function DetailPage() {
 
     if (!currentUser) {
       showToast('Anda harus login terlebih dahulu!', 'error');
+      return;
+    }
+
+    const now = new Date();
+    const start = product.waktu_mulai ? new Date(product.waktu_mulai) : null;
+    if (start && now < start) {
+      showToast('Lelang belum dimulai!', 'error');
       return;
     }
 
@@ -344,8 +370,9 @@ export default function DetailPage() {
                   <span className="user-tag">-</span>
                 )}
               </div>
-              <div className="price-huge text-right" style={{ color: priceColor, fontSize: '2.2rem', fontWeight: 800 }}>
-                Rp {formatCurrency(currentDisplayPrice)}
+              <div className="price-huge text-right" style={{ color: priceColor, fontSize: '2.4rem', fontWeight: 800, lineHeight: 1.1 }}>
+                <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: '0.2rem' }}>Rp</span>
+                {formatCurrency(currentDisplayPrice)}
               </div>
             </div>
 
@@ -368,6 +395,12 @@ export default function DetailPage() {
 
             <div className="info-lelang-section border-top-bottom" style={{ borderTop: '1px solid #E5E7EB', borderBottom: '1px solid #E5E7EB', padding: '1.5rem 0', margin: '1.5rem 0' }}>
               <h4 style={{ marginBottom: '1rem' }}>Informasi Lelang</h4>
+              {new Date(product.waktu_mulai) > new Date() && (
+                <div className="info-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span className="label" style={{ color: 'var(--text-muted)' }}>Lelang Dimulai</span>
+                  <span className="value" style={{ fontWeight: 600 }}>{formatDate(product.waktu_mulai)}</span>
+                </div>
+              )}
               <div className="info-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                 <span className="label" style={{ color: 'var(--text-muted)' }}>Lelang Berakhir</span>
                 <span className="value" style={{ fontWeight: 600 }}>{formatDate(product.waktu_selesai)}</span>
@@ -379,18 +412,23 @@ export default function DetailPage() {
             </div>
 
             <div className="countdown-section text-center" style={{ marginBottom: '2rem' }}>
-              <p>Sisa Waktu Lelang :</p>
-              <div className="countdown-timer" style={{ color: '#EF4444', fontWeight: 'bold', fontSize: '1.5rem' }}>
-                {timeLeft}
+              <p>{timeLeft.startsWith('Dimulai Dalam') ? 'Lelang Dimulai Dalam :' : 'Sisa Waktu Lelang :'}</p>
+              <div className="countdown-timer" style={{ color: timeLeft.startsWith('Dimulai Dalam') ? 'var(--primary)' : '#EF4444', fontWeight: 'bold', fontSize: '1.5rem' }}>
+                {timeLeft.startsWith('Dimulai Dalam') ? timeLeft.replace('Dimulai Dalam: ', '') : timeLeft}
               </div>
               <div className="progress-bar" style={{ background: '#E5E7EB', height: '8px', borderRadius: '4px', marginTop: '0.5rem', overflow: 'hidden' }}>
-                {/* FIX B-07: Hitung progress nyata dari waktu mulai dan selesai */}
                 <div className="progress-fill" style={{
                   width: (() => {
                     if (timeLeft === 'Waktu Habis') return '100%';
                     if (!product?.waktu_mulai || !product?.waktu_selesai) return '0%';
-                    const total = new Date(product.waktu_selesai) - new Date(product.waktu_mulai);
-                    const elapsed = new Date() - new Date(product.waktu_mulai);
+                    const now = new Date();
+                    const start = new Date(product.waktu_mulai);
+                    const end = new Date(product.waktu_selesai);
+                    
+                    if (now < start) return '0%';
+                    
+                    const total = end - start;
+                    const elapsed = now - start;
                     const pct = Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
                     return `${pct}%`;
                   })(),
@@ -414,7 +452,22 @@ export default function DetailPage() {
                     required
                     style={{ flex: 1, padding: '0.75rem', border: '1px solid #D1D5DB', outline: 'none', fontSize: '1rem', minWidth: '0' }}
                   />
-                  <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem', background: '#4F46E5', color: 'white', borderRadius: '0 8px 8px 0', border: '1px solid #4F46E5', cursor: 'pointer', fontWeight: 'bold' }}>Tawar</button>
+                  <button 
+                    type="submit" 
+                    className="btn-primary" 
+                    disabled={timeLeft.startsWith('Dimulai Dalam') || timeLeft === 'Waktu Habis'}
+                    style={{ 
+                      padding: '0.75rem 1.5rem', 
+                      background: (timeLeft.startsWith('Dimulai Dalam') || timeLeft === 'Waktu Habis') ? '#9CA3AF' : '#4F46E5', 
+                      color: 'white', 
+                      borderRadius: '0 8px 8px 0', 
+                      border: '1px solid #4F46E5', 
+                      cursor: (timeLeft.startsWith('Dimulai Dalam') || timeLeft === 'Waktu Habis') ? 'not-allowed' : 'pointer', 
+                      fontWeight: 'bold' 
+                    }}
+                  >
+                    {timeLeft.startsWith('Dimulai Dalam') ? 'Segera' : 'Tawar'}
+                  </button>
                 </div>
               </form>
             </div>

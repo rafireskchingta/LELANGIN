@@ -210,3 +210,51 @@ export async function fetchProductBids(productId, limit = 50) {
     return [];
   }
 }
+
+/**
+ * Create or update a transaction record
+ * @param {Object} trxData - Transaction data including product_id and shipping info
+ * @returns {Promise<Object>} Inserted/Updated transaction data
+ */
+export async function upsertTransaction(trxData) {
+  try {
+    const { data, error } = await supabase
+      .from('transactions')
+      .upsert(trxData, { onConflict: 'product_id' })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error in upsertTransaction:', error.message);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    console.error('Error in upsertTransaction catch:', err);
+    return null;
+  }
+}
+
+/**
+ * Fetch transaction detail for a product
+ * @param {string} productId - Product ID
+ * @returns {Promise<Object>} Transaction data
+ */
+export async function fetchTransactionDetail(productId) {
+  try {
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('product_id', productId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error in fetchTransactionDetail:', error.message);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    console.error('Error in fetchTransactionDetail catch:', err);
+    return null;
+  }
+}

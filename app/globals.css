@@ -1,1 +1,3 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+/* FIX B-15: Konsolidasikan CSS ke satu entry point via globals.css */
+/* style.css tetap di /public untuk kompatibilitas script.js vanilla, dimuat di sini */

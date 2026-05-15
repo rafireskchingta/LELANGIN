@@ -52,7 +52,7 @@ export default function TitipLelangPage() {
             .from('products')
             .select('id, nama_produk, kategori, harga_awal, status, waktu_selesai')
             .eq('seller_id', session.user.id)
-            .eq('status', 'aktif')
+            .is('deleted_at', null)
             .order('created_at', { ascending: false });
 
           if (produkError) {
@@ -80,6 +80,7 @@ export default function TitipLelangPage() {
     if (!confirm(`Hapus ${selected.length} produk yang dipilih?`)) return;
     setDeleting(true);
     try {
+      // Mencoba hapus permanen jika update dilarang oleh RLS
       const { error } = await supabase
         .from('products')
         .delete()
@@ -146,7 +147,7 @@ export default function TitipLelangPage() {
           {/* Action bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
             <p style={{ margin: 0, fontSize: '0.875rem', color: '#6B7280' }}>
-              {produkList.length} produk aktif
+              {produkList.length} produk
               {selected.length > 0 && ` · ${selected.length} dipilih`}
             </p>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

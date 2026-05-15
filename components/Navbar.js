@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
+import { supabase } from '../src/lib/supabase';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -14,19 +15,43 @@ export default function Navbar() {
   const isAkun = pathname.startsWith('/akun');
 
   useEffect(() => {
-    if (isAdmin) return; // Skip untuk halaman admin
-    const checkLogin = () => {
-      if (typeof window !== 'undefined') {
-        const loggedInStatus = localStorage.getItem('isLoggedIn');
-        setIsLoggedIn(loggedInStatus === 'true');
+    if (isAdmin) return;
+    const checkLogin = async () => {
+      if (typeof window === 'undefined') return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setIsLoggedIn(true);
+          localStorage.setItem('isLoggedIn', 'true');
+        } else {
+          setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+        }
+      } catch {
+        setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
       }
     };
-    
+
     checkLogin();
-    
-    // Dengarkan event kustom 'auth-change' jika diloginkan
     window.addEventListener('auth-change', checkLogin);
-    return () => window.removeEventListener('auth-change', checkLogin);
+
+    // FIX: Dengarkan perubahan sesi langsung dari Supabase
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setIsLoggedIn(false);
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('lelangin_user');
+      } else if (session) {
+        setIsLoggedIn(true);
+        localStorage.setItem('isLoggedIn', 'true');
+      }
+    });
+
+    return () => {
+      window.removeEventListener('auth-change', checkLogin);
+      if (authListener && authListener.subscription) {
+        authListener.subscription.unsubscribe();
+      }
+    };
   }, [isAdmin]);
 
   // Update sliding indicator kapanpun pathname berubah atau component di-mount

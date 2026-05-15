@@ -1,9 +1,31 @@
 "use client";
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../src/lib/supabase';
 
 export default function HomePage() {
   const [activeFaq, setActiveFaq] = useState(0);
+  // FIX B-11: Ganti kartu hardcoded dengan data dinamis dari Supabase
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('id, nama_produk, harga_awal, current_price, image_urls, lokasi, waktu_selesai')
+        .eq('status', 'aktif')
+        .is('deleted_at', null)
+        .order('waktu_mulai', { ascending: false })
+        .limit(4);
+      if (data) setFeaturedProducts(data);
+    };
+    fetchFeatured();
+  }, []);
+
+  const formatRupiah = (angka) => {
+    if (!angka) return '0';
+    return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
 
   const toggleFaq = (index) => {
     setActiveFaq(activeFaq === index ? -1 : index);
@@ -65,25 +87,27 @@ export default function HomePage() {
             <Link href="/jelajahi" className="auctions-view-all">Lihat Semua <i className="ph ph-plus-circle"></i></Link>
           </div>
           <div className="auctions-list">
-            {/* Card 1 */}
-            <div className="auction-card">
-              <div className="auction-fav"><i className="ph ph-heart"></i></div>
-              <img src="/assets/tv.png" alt="TV Android" />
-              <div className="auction-price">Rp 5.000.000</div>
-              <div className="auction-price-old">Rp 7.299.000</div>
-              <div className="auction-title">TV Android POLYTRON Smart Android TV 32 inch PLD 32AG5759</div>
-              <div className="auction-location">Kalipancur, Semarang</div>
-            </div>
-
-            {/* Card 2 */}
-            <div className="auction-card">
-              <div className="auction-fav"><i className="ph ph-heart"></i></div>
-              <img src="/assets/bag.png" alt="Chanel Bag" />
-              <div className="auction-price">Rp 13.000.000</div>
-              <div className="auction-price-old">Rp 15.000.000</div>
-              <div className="auction-title">C25 Shopping Bag Shiny Lambskin Leather Black Ghw</div>
-              <div className="auction-location">Kedungmundu, Semarang</div>
-            </div>
+            {/* FIX B-11: Render kartu lelang secara dinamis dari database */}
+            {featuredProducts.length === 0 ? (
+              <p style={{ color: '#6B7280', fontSize: '0.9rem' }}>Belum ada lelang aktif saat ini.</p>
+            ) : (
+              featuredProducts.map((product) => (
+                <Link key={product.id} href={`/jelajahi/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div className="auction-card">
+                    <div className="auction-fav"><i className="ph ph-heart"></i></div>
+                    <img
+                      src={product.image_urls?.[0] || '/assets/tv.png'}
+                      alt={product.nama_produk}
+                      style={{ width: '100%', height: '180px', objectFit: 'cover' }}
+                    />
+                    <div className="auction-price">Rp {formatRupiah(product.current_price || product.harga_awal)}</div>
+                    <div className="auction-price-old">Rp {formatRupiah(product.harga_awal)}</div>
+                    <div className="auction-title">{product.nama_produk}</div>
+                    <div className="auction-location">{product.lokasi}</div>
+                  </div>
+                </Link>
+              ))
+            )}
           </div>
         </div>
       </section>

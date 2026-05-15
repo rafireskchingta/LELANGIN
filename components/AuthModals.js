@@ -150,6 +150,22 @@ export default function AuthModals() {
 
         if (window.DB) window.DB.setUser(userObj);
         if (window.updateHeaderState) window.updateHeaderState();
+
+        // FIX B-14: Migrasi favorit dari localStorage ke Supabase saat login
+        try {
+          const localFavs = JSON.parse(localStorage.getItem('lelangin_favorites') || '[]');
+          if (localFavs.length > 0) {
+            const inserts = localFavs.map(productId => ({
+              user_id: data.user.id,
+              product_id: productId
+            }));
+            // upsert agar tidak duplikat jika sudah ada di DB
+            await supabase.from('favorites').upsert(inserts, { onConflict: 'user_id,product_id' });
+            localStorage.removeItem('lelangin_favorites');
+          }
+        } catch (migErr) {
+          console.warn('Migrasi favorit gagal:', migErr);
+        }
       }
 
       showToast('Berhasil masuk! Selamat datang.', 'success');
@@ -173,7 +189,7 @@ export default function AuthModals() {
         'September': '09', 'Oktober': '10', 'November': '11', 'Desember': '12'
       };
 
-      const tgl = regTgl.padStart(2, '0');
+      const tgl = regTgl ? regTgl.padStart(2, '0') : '01';
       const bln = bulanMap[regBulan] || '01';
       const thn = regTahun || '2000';
       const birthDate = `${thn}-${bln}-${tgl}`;

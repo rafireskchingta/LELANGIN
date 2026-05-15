@@ -19,6 +19,7 @@ function AdminUsersContent() {
   const query = searchParams.get('q') || '';
 
   useEffect(() => {
+    // FIX B-10: Gabungkan ke satu useEffect - hapus duplikat yang memanggil fetchUsers dua kali
     setMounted(true);
     fetchUsers();
   }, []);
@@ -50,9 +51,7 @@ function AdminUsersContent() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -317,12 +316,13 @@ function AdminUsersContent() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 1.5rem' }}>
                   <div className="form-group">
                     <label>Nama Lengkap</label>
-                    <input type="text" required />
+                    {/* FIX B-09: Semua input terhubung ke addFormData state */}
+                    <input type="text" required value={addFormData.full_name} onChange={(e) => setAddFormData({...addFormData, full_name: e.target.value})} />
                   </div>
                   
                   <div className="form-group">
                     <label>Nama Akun (Username)</label>
-                    <input type="text" required />
+                    <input type="text" required value={addFormData.username} onChange={(e) => setAddFormData({...addFormData, username: e.target.value})} />
                   </div>
 
                   <div className="form-group">
@@ -340,12 +340,12 @@ function AdminUsersContent() {
 
                   <div className="form-group">
                     <label>No Telp</label>
-                    <input type="tel" required />
+                    <input type="tel" required value={addFormData.phone_number} onChange={(e) => setAddFormData({...addFormData, phone_number: e.target.value.replace(/\D/g, '')})} />
                   </div>
 
                   <div className="form-group">
                     <label>Email</label>
-                    <input type="email" required />
+                    <input type="email" required value={addFormData.email} onChange={(e) => setAddFormData({...addFormData, email: e.target.value})} />
                   </div>
 
                   <div className="form-group">
