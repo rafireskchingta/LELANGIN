@@ -251,6 +251,24 @@ function StatusLelangContent() {
     }
   };
 
+  // Penentuan Status Badge Dinamis
+  const getDynamicStatus = (item) => {
+    if (item.status === 'dibatalkan') return { label: 'Dibatalkan', bg: '#FEF2F2', color: '#DC2626' };
+    
+    if (activeTab !== 'Semua') {
+      if (activeTab === 'Menang Lelang' || activeTab === 'Selesai' || activeTab === 'Dikirim') return { label: activeTab, bg: '#ECFDF5', color: '#059669' };
+      if (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan') return { label: activeTab, bg: '#FEF2F2', color: '#DC2626' };
+      return { label: activeTab, bg: '#E0E7FF', color: 'var(--primary)' };
+    }
+
+    const isFinished = new Date(item.waktu_selesai) <= currentTime;
+    if (isFinished) {
+      return { label: 'Selesai', bg: '#ECFDF5', color: '#059669' };
+    } else {
+      return { label: 'Berlangsung', bg: '#E0E7FF', color: 'var(--primary)' };
+    }
+  };
+
   return (
     <main className="page-container" style={{ padding: '0 5%', margin: '0 auto', minHeight: '80vh' }}>
 
@@ -355,13 +373,18 @@ function StatusLelangContent() {
 
               {/* Status Badge */}
               <div>
-                <span style={{
-                  background: (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#ECFDF5' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#FEF2F2' : '#E0E7FF'),
-                  color: (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#059669' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#DC2626' : 'var(--primary)'),
-                  padding: '0.5rem 1.25rem', borderRadius: '20px', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem'
-                }}>
-                  {activeTab === 'Semua' ? 'Aktif' : activeTab}
-                </span>
+                {(() => {
+                  const statusInfo = getDynamicStatus(item);
+                  return (
+                    <span style={{
+                      background: statusInfo.bg,
+                      color: statusInfo.color,
+                      padding: '0.5rem 1.25rem', borderRadius: '20px', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem'
+                    }}>
+                      {statusInfo.label}
+                    </span>
+                  );
+                })()}
               </div>
             </div>
           ))
