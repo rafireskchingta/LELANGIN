@@ -187,7 +187,7 @@ export default function AdminEditProdukPage({ params }) {
         .update({
           nama_produk: formData.nama_produk,
           merk: formData.merk,
-          tahun_produksi: parseInt(formData.tahun_produksi, 10) || null,
+          tahun_produksi: parseInt(formData.tahun_produksi, 10),
           kategori: formData.kategori,
           kondisi: formData.kondisi,
           model: formData.model,
