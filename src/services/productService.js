@@ -258,3 +258,45 @@ export async function fetchTransactionDetail(productId) {
     return null;
   }
 }
+
+/**
+ * Fetch transaction detail for a product (alias for fetchTransactionDetail for compatibility)
+ */
+export async function fetchTransaction(productId) {
+  return await fetchTransactionDetail(productId);
+}
+
+/**
+ * Update transaction status and data
+ */
+export async function updateTransactionStatus(transactionId, updateData) {
+  try {
+    const { data, error } = await supabase
+      .from('transactions')
+      .update({
+        ...updateData,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', transactionId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error in updateTransactionStatus:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Error in updateTransactionStatus catch:', err);
+    return false;
+  }
+}
+
+/**
+ * Generate a mock Resi number
+ */
+export function generateResi() {
+  const prefix = 'LX';
+  const randomNum = Math.floor(100000000 + Math.random() * 900000000);
+  return `${prefix}${randomNum}ID`;
+}
