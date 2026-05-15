@@ -297,8 +297,10 @@ function StatusLelangContent() {
               break;
             case 'Selesai':
               fetchedData = (prods || []).filter(p => {
-                const s = (p.status || '').toLowerCase();
-                return s === 'selesai' || new Date(p.waktu_selesai) <= new Date();
+                const s = (p.status || '').toLowerCase().trim();
+                const isFinalStatus = ['selesai', 'dikirim', 'sampai', 'komplain', 'diproses'].includes(s);
+                const isTimeExpired = new Date(p.waktu_selesai) <= new Date();
+                return isFinalStatus || isTimeExpired;
               });
               break;
             case 'Dibatalkan':
@@ -453,7 +455,9 @@ function StatusLelangContent() {
                   {activeRole === 'penjual' ? (item.status || 'menunggu').toUpperCase() : (
                     activeTab === 'Menang Lelang' ? 'Menang' : 
                     activeTab === 'Kalah Lelang' ? 'Kalah' : 
-                    (new Date(item.waktu_selesai) <= new Date() ? 'Selesai' : (new Date(item.waktu_mulai) > new Date() ? 'Segera' : 'Berjalan'))
+                    (['selesai', 'dikirim', 'sampai'].includes((item.status || '').toLowerCase()) ? 'Selesai' : 
+                      (new Date(item.waktu_selesai) <= new Date() ? 'Selesai' : 
+                        (new Date(item.waktu_mulai) > new Date() ? 'Segera' : 'Berjalan')))
                   )}
                 </span>
               </div>
