@@ -10,7 +10,8 @@ function StatusLelangContent() {
   const searchParams = useSearchParams();
   const initRole = searchParams.get('role') || 'pembeli';
 
-  // --- 1. STATE UI ---
+  // --- 1. HOOKS & UI STATE ---
+  // Penanganan status menunggu dan sinkronisasi modal
   const [activeRole, setActiveRole] = useState(initRole);
   const [activeTab, setActiveTab] = useState('Semua');
   const [isModalOpen, setIsModalOpen] = useState(false);
