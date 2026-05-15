@@ -223,13 +223,10 @@ function StatusLelangContent() {
     const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
     const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
 
-    if (hari > 0) return `${hari} Hari`;
-    if (jam > 0) return `${jam} Jam`;
-    if (menit > 0) return `${menit} Menit`;
-    
-    // Format detik jadi 2 digit agar layout tidak melompat (misal: "09 Detik")
     const detikStr = String(detik).padStart(2, '0');
-    return `${detikStr} Detik`;
+    if (hari > 0) return `${hari} Hari : ${jam} Jam : ${menit} Menit : ${detikStr} Detik`;
+    if (jam > 0) return `${jam} Jam : ${menit} Menit : ${detikStr} Detik`;
+    return `${menit} Menit : ${detikStr} Detik`;
   };
 
   // Penentuan Warna Harga Khusus Pembeli

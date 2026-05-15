@@ -182,7 +182,7 @@ function JelajahiContent() {
     return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   };
 
-  const calculateTimeLeft = (waktuSelesai) => {
+  const calculateTimeLeft = (waktuSelesai, isShort = false) => {
     if (!waktuSelesai) return 'Waktu Habis';
     const selisihMs = new Date(waktuSelesai) - currentTime;
     if (selisihMs <= 0) return 'Waktu Habis';
@@ -192,13 +192,18 @@ function JelajahiContent() {
     const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
     const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
 
-    if (hari > 0) return `${hari} Hari`;
-    if (jam > 0) return `${jam} Jam`;
-    if (menit > 0) return `${menit} Menit`;
-    
-    // Format detik jadi 2 digit agar layout tidak melompat (misal: "09 Detik")
+    if (isShort) {
+      if (hari > 0) return `${hari} Hari`;
+      if (jam > 0) return `${jam} Jam`;
+      if (menit > 0) return `${menit} Menit`;
+      const detikStr = String(detik).padStart(2, '0');
+      return `${detikStr} Detik`;
+    }
+
     const detikStr = String(detik).padStart(2, '0');
-    return `${detikStr} Detik`;
+    if (hari > 0) return `${hari} Hari : ${jam} Jam : ${menit} Menit : ${detikStr} Detik`;
+    if (jam > 0) return `${jam} Jam : ${menit} Menit : ${detikStr} Detik`;
+    return `${menit} Menit : ${detikStr} Detik`;
   };
 
   return (
@@ -322,7 +327,7 @@ function JelajahiContent() {
             ) : (
               products.map((product) => (
                 <div key={product.id} onClick={() => openModal(product)} className="auction-card card-jelajahi" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', cursor: 'pointer', height: '100%' }}>
-                  <div className="badge-time"><i className="ph ph-clock"></i> {calculateTimeLeft(product.waktu_selesai)}</div>
+                  <div className="badge-time"><i className="ph ph-clock"></i> {calculateTimeLeft(product.waktu_selesai, true)}</div>
                   <img src={product.image_urls?.[0] || '/assets/placeholder.png'} alt={product.nama_produk} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem', marginTop: '1rem' }}>
                     <div className="auction-price" style={{ marginBottom: 0, fontSize: '1.25rem', color: 'var(--primary)' }}>
@@ -486,7 +491,7 @@ function JelajahiContent() {
                 <div className="countdown-section">
                   <p>Sisa Waktu Lelang :</p>
                   <div className="countdown-timer" style={{ color: 'var(--danger)', fontWeight: 'bold' }}>
-                    {calculateTimeLeft(selectedProduct.waktu_selesai)}
+                    {calculateTimeLeft(selectedProduct.waktu_selesai, false)}
                   </div>
                 </div>
 

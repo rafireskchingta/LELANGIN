@@ -126,12 +126,13 @@ export default function DetailPage() {
       const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
       const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
 
+      const detikStr = String(detik).padStart(2, '0');
       if (hari > 0) {
-        setTimeLeft(`${hari} Hari : ${jam} Jam : ${menit} Menit`);
+        setTimeLeft(`${hari} Hari : ${jam} Jam : ${menit} Menit : ${detikStr} Detik`);
       } else if (jam > 0) {
-        setTimeLeft(`${jam} Jam : ${menit} Menit`);
+        setTimeLeft(`${jam} Jam : ${menit} Menit : ${detikStr} Detik`);
       } else {
-        setTimeLeft(`${menit} Menit : ${detik} Detik`);
+        setTimeLeft(`${menit} Menit : ${detikStr} Detik`);
       }
     }, 1000);
 
