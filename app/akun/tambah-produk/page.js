@@ -18,8 +18,8 @@ export default function TambahProdukPage() {
 
   // Form states
   const [namaProduk, setNamaProduk] = useState("");
-  const [kategori, setKategori] = useState("Elektronik");
-  const [kondisi, setKondisi] = useState("Baru");
+  const [kategori, setKategori] = useState("");
+  const [kondisi, setKondisi] = useState("");
   const [merk, setMerk] = useState("");
   const [model, setModel] = useState("");
   const [warna, setWarna] = useState("");
@@ -88,6 +88,8 @@ export default function TambahProdukPage() {
     
     // Check text fields
     if (!namaProduk) errors.namaProduk = true;
+    if (!kategori) errors.kategori = true;
+    if (!kondisi) errors.kondisi = true;
     if (!merk) errors.merk = true;
     if (!model) errors.model = true;
     if (!warna) errors.warna = true;
@@ -238,6 +240,17 @@ export default function TambahProdukPage() {
     }
   };
 
+  const kategoriOptions = [
+    { value: 'Elektronik', label: 'Elektronik' },
+    { value: 'Seni', label: 'Seni' },
+    { value: 'Hobi', label: 'Hobi' },
+  ];
+
+  const kondisiOptions = [
+    { value: 'Baru', label: 'Baru' },
+    { value: 'Bekas', label: 'Bekas' },
+  ];
+
   const kondisiFisikOptions = [
     { value: 'Sangat Baik', label: 'Sangat Baik' },
     { value: 'Baik', label: 'Baik' },
@@ -300,19 +313,16 @@ export default function TambahProdukPage() {
         
         <div className="form-horizontal-group">
           <label>Kategori <span className="required">*</span></label>
-          <div className="input-wrapper checkbox-list-inline">
-            <label><input type="radio" name="kategori" value="Elektronik" checked={kategori === 'Elektronik'} onChange={(e) => setKategori(e.target.value)} /> Elektronik</label>
-            <label><input type="radio" name="kategori" value="Seni" checked={kategori === 'Seni'} onChange={(e) => setKategori(e.target.value)} /> Seni</label>
-            <label><input type="radio" name="kategori" value="Hobi" checked={kategori === 'Hobi'} onChange={(e) => setKategori(e.target.value)} /> Hobi</label>
+          <div className="input-wrapper">
+            <CustomSelect options={kategoriOptions} value={kategori} onChange={setKategori} placeholder="Pilih Kategori" error={formErrors.kategori} />
           </div>
         </div>
 
         <h3 className="sub-title">Info Produk</h3>
         <div className="form-horizontal-group">
           <label>Kondisi <span className="required">*</span></label>
-          <div className="input-wrapper checkbox-list-inline">
-            <label><input type="radio" name="kondisi" value="Baru" checked={kondisi === 'Baru'} onChange={(e) => setKondisi(e.target.value)} /> Baru</label>
-            <label><input type="radio" name="kondisi" value="Bekas" checked={kondisi === 'Bekas'} onChange={(e) => setKondisi(e.target.value)} /> Bekas</label>
+          <div className="input-wrapper">
+            <CustomSelect options={kondisiOptions} value={kondisi} onChange={setKondisi} placeholder="Pilih Kondisi" error={formErrors.kondisi} />
           </div>
         </div>
         
