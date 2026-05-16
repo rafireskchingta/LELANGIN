@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, Suspense } from 'react';
-import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../../src/lib/supabase';
 import { fetchProductBids } from '../../src/services/productService';
@@ -10,11 +9,6 @@ function StatusLelangContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initRole = searchParams.get('role') || 'pembeli';
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // --- 1. STATE UI ---
   const [activeRole, setActiveRole] = useState(initRole);
@@ -32,11 +26,16 @@ function StatusLelangContent() {
   const [userRole, setUserRole] = useState('pembeli');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [nowTime, setNowTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // --- 3. STATE SEARCH (DEBOUNCE) ---
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentTime, setCurrentTime] = useState(new Date());
 
   const pembeliTabs = ['Semua', 'Sedang Diikuti', 'Favorit', 'Menang Lelang', 'Kalah Lelang', 'Dikirim', 'Selesai', 'Dibatalkan'];
   const penjualTabs = ['Semua', 'Menunggu', 'Aktif', 'Selesai', 'Dibatalkan'];
@@ -70,14 +69,6 @@ function StatusLelangContent() {
     }, 500);
     return () => clearTimeout(timeoutId);
   }, [searchInput]);
-  
-  // TIMER UNTUK UPDATE REAL-TIME (Agar detik berjalan)
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   // FETCH DATA MENCEGAH ERROR NULL 'id'
   useEffect(() => {
@@ -121,8 +112,15 @@ function StatusLelangContent() {
               fetchedData = extractUniqueProducts(wins);
               break;
             case 'Kalah Lelang':
-              const { data: lostBids } = await supabase.from('bids').select('products(*)').eq('bidder_id', currentUser.id).eq('is_winning_bid', false).lt('products.waktu_selesai', now);
-              fetchedData = extractUniqueProducts(lostBids);
+              // Fetch all bids by user where auction has ended
+              const { data: allBidsEnded } = await supabase.from('bids').select('is_winning_bid, products(*)').eq('bidder_id', currentUser.id).lt('products.waktu_selesai', now);
+              if (allBidsEnded) {
+                // Collect IDs of products the user actually won
+                const wonProductIds = new Set(allBidsEnded.filter(b => b.is_winning_bid).map(b => b.products?.id));
+                // Filter out products that the user won
+                const lostBids = allBidsEnded.filter(b => b.products && !wonProductIds.has(b.products.id));
+                fetchedData = extractUniqueProducts(lostBids);
+              }
               break;
             case 'Dikirim':
             case 'Selesai':
@@ -154,7 +152,9 @@ function StatusLelangContent() {
               query = query.eq('status', 'dibatalkan');
               break;
             case 'Semua':
-            default: break;
+            default: 
+              query = query.gte('waktu_selesai', now);
+              break;
           }
 
           const { data, error } = await query.order('created_at', { ascending: false });
@@ -219,20 +219,39 @@ function StatusLelangContent() {
     return `${tanggal} pukul ${waktu}`;
   };
 
-  const calculateTimeLeft = (waktuSelesai) => {
-    if (!waktuSelesai) return 'Waktu Habis';
-    const selisihMs = new Date(waktuSelesai) - currentTime;
-    if (selisihMs <= 0) return 'Waktu Habis';
+  const calculateTimeLeft = (waktuSelesai, waktuMulai) => {
+    if (!waktuSelesai) return { text: 'Waktu Habis', percent: 100 };
+    
+    const end = new Date(waktuSelesai);
+    const start = new Date(waktuMulai || end.getTime() - 1000 * 60 * 60 * 24); // Fallback 1 hari
+    const selisihMs = end - nowTime;
+
+    let percent = 0;
+    const totalDuration = end - start;
+    const elapsed = nowTime - start;
+    if (totalDuration > 0) {
+      percent = (elapsed / totalDuration) * 100;
+      if (percent < 0) percent = 0;
+      if (percent > 100) percent = 100;
+    }
+
+    if (selisihMs <= 0) return { text: 'Waktu Habis', percent: 100 };
 
     const hari = Math.floor(selisihMs / (1000 * 60 * 60 * 24));
     const jam = Math.floor((selisihMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
     const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
 
-    const detikStr = String(detik).padStart(2, '0');
-    if (hari > 0) return `${hari} Hari : ${jam} Jam : ${menit} Menit : ${detikStr} Detik`;
-    if (jam > 0) return `${jam} Jam : ${menit} Menit : ${detikStr} Detik`;
-    return `${menit} Menit : ${detikStr} Detik`;
+    let text;
+    if (hari > 0) {
+      text = `${hari} Hari : ${jam} Jam : ${menit} Menit`;
+    } else if (jam > 0) {
+      text = `${jam} Jam : ${menit} Menit`;
+    } else {
+      text = `${menit} Menit : ${detik} Detik`;
+    }
+
+    return { text, percent };
   };
 
   // Penentuan Warna Harga Khusus Pembeli
@@ -258,27 +277,33 @@ function StatusLelangContent() {
     }
   };
 
-  // Penentuan Status Badge Dinamis
+  // Penentuan Status Dinamis Khusus Tab "Semua"
   const getDynamicStatus = (item) => {
-    if (item.status === 'dibatalkan') return { label: 'Dibatalkan', bg: '#FEF2F2', color: '#DC2626' };
-    if (item.status === 'menunggu') return { label: 'Menunggu', bg: '#E0E7FF', color: 'var(--primary)' };
+    if (activeTab !== 'Semua') return activeTab;
+    const now = new Date();
+    const endTime = new Date(item.waktu_selesai);
     
-    if (activeTab !== 'Semua') {
-      if (activeTab === 'Menang Lelang' || activeTab === 'Selesai' || activeTab === 'Dikirim') return { label: activeTab, bg: '#ECFDF5', color: '#059669' };
-      if (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan') return { label: activeTab, bg: '#FEF2F2', color: '#DC2626' };
-      return { label: activeTab, bg: '#E0E7FF', color: 'var(--primary)' };
-    }
-
-    const isFinished = new Date(item.waktu_selesai) <= currentTime;
-    if (isFinished || item.status === 'selesai') {
-      return { label: 'Selesai', bg: '#ECFDF5', color: '#059669' };
+    if (activeRole === 'penjual') {
+      if (item.status === 'dibatalkan') return 'Dibatalkan';
+      if (item.status === 'menunggu') return 'Menunggu';
+      if (endTime <= now) return 'Selesai';
+      if (item.status === 'aktif') return 'Aktif';
+      return item.status;
     } else {
-      return { label: 'Berlangsung', bg: '#E0E7FF', color: 'var(--primary)' };
+      if (endTime <= now) return 'Selesai';
+      return 'Aktif';
     }
   };
 
+  // Styling Badge Status
+  const getBadgeStyle = (status) => {
+    if (status === 'Menang Lelang' || status === 'Selesai') return { bg: '#ECFDF5', color: '#059669' };
+    if (status === 'Kalah Lelang' || status === 'Dibatalkan') return { bg: '#FEF2F2', color: '#DC2626' };
+    if (status === 'Menunggu') return { bg: '#FFFBEB', color: '#D97706' };
+    return { bg: '#E0E7FF', color: 'var(--primary)' };
+  };
+
   return (
-    <>
     <main className="page-container" style={{ padding: '0 5%', margin: '0 auto', minHeight: '80vh' }}>
 
       {/* Banner Utama */}
@@ -382,28 +407,21 @@ function StatusLelangContent() {
 
               {/* Status Badge */}
               <div>
-                {(() => {
-                  const statusInfo = getDynamicStatus(item);
-                  return (
-                    <span style={{
-                      background: statusInfo.bg,
-                      color: statusInfo.color,
-                      padding: '0.5rem 1.25rem', borderRadius: '20px', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem'
-                    }}>
-                      {statusInfo.label}
-                    </span>
-                  );
-                })()}
+                <span style={{
+                  background: getBadgeStyle(getDynamicStatus(item)).bg,
+                  color: getBadgeStyle(getDynamicStatus(item)).color,
+                  padding: '0.5rem 1.25rem', borderRadius: '20px', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem'
+                }}>
+                  {getDynamicStatus(item)}
+                </span>
               </div>
             </div>
           ))
         )}
       </div>
-    </main>
 
       {/* --- MODAL QUICK VIEW --- */}
-      {mounted && typeof document !== 'undefined' && createPortal(
-        <div className={`modal-overlay ${isModalOpen ? 'active' : ''}`} onClick={(e) => { if (e.target.classList.contains('modal-overlay')) setIsModalOpen(false) }}>
+      <div className={`modal-overlay ${isModalOpen ? 'active' : ''}`} onClick={(e) => { if (e.target.classList.contains('modal-overlay')) setIsModalOpen(false) }}>
         <div className={`modal modal-lg ${isModalOpen ? 'active' : ''}`} style={{ overflowY: 'auto', maxHeight: '90vh', padding: '2rem' }}>
           <button className="modal-close" onClick={() => setIsModalOpen(false)} style={{ zIndex: 10, position: 'absolute', top: '1.5rem', right: '1.5rem' }}><i className="ph ph-x"></i></button>
 
@@ -511,23 +529,27 @@ function StatusLelangContent() {
                   <div className="info-row"><span className="label">Lokasi Barang</span><span className="value">{selectedItem.lokasi}</span></div>
                 </div>
 
-                <div className="countdown-section">
-                  <p>Sisa Waktu Lelang :</p>
-                  <div className="countdown-timer" style={{ color: 'var(--danger)', fontWeight: 'bold' }}>
-                    {calculateTimeLeft(selectedItem.waktu_selesai)}
-                  </div>
-                </div>
+                {(() => {
+                  const timerData = calculateTimeLeft(selectedItem.waktu_selesai, selectedItem.created_at);
+                  return (
+                    <div className="countdown-section text-center" style={{ marginBottom: '1.5rem', marginTop: '1.5rem' }}>
+                      <p>Sisa Waktu Lelang :</p>
+                      <div className="countdown-timer" style={{ color: '#EF4444', fontWeight: 'bold', fontSize: '1.2rem', marginBottom: '0.5rem' }}>
+                        {timerData.text}
+                      </div>
+                      <div className="progress-bar" style={{ background: '#E5E7EB', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div className="progress-fill" style={{ width: `${timerData.percent}%`, background: '#EF4444', height: '100%', transition: 'width 1s linear' }}></div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column' }}>
                   <button className="btn-primary-full" onClick={() => router.push(`/jelajahi/${selectedItem.id}?from=status-lelang`)}>
                     Lihat Detail Penuh
                   </button>
 
-                  {activeRole === 'pembeli' && activeTab === 'Menang Lelang' && (
-                    <button className="btn-secondary" style={{ padding: '1rem', borderRadius: '999px', fontSize: '1rem', fontWeight: 700, background: '#10B981', color: 'white', border: 'none' }} onClick={() => router.push(`/status-lelang/pembayaran/${selectedItem.id}`)}>
-                      Lanjut Pembayaran
-                    </button>
-                  )}
+
                   {activeRole === 'penjual' && activeTab === 'Selesai' && modalBids.length > 0 && (
                     <button className="btn-secondary" style={{ padding: '1rem', borderRadius: '999px', fontSize: '1rem', fontWeight: 700, background: '#10B981', color: 'white', border: 'none' }} onClick={() => router.push(`/status-lelang/pengiriman/penjual/${selectedItem.id}`)}>
                       Proses Pengiriman Barang
@@ -540,8 +562,8 @@ function StatusLelangContent() {
           )}
         </div>
       </div>
-      , document.body)}
-    </>
+
+    </main>
   );
 }
 
