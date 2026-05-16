@@ -12,6 +12,7 @@ export default function AkunPenjualPage() {
   const [submitting, setSubmitting] = useState(false);
   // sellerStatus: null (belum daftar), 'menunggu', 'disetujui', 'ditolak'
   const [sellerStatus, setSellerStatus] = useState(null);
+  const [catatanAdmin, setCatatanAdmin] = useState(null);
   const [userId, setUserId] = useState(null);
   const [toast, setToast] = useState(null);
   const [hasHistory, setHasHistory] = useState(false);
@@ -70,6 +71,7 @@ export default function AkunPenjualPage() {
 
         // Simpan status: null, 'menunggu', 'disetujui', 'ditolak'
         setSellerStatus(sellerApp?.status || null);
+        setCatatanAdmin(sellerApp?.catatan_admin || null);
         
         // hasHistory: True jika pernah daftar sebelumnya (jumlah baris > 0)
         setHasHistory(appsCount > 0);
@@ -384,9 +386,16 @@ export default function AkunPenjualPage() {
         </div>
       )}
       {sellerStatus === 'ditolak' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#FEE2E2', border: '1px solid #FCA5A5', borderRadius: '8px', padding: '0.75rem 1.1rem', marginBottom: '1.5rem', fontSize: '0.875rem', color: '#991B1B', fontWeight: 500 }}>
-          <i className="ph ph-x-circle" style={{ fontSize: '1.1rem' }}></i>
-          Pendaftaran penjual <strong>ditolak</strong>. Silakan perbaiki data dan ajukan kembali.
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', backgroundColor: '#FEE2E2', border: '1px solid #FCA5A5', borderRadius: '8px', padding: '0.75rem 1.1rem', marginBottom: '1.5rem', fontSize: '0.875rem', color: '#991B1B', fontWeight: 500 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <i className="ph ph-x-circle" style={{ fontSize: '1.1rem' }}></i>
+            <span>Pendaftaran penjual <strong>ditolak</strong>. Silakan perbaiki data dan ajukan kembali.</span>
+          </div>
+          {catatanAdmin && (
+            <div style={{ marginTop: '0.25rem', padding: '0.5rem 0.75rem', backgroundColor: '#FEF2F2', borderLeft: '3px solid #EF4444', borderRadius: '4px', fontSize: '0.825rem', color: '#B91C1C' }}>
+              <strong>Catatan Admin:</strong> {catatanAdmin}
+            </div>
+          )}
         </div>
       )}
 

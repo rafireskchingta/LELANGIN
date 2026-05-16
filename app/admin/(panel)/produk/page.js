@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
@@ -11,6 +12,7 @@ function AdminProdukContent() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Semua');
+  const [mounted, setMounted] = useState(false);
 
   // --- State Baru untuk Filter & Sorting ---
   const [statusFilter, setStatusFilter] = useState('Semua');
@@ -22,7 +24,10 @@ function AdminProdukContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
 
+  const [highestBidInfo, setHighestBidInfo] = useState(null);
+
   useEffect(() => {
+    setMounted(true);
     fetchProducts();
   }, []);
 
@@ -65,10 +70,43 @@ function AdminProdukContent() {
     }
   };
 
-  const openDetailModal = (product) => {
+  const openDetailModal = async (product) => {
     setSelectedProduct(product);
     setActiveImageUrl(product.image_urls?.[0] || null);
     setIsDetailModalOpen(true);
+    setHighestBidInfo(null); // Reset while loading
+
+    try {
+      // Fetch highest bid for "Harga Terakhir" & "Pemenang"
+      const { data, error } = await supabase
+        .from('bids')
+        .select('amount, profiles(full_name, username)')
+        .eq('product_id', product.id)
+        .order('amount', { ascending: false })
+        .limit(1);
+
+      if (data && data.length > 0) {
+        setHighestBidInfo(data[0]);
+      } else {
+        setHighestBidInfo({ amount: product.harga_awal, profiles: null });
+      }
+    } catch (err) {
+      console.error('Error fetching bids:', err.message);
+      setHighestBidInfo({ amount: product.harga_awal, profiles: null });
+    }
+  };
+
+  const formatDateId = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).replace(/\./g, ':');
   };
 
   const formatRupiah = (angka) => {
@@ -224,108 +262,135 @@ function AdminProdukContent() {
       </div>
 
       {/* Detail Produk Modal */}
-      <div className={`admin-modal-overlay ${isDetailModalOpen ? 'active' : ''}`} onClick={(e) => { if (e.target.classList.contains('admin-modal-overlay')) setIsDetailModalOpen(false) }}>
-        <div className="admin-modal modal-large">
-          <button className="admin-modal-close" onClick={() => setIsDetailModalOpen(false)} style={{ right: '1.5rem' }}>
-            <i className="ph ph-x" style={{ background: '#F3F4F6', padding: '0.4rem', borderRadius: '8px', fontSize: '1rem' }}></i>
-          </button>
-          {selectedProduct && (
-            <button className="admin-modal-close" onClick={() => router.push(`/admin/produk/edit/${selectedProduct.id}`)} style={{ right: '4rem' }}>
-              <i className="ph ph-pencil-simple" style={{ background: '#F3F4F6', padding: '0.4rem', borderRadius: '8px', fontSize: '1rem' }}></i>
+      {mounted && createPortal(
+        <div className={`admin-modal-overlay ${isDetailModalOpen ? 'active' : ''}`} onClick={(e) => { if (e.target.classList.contains('admin-modal-overlay')) setIsDetailModalOpen(false) }}>
+          <div className="admin-modal modal-large">
+            <button className="admin-modal-close" onClick={() => setIsDetailModalOpen(false)} style={{ right: '1.5rem' }}>
+              <i className="ph ph-x" style={{ background: '#F3F4F6', padding: '0.4rem', borderRadius: '8px', fontSize: '1rem' }}></i>
             </button>
-          )}
+            
+            {/* HASIL GABUNGAN: Tombol Edit ditambahkan di sini */}
+            {selectedProduct && (
+              <button className="admin-modal-close" onClick={() => router.push(`/admin/produk/edit/${selectedProduct.id}`)} style={{ right: '4rem' }}>
+                <i className="ph ph-pencil-simple" style={{ background: '#F3F4F6', padding: '0.4rem', borderRadius: '8px', fontSize: '1rem' }}></i>
+              </button>
+            )}
 
-          {selectedProduct && (
-            <div className="product-detail-layout">
-              <div className="product-detail-left">
-                <div className="product-id-badge">
-                  <i className="ph ph-package"></i> ID PRODUK : {selectedProduct.id.substring(0, 5).toUpperCase()}
-                </div>
-                <h2 className="product-detail-title">{selectedProduct.nama_produk || '-'}</h2>
-                <div className="product-detail-img-box">
-                  <img
-                    src={activeImageUrl || "/assets/placeholder.png"}
-                    alt={selectedProduct.nama_produk || 'Produk'}
-                    style={{ height: '300px', width: '100%', objectFit: 'cover', borderRadius: '8px', transition: 'all 0.3s ease' }}
-                  />
-                </div>
-                {/* Galeri Mini */}
-                {selectedProduct.image_urls && selectedProduct.image_urls.length > 1 && (
-                  <div className="product-detail-gallery" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                    {selectedProduct.image_urls.map((url, i) => (
-                      <img 
-                        key={i} 
-                        src={url} 
-                        alt={`Foto ${i + 1}`} 
-                        onClick={() => setActiveImageUrl(url)}
-                        style={{ 
-                          height: '60px', width: '60px', objectFit: 'cover', borderRadius: '6px', 
-                          border: activeImageUrl === url ? '2px solid #4F46E5' : '1px solid #E5E7EB',
-                          cursor: 'pointer', opacity: activeImageUrl === url ? 1 : 0.6,
-                          transition: 'all 0.2s ease'
-                        }} 
-                      />
-                    ))}
+            {selectedProduct && (
+              <div className="product-detail-layout">
+                <div className="product-detail-left">
+                  <div className="product-id-badge">
+                    <i className="ph ph-package"></i> ID PRODUK : {selectedProduct.id.substring(0, 5).toUpperCase()}
                   </div>
-                )}
-              </div>
-
-              <div className="product-detail-right" style={{ marginTop: '3.5rem' }}>
-                <div className="detail-item">
-                  <label>STATUS LELANG</label>
-                  <span className="admin-badge" style={{ display: 'inline-block', width: 'max-content', background: '#EEF2FF', color: '#4F46E5', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                    {(selectedProduct.status || 'aktif').toUpperCase()}
-                  </span>
-                </div>
-                <div className="detail-item">
-                  <label>KATEGORI</label>
-                  <span>{selectedProduct.kategori || '-'}</span>
-                </div>
-                <div className="detail-item">
-                  <label>PENJUAL/PEMILIK</label>
-                  <span>{selectedProduct.profiles?.full_name || '-'}</span>
-                </div>
-                <div className="detail-item">
-                  <label>MODEL</label>
-                  <span>{selectedProduct.model || '-'}</span>
-                </div>
-                <div className="detail-item">
-                  <label>KONDISI BARANG</label>
-                  <span>{selectedProduct.kondisi_fisik || '-'}</span>
-                </div>
-                <div className="detail-item">
-                  <label>LOKASI BARANG</label>
-                  <span>{selectedProduct.lokasi || '-'}</span>
-                </div>
-                <div className="detail-item">
-                  <label>MERK</label>
-                  <span>{selectedProduct.merk || '-'}</span>
-                </div>
-                <div className="detail-item">
-                  <label>TAHUN PRODUKSI</label>
-                  <span>{selectedProduct.tahun_produksi || '-'}</span>
-                </div>
-                <div className="detail-item">
-                  <label>WAKTU MULAI</label>
-                  <span>{selectedProduct.waktu_mulai ? new Date(selectedProduct.waktu_mulai).toLocaleString() : '-'}</span>
-                </div>
-                <div className="detail-item">
-                  <label>WAKTU SELESAI</label>
-                  <span>{selectedProduct.waktu_selesai ? new Date(selectedProduct.waktu_selesai).toLocaleString() : '-'}</span>
-                </div>
-                <div className="harga-terakhir-box">
-                  <label>HARGA AWAL</label>
-                  <span>{formatRupiah(selectedProduct.harga_awal || 0)}</span>
+                  <h2 className="product-detail-title">{selectedProduct.nama_produk || '-'}</h2>
+                  <div className="product-detail-img-box">
+                    <img
+                      src={activeImageUrl || "/assets/placeholder.png"}
+                      alt={selectedProduct.nama_produk || 'Produk'}
+                      style={{ height: '300px', width: '100%', objectFit: 'cover', borderRadius: '8px', transition: 'all 0.3s ease' }}
+                    />
+                  </div>
+                  {/* Galeri Mini */}
+                  {selectedProduct.image_urls && selectedProduct.image_urls.length > 1 && (
+                    <div className="product-detail-gallery" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                      {selectedProduct.image_urls.map((url, i) => (
+                        <img 
+                          key={i} 
+                          src={url} 
+                          alt={`Foto ${i + 1}`} 
+                          onClick={() => setActiveImageUrl(url)}
+                          style={{ 
+                            height: '60px', width: '60px', objectFit: 'cover', borderRadius: '6px', 
+                            border: activeImageUrl === url ? '2px solid #4F46E5' : '1px solid #E5E7EB',
+                            cursor: 'pointer', opacity: activeImageUrl === url ? 1 : 0.6,
+                            transition: 'all 0.2s ease'
+                          }} 
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div style={{ gridColumn: '1 / -1', marginTop: 'auto' }}>
-                  <button className="btn-tutup-detail" onClick={() => setIsDetailModalOpen(false)}>Tutup Detail</button>
+                <div className="product-detail-right" style={{ marginTop: '3.5rem' }}>
+                  <div className="detail-item">
+                    <label>STATUS LELANG</label>
+                    <span className="admin-badge" style={{ display: 'inline-block', width: 'max-content', background: '#EEF2FF', color: '#4F46E5', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                      {(selectedProduct.status || 'aktif').toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <label>KATEGORI</label>
+                    <span>{selectedProduct.kategori || '-'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <label>PENJUAL/PEMILIK</label>
+                    <span>{selectedProduct.profiles?.full_name || '-'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <label>MODEL</label>
+                    <span>{selectedProduct.model || '-'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <label>KONDISI BARANG</label>
+                    <span>{selectedProduct.kondisi_fisik || '-'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <label>LOKASI BARANG</label>
+                    <span>{selectedProduct.lokasi || '-'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <label>MERK</label>
+                    <span>{selectedProduct.merk || '-'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <label>TAHUN PRODUKSI</label>
+                    <span>{selectedProduct.tahun_produksi || '-'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <label>WAKTU MULAI</label>
+                    <span>{formatDateId(selectedProduct.waktu_mulai)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <label>WAKTU SELESAI</label>
+                    <span>{formatDateId(selectedProduct.waktu_selesai)}</span>
+                  </div>
+                  
+                  {/* Container for prices */}
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                    <div className="harga-terakhir-box" style={{ flex: 1, margin: 0 }}>
+                      <label>HARGA AWAL</label>
+                      <span>{formatRupiah(selectedProduct.harga_awal || 0)}</span>
+                    </div>
+                    <div className="harga-terakhir-box" style={{ flex: 1, margin: 0, background: '#EEF2FF', color: '#4F46E5', borderColor: '#C7D2FE' }}>
+                      <label style={{ color: '#4F46E5' }}>HARGA SAAT INI</label>
+                      <span>{highestBidInfo ? formatRupiah(highestBidInfo.amount) : 'Memuat...'}</span>
+                    </div>
+                  </div>
+
+                  {/* Pemenang / Penawar Tertinggi */}
+                  <div className="detail-item" style={{ gridColumn: '1 / -1', background: '#F9FAFB', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #E5E7EB', marginTop: '0.5rem' }}>
+                    <label style={{ display: 'block', marginBottom: '0.25rem', color: '#6B7280' }}>
+                      {selectedProduct.status?.toLowerCase() === 'selesai' ? 'PEMENANG LELANG' : 'PENAWAR TERTINGGI'}
+                    </label>
+                    <span style={{ fontWeight: 'bold', color: '#111827', fontSize: '1rem' }}>
+                      {highestBidInfo && highestBidInfo.profiles ? (
+                        `${highestBidInfo.profiles.full_name || '-'} (@${highestBidInfo.profiles.username || '-'})`
+                      ) : (
+                        highestBidInfo ? 'Belum ada penawaran' : 'Memuat...'
+                      )}
+                    </span>
+                  </div>
+
+                  <div style={{ gridColumn: '1 / -1', marginTop: 'auto', paddingTop: '1rem' }}>
+                    <button className="btn-tutup-detail" onClick={() => setIsDetailModalOpen(false)}>Tutup Detail</button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      </div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

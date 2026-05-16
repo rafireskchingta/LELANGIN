@@ -1,5 +1,18 @@
 import { supabase } from '../lib/supabase';
 
+/**
+ * Fetch products with filters, search, and sorting
+ * @param {Object} options - Filter options
+ * @param {string} options.kategori - Product category filter (e.g., 'Elektronik', 'Seni', 'Hobi', 'Semua')
+ * @param {number} options.hargaMin - Minimum price filter
+ * @param {number} options.hargaMax - Maximum price filter
+ * @param {array} options.lokasi - Array of locations to filter (Java provinces)
+ * @param {number} options.tahunMin - Minimum production year
+ * @param {number} options.tahunMax - Maximum production year
+ * @param {string} options.search - Search keyword in product name
+ * @param {string} options.sortBy - Sort order: 'terbaru' or 'terlama'
+ * @returns {Promise<Array>} Array of products
+ */
 export async function fetchProducts(options = {}) {
   const {
     kategori = 'Semua',
@@ -39,35 +52,39 @@ export async function fetchProducts(options = {}) {
       .eq('status', 'aktif')
       .filter('deleted_at', 'is', null);
 
+    // Filter kategori
     if (kategori !== 'Semua') {
       query = query.eq('kategori', kategori);
     }
 
+    // Filter harga berdasarkan current_price
     if (hargaMin > 0 || hargaMax !== Infinity) {
       query = query.gte('current_price', hargaMin).lte('current_price', hargaMax);
     }
 
+    // Filter lokasi
     if (lokasi.length > 0) {
       query = query.in('lokasi', lokasi);
     }
 
+    // Filter tahun produksi
     if (tahunMin > 0 || tahunMax < 9999) {
       query = query.gte('tahun_produksi', tahunMin).lte('tahun_produksi', tahunMax);
     }
 
-    // Filter search — hanya satu kali (FIX B-02: hapus duplikat)
+    // Filter search (case-insensitive)
     if (search) {
       query = query.ilike('nama_produk', `%${search}%`);
     }
 
-    // FIX B-01: Sorting diterapkan SEBELUM eksekusi query
+    // Urutkan data sebelum eksekusi query
     if (sortBy === 'terbaru') {
       query = query.order('waktu_mulai', { ascending: false });
     } else if (sortBy === 'terlama') {
       query = query.order('waktu_mulai', { ascending: true });
     }
 
-    // Execute query
+    // Execute query (REVISI: let diubah menjadi const)
     const { data, error } = await query;
 
     if (error) {
@@ -82,6 +99,11 @@ export async function fetchProducts(options = {}) {
   }
 }
 
+/**
+ * Fetch single product detail by ID
+ * @param {string} productId - Product ID
+ * @returns {Promise<Object>} Product data
+ */
 export async function fetchProductDetail(productId) {
   try {
     const { data, error } = await supabase
@@ -116,7 +138,7 @@ export async function fetchProductDetail(productId) {
       `)
       .eq('id', productId)
       .filter('deleted_at', 'is', null)
-      .maybeSingle();
+      .maybeSingle(); // REVISI: Menggunakan maybeSingle() agar lebih aman dari error jika produk terhapus
 
     if (error) {
       console.error('Error fetching product detail:', error.message);
@@ -130,10 +152,20 @@ export async function fetchProductDetail(productId) {
   }
 }
 
+/**
+ * Get all product categories from database (or predefined)
+ * @returns {Promise<Array>} Array of category strings
+ */
 export async function getCategories() {
+  // Predefined categories based on enum
+  // In production, these could be fetched from a categories table
   return ['Semua', 'Seni', 'Elektronik', 'Hobi', 'Furniture', 'Fashion', 'Otomotif'];
 }
 
+/**
+ * Get all Java provinces for location filter
+ * @returns {Array} Array of Java province names
+ */
 export function getJavaProvinces() {
   return [
     'DKI Jakarta',
@@ -145,6 +177,12 @@ export function getJavaProvinces() {
   ];
 }
 
+/**
+ * Fetch bids for a product
+ * @param {string} productId - Product ID
+ * @param {number} limit - Maximum number of bids to fetch
+ * @returns {Promise<Array>} Array of bids
+ */
 export async function fetchProductBids(productId, limit = 50) {
   try {
     const { data, error } = await supabase

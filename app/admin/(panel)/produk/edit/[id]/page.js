@@ -4,6 +4,8 @@ import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '../../../../../../src/lib/supabase';
+import CustomDatePicker from '../../../../../../components/CustomDatePicker';
+import CustomTimePicker from '../../../../../../components/CustomTimePicker';
 import CustomSelect from '../../../../../../components/CustomSelect';
 
 export default function AdminEditProdukPage({ params }) {
@@ -13,14 +15,28 @@ export default function AdminEditProdukPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // State disesuaikan dengan DATABASE_SCHEMA
   const [formData, setFormData] = useState({
     nama_produk: '',
     merk: '',
     tahun_produksi: '',
-    kategori: '',
+    kategori: 'Elektronik',
+    kondisi: 'Baru',
     model: '',
+    warna: '',
+    daya_listrik: '',
+    kapasitas: '',
+    tegangan: '',
+    kondisi_fisik: '',
+    kelengkapan: '',
+    estetika: '',
+    dokumen: '',
+    kemasan: '',
+    aksesoris: '',
     harga_awal: '',
+    tglMulai: '',
+    waktuMulai: '',
+    tglSelesai: '',
+    waktuSelesai: '',
     lokasi: '',
     status: 'aktif'
   });
@@ -28,6 +44,12 @@ export default function AdminEditProdukPage({ params }) {
   const [imageUrls, setImageUrls] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef(null);
+
+  const formatRibuan = (val) => {
+    if (!val) return '';
+    const num = val.toString().replace(/\D/g, '');
+    return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
 
   useEffect(() => {
     if (id) fetchProduct();
@@ -42,19 +64,49 @@ export default function AdminEditProdukPage({ params }) {
         .eq('id', id)
         .single();
 
-      // HAPUS FALLBACK PALSU DI SINI
       if (error) throw error;
 
       if (data) {
+        let tglMulai = '';
+        let waktuMulai = '';
+        if (data.waktu_mulai) {
+          const d = new Date(data.waktu_mulai);
+          tglMulai = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          waktuMulai = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+
+        let tglSelesai = '';
+        let waktuSelesai = '';
+        if (data.waktu_selesai) {
+          const d = new Date(data.waktu_selesai);
+          tglSelesai = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          waktuSelesai = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+
         setFormData({
           nama_produk: data.nama_produk || '',
           merk: data.merk || '',
           tahun_produksi: data.tahun_produksi || '',
-          kategori: data.kategori || '',
+          kategori: data.kategori || 'Elektronik',
+          kondisi: data.kondisi || 'Baru',
           model: data.model || '',
-          harga_awal: data.harga_awal || '',
+          warna: data.warna || '',
+          daya_listrik: data.daya_listrik || '',
+          kapasitas: data.kapasitas || '',
+          tegangan: data.tegangan || '',
+          kondisi_fisik: data.kondisi_fisik || '',
+          kelengkapan: data.kelengkapan || '',
+          estetika: data.estetika_tampilan || '',
+          dokumen: data.dokumen_pendukung || '',
+          kemasan: data.kemasan_box || '',
+          aksesoris: data.aksesoris_tambahan || '',
+          harga_awal: data.harga_awal ? formatRibuan(data.harga_awal) : '',
           lokasi: data.lokasi || '',
-          status: data.status || 'aktif'
+          status: data.status || 'aktif',
+          tglMulai,
+          waktuMulai,
+          tglSelesai,
+          waktuSelesai,
         });
 
         if (data.image_urls && data.image_urls.length > 0) {
@@ -74,8 +126,12 @@ export default function AdminEditProdukPage({ params }) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const setStatus = (status) => {
-    setFormData(prev => ({ ...prev, status }));
+  const handleSelectChange = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleHargaChange = (e) => {
+    setFormData(prev => ({ ...prev, harga_awal: formatRibuan(e.target.value) }));
   };
 
   const handleImageUpload = async (e) => {
@@ -114,17 +170,41 @@ export default function AdminEditProdukPage({ params }) {
   const handleSave = async () => {
     setSaving(true);
     try {
+      let startDateTime = null;
+      let endDateTime = null;
+
+      if (formData.tglMulai && formData.waktuMulai && formData.tglSelesai && formData.waktuSelesai) {
+        startDateTime = new Date(`${formData.tglMulai}T${formData.waktuMulai}`);
+        endDateTime = new Date(`${formData.tglSelesai}T${formData.waktuSelesai}`);
+      } else {
+        throw new Error('Mohon lengkapi semua field Waktu Mulai dan Selesai');
+      }
+
+      const numericHarga = parseInt(formData.harga_awal.replace(/\./g, ''), 10);
+
       const { error } = await supabase
         .from('products')
         .update({
           nama_produk: formData.nama_produk,
           merk: formData.merk,
-          tahun_produksi: formData.tahun_produksi,
+          tahun_produksi: parseInt(formData.tahun_produksi, 10) || null,
           kategori: formData.kategori,
+          kondisi: formData.kondisi,
           model: formData.model,
-          harga_awal: formData.harga_awal,
+          warna: formData.warna,
+          daya_listrik: formData.daya_listrik,
+          kapasitas: formData.kapasitas,
+          tegangan: formData.tegangan,
+          kondisi_fisik: formData.kondisi_fisik,
+          kelengkapan: formData.kelengkapan,
+          estetika_tampilan: formData.estetika,
+          dokumen_pendukung: formData.dokumen,
+          kemasan_box: formData.kemasan,
+          aksesoris_tambahan: formData.aksesoris,
+          harga_awal: numericHarga,
           lokasi: formData.lokasi,
-          status: formData.status,
+          waktu_mulai: startDateTime.toISOString(),
+          waktu_selesai: endDateTime.toISOString(),
           image_urls: imageUrls
         })
         .eq('id', id);
@@ -164,6 +244,42 @@ export default function AdminEditProdukPage({ params }) {
     { value: 'DI Yogyakarta', label: 'DI Yogyakarta' },
     { value: 'Jawa Timur', label: 'Jawa Timur' }
   ];
+
+  const kondisiFisikOptions = [
+    { value: 'Sangat Baik', label: 'Sangat Baik' },
+    { value: 'Baik', label: 'Baik' },
+    { value: 'Cukup Baik', label: 'Cukup Baik' },
+  ];
+
+  const kelengkapanOptions = [
+    { value: 'Lengkap', label: 'Lengkap' },
+    { value: 'Sebagian', label: 'Sebagian' },
+    { value: 'Hanya Unit', label: 'Hanya Unit' },
+  ];
+
+  const estetikaOptions = [
+    { value: 'Mulus', label: 'Mulus' },
+    { value: 'Ada Goresan', label: 'Ada Goresan Halus' },
+    { value: 'Banyak Goresan', label: 'Banyak Goresan/Lecet' },
+  ];
+
+  const ketersediaanOptions = [
+    { value: 'Ada', label: 'Ada' },
+    { value: 'Tidak Ada', label: 'Tidak Ada' },
+  ];
+
+  const kemasanOptions = [
+    { value: 'Lengkap (Original)', label: 'Lengkap (Original)' },
+    { value: 'Pengganti', label: 'Pengganti' },
+    { value: 'Tanpa Kemasan', label: 'Tanpa Kemasan' },
+  ];
+
+  const aksesorisOptions = [
+    { value: 'Lengkap', label: 'Lengkap' },
+    { value: 'Sebagian', label: 'Sebagian' },
+    { value: 'Tidak Ada', label: 'Tidak Ada' },
+  ];
+
   return (
     <div className="admin-produk-edit-page">
       <div className="admin-page-header">
@@ -203,16 +319,32 @@ export default function AdminEditProdukPage({ params }) {
             </div>
 
             <div className="form-group-edit">
-              <label>HARGA TERAKHIR (RP)</label>
-              <input type="number" name="harga_awal" value={formData.harga_awal} onChange={handleChange} />
+              <label>KONDISI</label>
+              <div className="input-wrapper checkbox-list-inline" style={{ marginTop: '0.5rem' }}>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginRight: '1rem', cursor: 'pointer' }}>
+                  <input type="radio" name="kondisi" value="Baru" checked={formData.kondisi === 'Baru'} onChange={handleChange} style={{ width: '16px', height: '16px', cursor: 'pointer' }} /> Baru
+                </label>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input type="radio" name="kondisi" value="Bekas" checked={formData.kondisi === 'Bekas'} onChange={handleChange} style={{ width: '16px', height: '16px', cursor: 'pointer' }} /> Bekas
+                </label>
+              </div>
+            </div>
+
+            <div className="form-group-edit" style={{ marginTop: '1rem' }}>
+              <label>HARGA TERAKHIR / AWAL (RP)</label>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#6B7280', fontWeight: '500' }}>Rp</span>
+                <input type="text" inputMode="numeric" value={formData.harga_awal} onChange={handleHargaChange} style={{ paddingLeft: '2.5rem' }} />
+              </div>
             </div>
 
             <div className="form-group-edit">
               <label>STATUS LELANG</label>
-              <div className="status-lelang-group">
-                <button className={`status-lelang-btn ${formData.status === 'aktif' ? 'active' : ''}`} onClick={() => setStatus('aktif')}>AKTIF</button>
-                <button className={`status-lelang-btn ${formData.status === 'selesai' ? 'active' : ''}`} onClick={() => setStatus('selesai')}>SELESAI</button>
-                <button className={`status-lelang-btn ${formData.status === 'dibatalkan' ? 'active' : ''}`} onClick={() => setStatus('dibatalkan')}>DIBATALKAN</button>
+              <div className="status-lelang-group" style={{ opacity: 0.8 }}>
+                {/* Disabled buttons so they cannot be clicked anymore */}
+                <button type="button" disabled className={`status-lelang-btn ${formData.status === 'aktif' ? 'active' : ''}`} style={{ cursor: 'not-allowed' }}>AKTIF</button>
+                <button type="button" disabled className={`status-lelang-btn ${formData.status === 'selesai' ? 'active' : ''}`} style={{ cursor: 'not-allowed' }}>SELESAI</button>
+                <button type="button" disabled className={`status-lelang-btn ${formData.status === 'dibatalkan' ? 'active' : ''}`} style={{ cursor: 'not-allowed' }}>DIBATALKAN</button>
               </div>
             </div>
 
@@ -220,46 +352,24 @@ export default function AdminEditProdukPage({ params }) {
               <label>FOTO PRODUK</label>
               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                 {imageUrls.map((url, index) => (
-                  <div key={index} style={{ position: 'relative', width: '150px', height: '150px' }}>
-                    <img 
-                      src={url || "/assets/placeholder.png"} 
-                      alt={`Produk ${index+1}`} 
-                      className="foto-produk-preview" 
-                      style={{ objectFit: 'cover', width: '100%', height: '100%', borderRadius: '8px', border: '1px solid #E5E7EB' }} 
-                    />
-                    <button 
-                      onClick={() => removeImage(index)}
-                      style={{
-                        position: 'absolute', top: '6px', right: '6px',
-                        width: '24px', height: '24px', borderRadius: '50%',
-                        backgroundColor: 'rgba(239, 68, 68, 0.9)', color: 'white',
-                        border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', zIndex: 10
-                      }}
-                    >
+                  <div key={index} style={{ position: 'relative', width: '120px', height: '120px' }}>
+                    <img src={url || "/assets/placeholder.png"} alt={`Produk ${index+1}`} className="foto-produk-preview" style={{ objectFit: 'cover', width: '100%', height: '100%', borderRadius: '8px', border: '1px solid #E5E7EB' }} />
+                    <button type="button" onClick={() => removeImage(index)} style={{ position: 'absolute', top: '6px', right: '6px', width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.9)', color: 'white', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}>
                       <i className="ph ph-x" style={{ fontSize: '14px', fontWeight: 'bold' }}></i>
                     </button>
                   </div>
                 ))}
                 
-                <div 
-                  className="foto-produk-upload" 
-                  onClick={() => !uploadingImage && fileInputRef.current?.click()}
-                  style={{ 
-                    width: '150px', height: '150px', display: 'flex', flexDirection: 'column', 
-                    justifyContent: 'center', alignItems: 'center', cursor: uploadingImage ? 'not-allowed' : 'pointer',
-                    opacity: uploadingImage ? 0.6 : 1
-                  }}
-                >
+                <div className="foto-produk-upload" onClick={() => !uploadingImage && fileInputRef.current?.click()} style={{ width: '120px', height: '120px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', cursor: uploadingImage ? 'not-allowed' : 'pointer', opacity: uploadingImage ? 0.6 : 1, border: '2px dashed #D1D5DB', borderRadius: '8px', background: '#F9FAFB' }}>
                   {uploadingImage ? (
                     <>
                       <i className="ph ph-spinner" style={{ animation: 'spin 1s linear infinite' }}></i>
-                      <span>Mengunggah...</span>
+                      <span style={{ fontSize: '0.75rem' }}>Mengunggah...</span>
                     </>
                   ) : (
                     <>
                       <i className="ph ph-upload-simple"></i>
-                      <span>Tambah Foto</span>
+                      <span style={{ fontSize: '0.75rem' }}>Tambah Foto</span>
                     </>
                   )}
                 </div>
@@ -283,22 +393,93 @@ export default function AdminEditProdukPage({ params }) {
               </div>
             </div>
 
-            <div className="form-group-edit">
-              <label>MODEL</label>
-              <input type="text" name="model" value={formData.model} onChange={handleChange} />
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div className="form-group-edit" style={{ flex: 1 }}>
+                <label>MODEL</label>
+                <input type="text" name="model" value={formData.model} onChange={handleChange} />
+              </div>
+              <div className="form-group-edit" style={{ flex: 1 }}>
+                <label>WARNA</label>
+                <input type="text" name="warna" value={formData.warna} onChange={handleChange} />
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div className="form-group-edit" style={{ flex: 1 }}>
+                <label>DAYA LISTRIK</label>
+                <input type="text" name="daya_listrik" value={formData.daya_listrik} onChange={handleChange} />
+              </div>
+              <div className="form-group-edit" style={{ flex: 1 }}>
+                <label>KAPASITAS</label>
+                <input type="text" name="kapasitas" value={formData.kapasitas} onChange={handleChange} />
+              </div>
+              <div className="form-group-edit" style={{ flex: 1 }}>
+                <label>TEGANGAN</label>
+                <input type="text" name="tegangan" value={formData.tegangan} onChange={handleChange} />
+              </div>
             </div>
 
+            <h3 className="admin-edit-section-title" style={{ marginTop: '2rem' }}>KONDISI PRODUK</h3>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+              <div className="form-group-edit" style={{ flex: 1 }}>
+                <label>KONDISI FISIK</label>
+                <CustomSelect options={kondisiFisikOptions} value={formData.kondisi_fisik} onChange={(v) => handleSelectChange('kondisi_fisik', v)} placeholder="Pilih Kondisi Fisik" />
+              </div>
+              <div className="form-group-edit" style={{ flex: 1 }}>
+                <label>KELENGKAPAN</label>
+                <CustomSelect options={kelengkapanOptions} value={formData.kelengkapan} onChange={(v) => handleSelectChange('kelengkapan', v)} placeholder="Pilih Kelengkapan" />
+              </div>
+            </div>
             <div className="form-group-edit">
+              <label>ESTETIKA / TAMPILAN</label>
+              <CustomSelect options={estetikaOptions} value={formData.estetika} onChange={(v) => handleSelectChange('estetika', v)} placeholder="Pilih Estetika" />
+            </div>
+
+            <h3 className="admin-edit-section-title" style={{ marginTop: '2rem' }}>DETAIL KELENGKAPAN</h3>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+              <div className="form-group-edit" style={{ flex: 1 }}>
+                <label>DOKUMEN PENDUKUNG</label>
+                <CustomSelect options={ketersediaanOptions} value={formData.dokumen} onChange={(v) => handleSelectChange('dokumen', v)} placeholder="Pilih Ketersediaan" />
+              </div>
+              <div className="form-group-edit" style={{ flex: 1 }}>
+                <label>KEMASAN (BOX)</label>
+                <CustomSelect options={kemasanOptions} value={formData.kemasan} onChange={(v) => handleSelectChange('kemasan', v)} placeholder="Pilih Kemasan" />
+              </div>
+            </div>
+            <div className="form-group-edit">
+              <label>AKSESORIS TAMBAHAN</label>
+              <CustomSelect options={aksesorisOptions} value={formData.aksesoris} onChange={(v) => handleSelectChange('aksesoris', v)} placeholder="Pilih Aksesoris" />
+            </div>
+            
+            <h3 className="admin-edit-section-title" style={{ marginTop: '2rem' }}>DETAIL LELANG</h3>
+            <div className="form-group-edit" style={{ marginBottom: '1rem' }}>
               <label>LOKASI BARANG</label>
               <CustomSelect options={lokasiOptions} value={formData.lokasi} onChange={(v) => handleSelectChange('lokasi', v)} placeholder="Pilih Lokasi" />
             </div>
-
-            <div className="review-data-box" style={{ marginTop: '3rem' }}>
-              <h4><i className="ph-fill ph-check-circle"></i> Review Data</h4>
-              <p>Pastikan informasi merk dan tahun sesuai dengan dokumen fisik barang.</p>
+            
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+              <div className="form-group-edit" style={{ flex: 1 }}>
+                <label>TANGGAL MULAI</label>
+                <CustomDatePicker value={formData.tglMulai} onChange={(v) => handleSelectChange('tglMulai', v)} placeholder="Pilih Tanggal Mulai" />
+              </div>
+              <div className="form-group-edit" style={{ flex: 1 }}>
+                <label>WAKTU MULAI</label>
+                <CustomTimePicker value={formData.waktuMulai} onChange={(v) => handleSelectChange('waktuMulai', v)} placeholder="HH:MM" />
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div className="form-group-edit" style={{ flex: 1 }}>
+                <label>TANGGAL SELESAI</label>
+                <CustomDatePicker value={formData.tglSelesai} onChange={(v) => handleSelectChange('tglSelesai', v)} minDate={formData.tglMulai ? new Date(formData.tglMulai) : null} placeholder="Pilih Tanggal Selesai" />
+              </div>
+              <div className="form-group-edit" style={{ flex: 1 }}>
+                <label>WAKTU SELESAI</label>
+                <CustomTimePicker value={formData.waktuSelesai} onChange={(v) => handleSelectChange('waktuSelesai', v)} placeholder="HH:MM" alignRight={true} />
+              </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '3rem', justifyContent: 'flex-end' }}>
               <button onClick={() => router.push('/admin/produk')} style={{ padding: '0.75rem 2rem', borderRadius: '8px', border: 'none', background: '#EEF2FF', color: '#4F46E5', fontWeight: 600, cursor: 'pointer' }}>
                 Kembali
               </button>
