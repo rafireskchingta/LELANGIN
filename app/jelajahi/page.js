@@ -306,7 +306,7 @@ function JelajahiContent() {
               <i className="ph ph-magnifying-glass"></i>
               <input
                 type="text"
-                placeholder="Ketik untuk mencari otomatis..."
+                placeholder="Cari produk"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
               />

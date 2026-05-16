@@ -11,330 +11,467 @@ function StatusLelangContent() {
   const searchParams = useSearchParams();
   const initRole = searchParams.get('role') || 'pembeli';
 
-  // --- 1. STATE UI & AUTH ---
+  // --- 1. STATE UI & LAYOUT ---
   const [mounted, setMounted] = useState(false);
-  const [activeRole, setActiveRole] = useState(initRole); // 'pembeli' atau 'penjual'
+  const [activeRole, setActiveRole] = useState(initRole);
   const [activeTab, setActiveTab] = useState('Semua');
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [nowTime, setNowTime] = useState(new Date());
-
-  // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalHistoryOpen, setIsModalHistoryOpen] = useState(false);
+
+  // State Data Popup
   const [selectedItem, setSelectedItem] = useState(null);
+  const [activeModalImage, setActiveModalImage] = useState('/assets/placeholder.png');
   const [modalBids, setModalBids] = useState([]);
 
-  // Data States
+  // --- 2. STATE DATA UTAMA ---
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userRole, setUserRole] = useState('pembeli');
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // --- 3. STATE SEARCH (DEBOUNCE) ---
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const pembeliTabs = ['Semua', 'Sedang Diikuti', 'Favorit', 'Menang Lelang', 'Kalah Lelang', 'Dikirim', 'Selesai', 'Dibatalkan'];
   const penjualTabs = ['Semua', 'Menunggu', 'Aktif', 'Selesai', 'Dibatalkan'];
+  const currentTabs = activeRole === 'pembeli' ? pembeliTabs : penjualTabs;
 
+  const tabsRef = useRef(null);
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
+
+  // CEK SINKRONISASI DOM & USER AUTH
   useEffect(() => {
     setMounted(true);
-    
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUser(user);
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+        if (profile) {
+          setUserRole(profile.role);
+          if (profile.role !== 'penjual' && activeRole === 'penjual') {
+            setActiveRole('pembeli');
+          }
+        }
+      }
     };
     getUser();
-  }, []);
+  }, [activeRole]);
 
-  // Timer interval 1 detik
+  // DEBOUNCE SEARCH FILTER
   useEffect(() => {
-    const timer = setInterval(() => {
-      setNowTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    const timeoutId = setTimeout(() => {
+      setSearchQuery(searchInput.toLowerCase());
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [searchInput]);
 
-  // --- 2. LOGIKA FETCH DATA BERDASARKAN ROLE & TAB ---
-  const loadStatusData = async () => {
+  // FETCH DATA UTAMA BERDASARKAN TAB & ROLE
+  useEffect(() => {
     if (!currentUser) return;
-    setLoading(true);
-    try {
-      const now = new Date().toISOString();
+
+    const extractUniqueProducts = (dataArray) => {
+      if (!dataArray) return [];
+      const unique = [];
+      const seen = new Set();
+      dataArray.forEach(item => {
+        const prod = item.products;
+        if (prod && !seen.has(prod.id)) {
+          seen.add(prod.id);
+          unique.push(prod);
+        }
+      });
+      return unique;
+    };
+
+    const fetchTabData = async () => {
+      setLoading(true);
       let fetchedData = [];
 
-      if (activeRole === 'pembeli') {
-        if (activeTab === 'Favorit') {
-          const { data } = await supabase
-            .from('favorites')
-            .select('products(*)')
-            .eq('user_id', currentUser.id);
-          fetchedData = data?.map(f => f.products).filter(Boolean) || [];
-        } else if (activeTab === 'Sedang Diikuti') {
-          const { data } = await supabase
-            .from('bids')
-            .select('products(*)')
-            .eq('bidder_id', currentUser.id)
-            .gt('products.waktu_selesai', now);
-          fetchedData = extractUniqueProducts(data);
-        } else if (activeTab === 'Menang Lelang') {
-          const { data } = await supabase
-            .from('bids')
-            .select('products(*)')
-            .eq('bidder_id', currentUser.id)
-            .eq('is_winning_bid', true)
-            .lte('products.waktu_selesai', now);
-          fetchedData = extractUniqueProducts(data);
-        } else if (activeTab === 'Kalah Lelang') {
-          // KIRI (MERAH): Logika efisien mencegah lag memori b.products
-          const { data: allBidsEnded } = await supabase
-            .from('bids')
-            .select('is_winning_bid, products(*)')
-            .eq('bidder_id', currentUser.id)
-            .lt('products.waktu_selesai', now);
+      try {
+        const now = new Date().toISOString();
 
-          if (allBidsEnded) {
-            const wonProductIds = new Set(allBidsEnded.filter(b => b.is_winning_bid).map(b => b.products?.id));
-            const lostBids = allBidsEnded.filter(b => b.products && !wonProductIds.has(b.products.id));
-            fetchedData = extractUniqueProducts(lostBids);
+        if (activeRole === 'pembeli') {
+          switch (activeTab) {
+            case 'Favorit':
+              const { data: favs } = await supabase.from('favorites').select('products(*)').eq('user_id', currentUser.id);
+              fetchedData = extractUniqueProducts(favs);
+              break;
+            case 'Sedang Diikuti':
+              const { data: activeBids } = await supabase.from('bids').select('products(*)').eq('bidder_id', currentUser.id).gt('products.waktu_selesai', now);
+              fetchedData = extractUniqueProducts(activeBids);
+              break;
+            case 'Menang Lelang':
+              const { data: wins } = await supabase.from('transactions').select('products(*)').eq('winner_id', currentUser.id).in('status_transaksi', ['menunggu_pembayaran', 'diproses']);
+              fetchedData = extractUniqueProducts(wins);
+              break;
+            case 'Kalah Lelang':
+              const { data: lostBids } = await supabase.from('bids').select('products(*)').eq('bidder_id', currentUser.id).eq('is_winning_bid', false).lt('products.waktu_selesai', now);
+              fetchedData = extractUniqueProducts(lostBids);
+              break;
+            case 'Dikirim':
+            case 'Selesai':
+            case 'Dibatalkan':
+              const { data: trxStatus } = await supabase.from('transactions').select('products(*)').eq('winner_id', currentUser.id).eq('status_transaksi', activeTab.toLowerCase());
+              fetchedData = extractUniqueProducts(trxStatus);
+              break;
+            case 'Semua':
+            default:
+              const { data: allInteractions } = await supabase.from('bids').select('products(*)').eq('bidder_id', currentUser.id);
+              fetchedData = extractUniqueProducts(allInteractions);
+              break;
           }
         } else {
-          // Status pembeli lainnya (Dikirim, Selesai, Dibatalkan)
-          let query = supabase.from('products').select('*');
-          if (activeTab !== 'Semua') {
-            query = query.eq('status', activeTab.toLowerCase());
+          let query = supabase.from('products').select('*').eq('seller_id', currentUser.id);
+
+          switch (activeTab) {
+            case 'Menunggu':
+              query = query.eq('status', 'menunggu');
+              break;
+            case 'Aktif':
+              query = query.eq('status', 'aktif').gt('waktu_selesai', now);
+              break;
+            case 'Selesai':
+              query = query.lt('waktu_selesai', now);
+              break;
+            case 'Dibatalkan':
+              query = query.eq('status', 'dibatalkan');
+              break;
+            case 'Semua':
+            default: break;
           }
-          const { data } = await query;
+
+          const { data, error } = await query.order('created_at', { ascending: false });
+          if (error) throw error;
           fetchedData = data || [];
         }
-      } else {
-        // ROLE: PENJUAL
-        let query = supabase.from('products').select('*').eq('seller_id', currentUser.id);
-        if (activeTab === 'Aktif') {
-          query = query.eq('status', 'aktif').gt('waktu_selesai', now);
-        } else if (activeTab === 'Selesai') {
-          query = query.or(`status.eq.selesai,waktu_selesai.lte.${now}`);
-        } else if (activeTab !== 'Semua') {
-          query = query.eq('status', activeTab.toLowerCase());
+
+        if (searchQuery) {
+          fetchedData = fetchedData.filter(item => item && item.nama_produk && item.nama_produk.toLowerCase().includes(searchQuery));
         }
-        const { data } = await query;
-        fetchedData = data || [];
+
+        setItems(fetchedData);
+      } catch (error) {
+        console.error("Gagal menarik data:", error);
       }
-
-      setItems(fetchedData);
-    } catch (err) {
-      console.error('Error fetching status data:', err);
-    } finally {
       setLoading(false);
-    }
-  };
+    };
 
+    fetchTabData();
+  }, [activeRole, activeTab, currentUser, searchQuery]);
+
+  // ANIMASI SLIDER INDIKATOR TAB GAUL
   useEffect(() => {
-    loadStatusData();
-  }, [currentUser, activeRole, activeTab]);
+    const updateIndicator = () => {
+      if (!tabsRef.current) return;
+      const activeEl = tabsRef.current.querySelector('[data-active="true"]');
+      if (activeEl) {
+        setIndicatorStyle({ left: activeEl.offsetLeft, width: activeEl.offsetWidth, opacity: 1 });
+      }
+    };
+    updateIndicator();
+    const timer = setTimeout(updateIndicator, 50);
+    window.addEventListener('resize', updateIndicator);
+    return () => { clearTimeout(timer); window.removeEventListener('resize', updateIndicator); };
+  }, [activeTab, activeRole]);
 
-  const extractUniqueProducts = (bidsArray) => {
-    if (!bidsArray) return [];
-    const uniques = {};
-    bidsArray.forEach(b => {
-      if (b.products) uniques[b.products.id] = b.products;
-    });
-    return Object.values(uniques);
-  };
-
-  // --- 3. OPEN MODAL QUICK VIEW ---
-  const openModal = async (item) => {
+  // BUKA MODAL QUICK VIEW
+  const handleOpenModal = async (item) => {
     setSelectedItem(item);
+    setActiveModalImage(item.image_urls?.[0] || '/assets/placeholder.png');
     setIsModalOpen(true);
-    const bidsData = await fetchProductBids(item.id);
+    setIsModalHistoryOpen(false);
+
+    const { data: bidsData } = await supabase.from('bids').select('*, profiles(username)').eq('product_id', item.id).order('amount', { ascending: false });
     setModalBids(bidsData || []);
   };
 
-  // --- 4. FORMATTER & PROGRESS TIMER BAR ---
+  // FORMATTERS
   const formatRupiah = (angka) => {
     if (!angka) return '0';
     return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   };
 
-  const calculateTimeLeft = (waktuSelesai, waktuMulai) => {
-    if (!waktuSelesai) return { text: 'Waktu Habis', percent: 0 };
-    const end = new Date(waktuSelesai);
-    const start = new Date(waktuMulai || end.getTime() - 1000 * 60 * 60 * 24);
-    const selisihMs = end - nowTime;
+  const formatTanggalPukul = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    const optionsTanggal = { day: 'numeric', month: 'long', year: 'numeric' };
+    const tanggal = date.toLocaleDateString('id-ID', optionsTanggal);
+    const waktu = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
+    return `${tanggal} pukul ${waktu}`;
+  };
 
-    if (selisihMs <= 0) return { text: 'Waktu Habis', percent: 0 };
-
-    // KANAN (HIJAU) DENGAN REVISI MENYUSUT: (Sisa Waktu / Total Durasi) * 100
-    const totalDuration = end - start;
-    let percent = 100;
-    if (totalDuration > 0) {
-      percent = (selisihMs / totalDuration) * 100;
-      if (percent < 0) percent = 0;
-      if (percent > 100) percent = 100;
-    }
+  const calculateTimeLeft = (waktuSelesai) => {
+    if (!waktuSelesai) return 'Waktu Habis';
+    const selisihMs = new Date(waktuSelesai) - new Date();
+    if (selisihMs <= 0) return 'Waktu Habis';
 
     const hari = Math.floor(selisihMs / (1000 * 60 * 60 * 24));
     const jam = Math.floor((selisihMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
-    const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
 
-    const detikStr = String(detik).padStart(2, '0');
-    let text = '';
-    if (hari > 0) {
-      text = `${hari} Hari : ${jam} Jam : ${menit} Menit`;
-    } else if (jam > 0) {
-      text = `${jam} Jam : ${menit} Menit`;
-    } else {
-      text = `${menit} Menit : ${detikStr} Detik`;
-    }
-
-    return { text, percent };
+    if (hari > 0) return `${hari} Hari`;
+    if (jam > 0) return `${jam} Jam`;
+    return `${menit} Menit`;
   };
 
-  // --- 5. LOGIKA BADGE STATUS DINAMIS ---
-  const getDynamicStatus = (item) => {
-    if (activeTab !== 'Semua') return activeTab;
-    const end = new Date(item.waktu_selesai);
-    if (activeRole === 'penjual') {
-      if (item.status === 'dibatalkan') return 'Dibatalkan';
-      if (item.status === 'menunggu') return 'Menunggu';
-      if (end <= nowTime) return 'Selesai';
-      if (item.status === 'aktif') return 'Aktif';
-      return item.status;
+  const getPriceColor = () => {
+    if (activeRole === 'pembeli') {
+      if (activeTab === 'Menang Lelang') return '#10B981';
+      if (activeTab === 'Kalah Lelang') return '#EF4444';
     } else {
-      if (end <= nowTime) return 'Selesai';
-      return 'Aktif';
+      if (activeTab === 'Selesai') return '#10B981';
+      if (activeTab === 'Dibatalkan') return '#EF4444';
     }
+    return 'var(--text-main)';
   };
 
-  const getBadgeStyle = (status) => {
-    if (status === 'Menang Lelang' || status === 'Selesai' || status === 'Aktif') {
-      return { bg: '#ECFDF5', color: '#059669' }; // Hijau
+  const getPriceLabel = () => {
+    if (activeRole === 'pembeli') {
+      if (activeTab === 'Menang Lelang' || activeTab === 'Kalah Lelang') return 'Penawaran Anda';
+      return 'Harga Terakhir';
+    } else {
+      if (activeTab === 'Selesai') return 'Terjual Seharga';
+      return 'Bid Tertinggi Saat Ini';
     }
-    if (status === 'Kalah Lelang' || status === 'Dibatalkan') {
-      return { bg: '#FEF2F2', color: '#DC2626' }; // Merah
-    }
-    if (status === 'Menunggu' || status === 'Sedang Diikuti') {
-      return { bg: '#FFFBEB', color: '#D97706' }; // Kuning
-    }
-    return { bg: '#EEF2FF', color: '#4F46E5' }; // Default Biru
   };
 
   return (
     <main className="page-container" style={{ padding: '0 5%', margin: '0 auto', minHeight: '80vh' }}>
-      <div className="role-switcher" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', marginTop: '2rem' }}>
-        <button className={`btn-role ${activeRole === 'pembeli' ? 'active' : ''}`} onClick={() => { setActiveRole('pembeli'); setActiveTab('Semua'); }}>Aktivitas Pembeli</button>
-        <button className={`btn-role ${activeRole === 'penjual' ? 'active' : ''}`} onClick={() => { setActiveRole('penjual'); setActiveTab('Semua'); }}>Aktivitas Penjual</button>
+
+      {/* Banner Utama */}
+      <div style={{ background: 'linear-gradient(135deg, var(--primary) 0%, #7B83F5 50%, #A5AAFF 100%)', color: 'white', padding: '1.5rem 2rem', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1rem', marginBottom: '2rem' }}>
+        <i className="ph ph-clock" style={{ fontSize: '2.25rem', opacity: 0.9 }}></i>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>Status Penawaran Lelang</h2>
       </div>
 
-      <div className="tabs-container" style={{ overflowX: 'auto', whiteSpace: 'nowrap', display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
-        {(activeRole === 'pembeli' ? pembeliTabs : penjualTabs).map((tab) => (
-          <button key={tab} className={`tab-item ${activeTab === tab ? 'active' : ''}`} onClick={() => setActiveTab(tab)}>
+      {/* Header Form & Role Kapsul Switcher */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+
+        {/* Kapsul Role Switcher dengan Sliding Effect */}
+        <div style={{ position: 'relative', display: 'inline-flex', background: '#F3F4F6', borderRadius: '999px', padding: '4px', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)' }}>
+          <div style={{
+            position: 'absolute', top: '4px', bottom: '4px',
+            left: activeRole === 'pembeli' ? '4px' : 'calc(50% + 2px)',
+            width: 'calc(50% - 6px)',
+            background: 'var(--primary)',
+            borderRadius: '999px',
+            transition: 'all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)'
+          }}></div>
+
+          <button
+            onClick={() => { setActiveRole('pembeli'); setActiveTab('Semua'); }}
+            style={{ position: 'relative', zIndex: 1, width: '120px', padding: '0.6rem 0', fontWeight: 700, border: 'none', background: 'transparent', color: activeRole === 'pembeli' ? 'white' : '#6B7280', cursor: 'pointer', transition: 'color 0.3s', fontFamily: 'inherit', fontSize: '0.9rem' }}
+          >
+            Pembeli
+          </button>
+          <button
+            onClick={() => {
+              if (userRole !== 'penjual') return;
+              setActiveRole('penjual');
+              setActiveTab('Semua');
+            }}
+            style={{ position: 'relative', zIndex: 1, width: '120px', padding: '0.6rem 0', fontWeight: 700, border: 'none', background: 'transparent', color: activeRole === 'penjual' ? 'white' : '#6B7280', cursor: userRole === 'penjual' ? 'pointer' : 'not-allowed', transition: 'color 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', fontFamily: 'inherit', fontSize: '0.9rem' }}
+          >
+            Penjual
+            {userRole !== 'penjual' && <i className="ph-fill ph-lock-key" style={{ fontSize: '1rem', color: '#9CA3AF' }}></i>}
+          </button>
+        </div>
+
+        {/* Search Input */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid #D1D5DB', borderRadius: '8px', padding: '0.5rem 1rem', minWidth: '260px', flex: '0 1 320px', background: 'white' }}>
+          <i className="ph ph-magnifying-glass" style={{ color: '#9CA3AF', fontSize: '1.1rem' }}></i>
+          <input type="text" placeholder="Cari produk kamu disini" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} style={{ border: 'none', outline: 'none', width: '100%', fontFamily: 'inherit', fontSize: '0.9rem', color: 'var(--text-main)', background: 'transparent' }} />
+        </div>
+      </div>
+
+      {/* Navigasi Tab Bar */}
+      <div ref={tabsRef} style={{ display: 'flex', borderBottom: '2px solid #E5E7EB', position: 'relative', marginBottom: '2rem' }}>
+        {currentTabs.map(tab => (
+          <button
+            key={tab}
+            data-active={activeTab === tab ? 'true' : 'false'}
+            onClick={() => setActiveTab(tab)}
+            style={{ flex: 1, padding: '1rem 0.25rem', background: 'none', border: 'none', color: activeTab === tab ? 'var(--primary)' : 'var(--text-muted)', fontWeight: activeTab === tab ? 700 : 500, fontSize: '0.9rem', cursor: 'pointer', transition: 'color 0.3s ease', textAlign: 'center' }}
+          >
             {tab}
           </button>
         ))}
+        <div style={{ position: 'absolute', bottom: '-2px', height: '3px', backgroundColor: 'var(--primary)', borderRadius: '3px', transition: 'left 0.3s ease, width 0.3s ease', left: indicatorStyle.left, width: indicatorStyle.width }}></div>
       </div>
 
-      {/* Grid List Item */}
-      <div className="status-lelang-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      {/* List Content Grid */}
+      <div style={{ minHeight: '400px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Memuat data aktivitas...</div>
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Memuat status penawaran...</div>
         ) : items.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Tidak ada aktivitas lelang di kategori ini.</div>
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Tidak ada data lelang di tab {activeTab}.</div>
         ) : (
-          items.map((item) => {
-            const currentStatus = getDynamicStatus(item);
-            const badgeStyle = getBadgeStyle(currentStatus);
-            return (
-              <div key={item.id} className="status-lelang-card" onClick={() => openModal(item)} style={{ display: 'flex', alignItems: 'center', background: 'white', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '1.25rem', gap: '1rem', cursor: 'pointer' }}>
-                <img src={item.image_urls?.[0] || '/assets/placeholder.png'} alt={item.nama_produk} style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '8px' }} />
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1rem', fontWeight: 600 }}>{item.nama_produk}</h3>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#6B7280' }}>Harga Awal: Rp {formatRupiah(item.harga_awal)}</p>
+          items.map((item) => (
+            <div key={item.id} onClick={() => handleOpenModal(item)} className="status-card smooth-fade" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem', background: 'white', borderRadius: '12px', border: '1px solid #E5E7EB', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}>
+              <img src={item.image_urls?.[0] || '/assets/placeholder.png'} alt={item.nama_produk} style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }} />
+
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.25rem', color: '#111827' }}>{item.nama_produk}</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.5rem' }}><i className="ph ph-map-pin"></i> {item.lokasi}</p>
+                <div style={{ display: 'flex', gap: '2rem' }}>
+                  <div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>{getPriceLabel()}</p>
+                    <p style={{ fontSize: '1.2rem', fontWeight: 800, color: getPriceColor() }}>Rp {formatRupiah(item.current_price || item.harga_awal)}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Batas / Hasil Lelang</p>
+                    <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151' }}>{formatTanggalPukul(item.waktu_selesai)}</p>
+                  </div>
                 </div>
-                <span style={{ backgroundColor: badgeStyle.bg, color: badgeStyle.color, padding: '6px 14px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 700 }}>
-                  {currentStatus.toUpperCase()}
+              </div>
+
+              <div>
+                <span style={{
+                  background: (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#ECFDF5' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#FEF2F2' : '#E0E7FF'),
+                  color: (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#059669' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#DC2626' : 'var(--primary)'),
+                  padding: '0.5rem 1.25rem', borderRadius: '20px', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem'
+                }}>
+                  {activeTab === 'Semua' ? 'Aktif' : activeTab}
                 </span>
               </div>
-            );
-          })
+            </div>
+          ))
         )}
       </div>
 
-      {/* --- POPUP SAKTI OVERLAY PENUH (CREATEPORTAL) --- */}
-      {mounted && isModalOpen && typeof document !== 'undefined' && createPortal(
-        <div className="modal-overlay active" id="itemDetailOverlay" onClick={(e) => { if (e.target.id === 'itemDetailOverlay') setIsModalOpen(false) }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-          <div className="modal modal-lg active" style={{ background: 'white', borderRadius: '16px', maxWidth: '800px', width: '90%', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', position: 'relative' }}>
-            <button className="modal-close" onClick={() => setIsModalOpen(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}><i className="ph ph-x"></i></button>
+      {/* --- OVERLAY DETIL POPUP UTUH (CREATEPORTAL) --- */}
+      {mounted && typeof document !== 'undefined' && createPortal(
+        <div className={`modal-overlay ${isModalOpen ? 'active' : ''}`} onClick={(e) => { if (e.target.classList.contains('modal-overlay')) setIsModalOpen(false) }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999, backdropFilter: 'blur(12px)', opacity: isModalOpen ? 1 : 0, pointerEvents: isModalOpen ? 'auto' : 'none', transition: 'all 0.3s ease' }}>
+          <div className={`modal modal-lg ${isModalOpen ? 'active' : ''}`} style={{ background: 'white', borderRadius: '16px', maxWidth: '800px', width: '90%', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', position: 'relative', transform: isModalOpen ? 'translateY(0)' : 'translateY(20px)', transition: 'transform 0.3s ease' }}>
+            <button className="modal-close" onClick={() => setIsModalOpen(false)} style={{ zIndex: 10, position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem' }}><i className="ph ph-x"></i></button>
 
             {selectedItem && (
               <div className="item-detail-layout" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
-                {/* KIRI: Foto & Riwayat */}
-                <div>
-                  <img src={selectedItem.image_urls?.[0] || '/assets/placeholder.png'} alt={selectedItem.nama_produk} style={{ width: '100%', height: '260px', objectFit: 'cover', borderRadius: '8px' }} />
-                  
-                  <div className="riwayat-section border-rounded" style={{ marginTop: '1.5rem', border: '1px solid #E5E7EB', borderRadius: '8px', padding: '1rem' }}>
-                    <h4 style={{ margin: '0 0 0.75rem 0' }}><i className="ph ph-clock-counter-clockwise"></i> Riwayat Penawaran ({modalBids.length})</h4>
-                    <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
-                      {modalBids.length === 0 ? (
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#6B7280', textAlign: 'center' }}>Belum ada penawaran</p>
-                      ) : (
-                        modalBids.slice(0, 5).map((bid) => (
-                          <div key={bid.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px dashed #E5E7EB', fontSize: '0.85rem' }}>
-                            <span>@{bid.profiles?.username || 'User'}</span>
-                            <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Rp {formatRupiah(bid.amount)}</span>
-                          </div>
-                        ))
-                      )}
-                    </div>
+
+                {/* KIRI */}
+                <div style={{ width: '100%' }}>
+                  <img src={activeModalImage} alt={selectedItem.nama_produk} style={{ width: '100%', height: '350px', objectFit: 'cover', borderRadius: '12px' }} />
+
+                  {selectedItem.image_urls?.length > 1 && (
+                    <div style={{ width: '100%', overflow: 'hidden', marginTop: '1rem' }}>
+                      <div className="small-gallery" style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}>
+                        {selectedItem.image_urls.map((url, idx) => (
+                          <img key={idx} src={url} alt={`Thumb ${idx}`} onClick={() => setActiveModalImage(url)} style={{ width: '80px', height: '80px', flexShrink: 0, objectFit: 'cover', borderRadius: '8px', cursor: 'pointer', border: activeModalImage === url ? '2px solid var(--primary)' : '1px solid #E5E7EB', scrollSnapAlign: 'start' }} />
+                        ))}
+                      </div>
+                  </div>
+                  )}
+
+                  <div className="riwayat-section border-rounded" style={{ marginTop: '1rem', border: '1px solid #E5E7EB', borderRadius: '8px', padding: '1rem' }}>
+                    <button className="riwayat-header" onClick={() => setIsModalHistoryOpen(!isModalHistoryOpen)} style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <i className="ph ph-clock-counter-clockwise"></i>
+                        Riwayat Penawaran ({modalBids.length})
+                      </div>
+                      <i className={`ph ph-caret-right ${isModalHistoryOpen ? 'ph-caret-down' : ''}`} style={{ transition: 'transform 0.3s' }}></i>
+                    </button>
+
+                    {isModalHistoryOpen && (
+                      <div className="riwayat-body" style={{ maxHeight: '150px', overflowY: 'auto', marginTop: '0.75rem' }}>
+                        {modalBids.length === 0 ? (
+                          <div style={{ textAlign: 'center', padding: '1rem', fontSize: '0.85rem', color: '#6B7280' }}>Belum ada penawaran</div>
+                        ) : (
+                          modalBids.slice(0, 3).map((bid) => (
+                            <div key={bid.id} className="riwayat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px dashed #E5E7EB', fontSize: '0.85rem' }}>
+                              <span>@{bid.profiles?.username || 'User'}</span>
+                              <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Rp {formatRupiah(bid.amount)}</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* KANAN: Detail & Tombol Aksi */}
+                {/* KANAN */}
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
-                    <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.4rem' }}>{selectedItem.nama_produk}</h2>
-                    <div style={{ background: '#F9FAFB', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
-                      <span style={{ fontSize: '0.85rem', color: '#6B7280', display: 'block' }}>Harga Pengajuan Awal</span>
-                      <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#111827' }}>Rp {formatRupiah(selectedItem.harga_awal)}</span>
+                    <h2 style={{ fontSize: '1.4rem', margin: '0 0 1rem 0', fontWeight: 700 }}>{selectedItem.nama_produk}</h2>
+
+                    {(() => {
+                      let bidStatusText = getPriceLabel();
+                      let bidStatusColor = getPriceColor();
+
+                      if (activeRole === 'pembeli' && (activeTab === 'Semua' || activeTab === 'Sedang Diikuti' || activeTab === 'Favorit')) {
+                        const isBiddedByUser = currentUser && modalBids.some(b => b.bidder_id === currentUser.id);
+                        const isOriginalHighest = currentUser && modalBids.length > 0 && modalBids[0].bidder_id === currentUser.id;
+
+                        if (modalBids.length === 0) {
+                          bidStatusText = 'Belum Ada Penawaran';
+                          bidStatusColor = 'var(--text-main)';
+                        } else if (isOriginalHighest) {
+                          bidStatusText = 'Anda Penawar Tertinggi Saat Ini!';
+                          bidStatusColor = '#10B981';
+                        } else if (isBiddedByUser) {
+                          bidStatusText = 'Harga Tertinggi saat ini:';
+                          bidStatusColor = '#EF4444';
+                        }
+                      }
+
+                      return (
+                        <div className="bid-section" style={{ padding: '0', marginBottom: '1rem' }}>
+                          <p style={{ color: bidStatusColor, fontWeight: 600, fontSize: '0.9rem', margin: '0 0 0.25rem 0' }}>{bidStatusText}</p>
+                          <h3 style={{ color: bidStatusColor, fontSize: '1.8rem', fontWeight: 800, margin: 0 }}>Rp {formatRupiah(modalBids.length > 0 ? modalBids[0].amount : (selectedItem.current_price || selectedItem.harga_awal))}</h3>
+                        </div>
+                      );
+                    })()}
+
+                    <table className="specs-table" style={{ width: '100%', borderCollapse: 'collapse', margin: '1.5rem 0', fontSize: '0.9rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid #E5E7EB', textAlign: 'left', color: '#6B7280' }}>
+                          <th style={{ paddingBottom: '0.5rem' }}>Merk</th>
+                          <th style={{ paddingBottom: '0.5rem' }}>Tahun</th>
+                          <th style={{ paddingBottom: '0.5rem' }}>Model</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr style={{ fontWeight: 500 }}>
+                          <td style={{ paddingTop: '0.5rem' }}>{selectedItem.merk || '-'}</td>
+                          <td style={{ paddingTop: '0.5rem' }}>{selectedItem.tahun_produksi || '-'}</td>
+                          <td style={{ paddingTop: '0.5rem' }}>{selectedItem.model || '-'}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <div className="info-lelang-section" style={{ fontSize: '0.9rem', borderTop: '1px solid #E5E7EB', paddingTop: '1rem', marginBottom: '1.5rem' }}>
+                      <h4 style={{ margin: '0 0 0.75rem 0', fontWeight: 600 }}>Informasi Lelang</h4>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}><span style={{ color: '#6B7280' }}>Lelang Berakhir</span><span style={{ fontWeight: 600 }}>{formatTanggalPukul(selectedItem.waktu_selesai)}</span></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6B7280' }}>Lokasi Barang</span><span style={{ fontWeight: 600 }}>{selectedItem.lokasi}</span></div>
                     </div>
 
-                    <div style={{ fontSize: '0.9rem', color: '#374151', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                      <div><strong>Kategori:</strong> {selectedItem.kategori}</div>
-                      <div><strong>Lokasi Barang:</strong> {selectedItem.lokasi}</div>
-                      <div><strong>Waktu Selesai:</strong> {formatDate(selectedItem.waktu_selesai)}</div>
+                    <div className="countdown-section" style={{ background: '#FFF5F5', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', textAlign: 'center' }}>
+                      <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem', color: '#4B5563' }}>Sisa Waktu Lelang :</p>
+                      <div style={{ color: 'var(--danger)', fontWeight: 800, fontSize: '1.25rem' }}>
+                        {calculateTimeLeft(selectedItem.waktu_selesai)}
+                      </div>
                     </div>
-
-                    {/* PROGRESS BAR BARU (MENYUSUT KE KIRI) */}
-                    {selectedItem.status === 'aktif' && (
-                      (() => {
-                        const timerData = calculateTimeLeft(selectedItem.waktu_selesai, selectedItem.waktu_mulai || selectedItem.created_at);
-                        return (
-                          <div className="countdown-section text-center" style={{ marginBottom: '1.5rem', background: '#FEF2F2', padding: '1rem', borderRadius: '8px' }}>
-                            <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem' }}>Sisa Waktu Lelang:</p>
-                            <div className="countdown-timer" style={{ color: '#EF4444', fontWeight: 'bold', fontSize: '1.2rem', marginBottom: '0.5rem' }}>
-                              {timerData.text}
-                            </div>
-                            <div className="progress-bar" style={{ width: '100%', background: '#E5E7EB', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
-                              <div className="progress-fill" style={{ width: `${timerData.percent}%`, background: '#EF4444', height: '100%', transition: 'width 1s linear' }}></div>
-                            </div>
-                          </div>
-                        );
-                      })()
-                    )}
                   </div>
 
-                  {/* KIRI (MERAH): Tombol Sakti Alur Pembayaran Tetap Terjaga */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-                    <button className="btn-primary-full" onClick={() => { setIsModalOpen(false); router.push(`/jelajahi/${selectedItem.id}`); }}>
+                  {/* TOMBOL ALUR TRANSAKSI SAKTI TETAP AMAN */}
+                  <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
+                    <button className="btn-primary-full" onClick={() => { setIsModalOpen(false); router.push(`/jelajahi/${selectedItem.id}?from=status-lelang`); }}>
                       Lihat Detail Penuh
                     </button>
 
                     {activeRole === 'pembeli' && activeTab === 'Menang Lelang' && (
-                      <button className="btn-secondary" onClick={() => { setIsModalOpen(false); router.push(`/status-lelang/pembayaran/${selectedItem.id}`); }} style={{ background: '#10B981', color: 'white', border: 'none', padding: '0.75rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+                      <button style={{ padding: '0.75rem', borderRadius: '8px', fontSize: '1rem', fontWeight: 700, background: '#10B981', color: 'white', border: 'none', cursor: 'pointer' }} onClick={() => { setIsModalOpen(false); router.push(`/status-lelang/pembayaran/${selectedItem.id}`); }}>
                         Lanjut Pembayaran
                       </button>
                     )}
-
                     {activeRole === 'penjual' && activeTab === 'Selesai' && modalBids.length > 0 && (
-                      <button className="btn-secondary" onClick={() => { setIsModalOpen(false); router.push(`/status-lelang/pengiriman/penjual/${selectedItem.id}`); }} style={{ background: '#4F46E5', color: 'white', border: 'none', padding: '0.75rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+                      <button style={{ padding: '0.75rem', borderRadius: '8px', fontSize: '1rem', fontWeight: 700, background: '#4F46E5', color: 'white', border: 'none', cursor: 'pointer' }} onClick={() => { setIsModalOpen(false); router.push(`/status-lelang/pengiriman/penjual/${selectedItem.id}`); }}>
                         Proses Pengiriman Barang
                       </button>
                     )}
                   </div>
+
                 </div>
               </div>
             )}
@@ -344,13 +481,6 @@ function StatusLelangContent() {
       )}
     </main>
   );
-}
-
-// Helper formatting date
-function formatDate(dateString) {
-  if (!dateString) return '-';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 export default function StatusLelangPage() {

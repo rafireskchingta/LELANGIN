@@ -17,6 +17,7 @@ export default function DetailPage() {
   const fromStatus = searchParams.get('from') === 'status-lelang';
 
   // --- STATE ---
+  const [mounted, setMounted] = useState(false); // PERBAIKAN: Dideklarasikan dengan benar
   const [product, setProduct] = useState(null);
   const [bids, setBids] = useState([]);
   const [bidValue, setBidValue] = useState('');
@@ -24,12 +25,17 @@ export default function DetailPage() {
 
   const [currentUser, setCurrentUser] = useState(null);
   const [timeLeft, setTimeLeft] = useState('Menghitung...');
-  const [progressPercent, setProgressPercent] = useState(0); // GABUNGAN: State Progress Bar dari Code 2
+  const [progressPercent, setProgressPercent] = useState(0); 
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
-  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false); // GABUNGAN: Fitur Alamat dari Code 1
-  const [isPaid, setIsPaid] = useState(false); // GABUNGAN: Fitur Pembayaran dari Code 1
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false); 
+  const [isPaid, setIsPaid] = useState(false); 
+
+  // PERBAIKAN: Set mounted menjadi true setelah komponen masuk ke client-side
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Cek status pembayaran dari localStorage (dummy)
   useEffect(() => {
@@ -115,7 +121,7 @@ export default function DetailPage() {
     };
   }, [productId, currentUser?.id]);
 
-// --- LOGIKA TIMER DENGAN PROGRESS BAR MENYUSUT (100% -> 0%) ---
+  // --- LOGIKA TIMER DENGAN PROGRESS BAR MENYUSUT (100% -> 0%) ---
   useEffect(() => {
     if (!product?.waktu_selesai) return;
 
@@ -127,17 +133,17 @@ export default function DetailPage() {
 
       if (selisihMs <= 0) {
         setTimeLeft('Waktu Habis');
-        setProgressPercent(0); // REVISI: Saat waktu habis, bar merah menjadi 0%
+        setProgressPercent(0); 
         clearInterval(timer);
         return;
       }
 
       // Kalkulasi persentase bar menyusut (Sisa Waktu / Total Durasi)
       const totalDuration = end - start;
-      let percent = 100; // Default penuh di awal
+      let percent = 100; 
       
       if (totalDuration > 0) {
-        percent = (selisihMs / totalDuration) * 100; // REVISI: Memakai sisa waktu
+        percent = (selisihMs / totalDuration) * 100; 
         if (percent < 0) percent = 0;
         if (percent > 100) percent = 100;
       }
@@ -396,7 +402,6 @@ export default function DetailPage() {
               </div>
             </div>
 
-            {/* GABUNGAN: Memakai Alur Transaksi dari Code 1 + Rumus Persentase Akurat dari Code 2 */}
             {product.status !== 'selesai' && timeLeft !== 'Waktu Habis' ? (
               <>
                 <div className="countdown-section text-center" style={{ marginBottom: '2rem' }}>
@@ -480,39 +485,41 @@ export default function DetailPage() {
       )}
 
       {product && (
-        <div className="specs-details-grid border-top-bottom mt-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid #E5E7EB' }}>
-          <div>
-            <h3 style={{ marginBottom: '1rem', color: '#111827' }}>Info</h3>
-            <ul className="key-value-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Merk</span><span style={{ fontWeight: 500 }}>{product.merk || '-'}</span></li>
-              <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Model</span><span style={{ fontWeight: 500 }}>{product.model || '-'}</span></li>
-              <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Daya Listrik</span><span style={{ fontWeight: 500 }}>{product.daya_listrik || '-'}</span></li>
-              <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Kapasitas</span><span style={{ fontWeight: 500 }}>{product.kapasitas || '-'}</span></li>
-              <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Warna</span><span style={{ fontWeight: 500 }}>{product.warna || '-'}</span></li>
-              <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Tahun Produksi</span><span style={{ fontWeight: 500 }}>{product.tahun_produksi || '-'}</span></li>
-              <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Tegangan</span><span style={{ fontWeight: 500 }}>{product.tegangan || '-'}</span></li>
-            </ul>
+        <>
+          <div className="specs-details-grid border-top-bottom mt-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid #E5E7EB' }}>
+            <div>
+              <h3 style={{ marginBottom: '1rem', color: '#111827' }}>Info</h3>
+              <ul className="key-value-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Merk</span><span style={{ fontWeight: 500 }}>{product.merk || '-'}</span></li>
+                <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Model</span><span style={{ fontWeight: 500 }}>{product.model || '-'}</span></li>
+                <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Daya Listrik</span><span style={{ fontWeight: 500 }}>{product.daya_listrik || '-'}</span></li>
+                <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Kapasitas</span><span style={{ fontWeight: 500 }}>{product.kapasitas || '-'}</span></li>
+                <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Warna</span><span style={{ fontWeight: 500 }}>{product.warna || '-'}</span></li>
+                <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Tahun Produksi</span><span style={{ fontWeight: 500 }}>{product.tahun_produksi || '-'}</span></li>
+                <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Tegangan</span><span style={{ fontWeight: 500 }}>{product.tegangan || '-'}</span></li>
+              </ul>
+            </div>
+            <div>
+              <h3 style={{ marginBottom: '1rem', color: '#111827' }}>Kelas</h3>
+              <ul className="key-value-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Kondisi Fisik</span><span style={{ fontWeight: 500 }}>{product.kondisi_fisik || '-'}</span></li>
+                <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Kelengkapan</span><span style={{ fontWeight: 500 }}>{product.kelengkapan || '-'}</span></li>
+                <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Estetika</span><span style={{ fontWeight: 500 }}>{product.estetika_tampilan || '-'}</span></li>
+              </ul>
+            </div>
+            <div>
+              <h3 style={{ marginBottom: '1rem', color: '#111827' }}>Dokumen</h3>
+              <ul className="key-value-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Dok. Pendukung</span><span style={{ fontWeight: 500 }}>{product.dokumen_pendukung || '-'}</span></li>
+                <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Kemasan/Box</span><span style={{ fontWeight: 500 }}>{product.kemasan_box || '-'}</span></li>
+                <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Aksesoris Tambahan</span><span style={{ fontWeight: 500 }}>{product.aksesoris_tambahan || '-'}</span></li>
+              </ul>
+            </div>
           </div>
-          <div>
-            <h3 style={{ marginBottom: '1rem', color: '#111827' }}>Kelas</h3>
-            <ul className="key-value-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Kondisi Fisik</span><span style={{ fontWeight: 500 }}>{product.kondisi_fisik || '-'}</span></li>
-              <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Kelengkapan</span><span style={{ fontWeight: 500 }}>{product.kelengkapan || '-'}</span></li>
-              <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Estetika</span><span style={{ fontWeight: 500 }}>{product.estetika_tampilan || '-'}</span></li>
-            </ul>
-          </div>
-          <div>
-            <h3 style={{ marginBottom: '1rem', color: '#111827' }}>Dokumen</h3>
-            <ul className="key-value-list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Dok. Pendukung</span><span style={{ fontWeight: 500 }}>{product.dokumen_pendukung || '-'}</span></li>
-              <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Kemasan/Box</span><span style={{ fontWeight: 500 }}>{product.kemasan_box || '-'}</span></li>
-              <li style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed #E5E7EB' }}><span style={{ color: 'var(--text-muted)' }}>Aksesoris Tambahan</span><span style={{ fontWeight: 500 }}>{product.aksesoris_tambahan || '-'}</span></li>
-            </ul>
-          </div>
-        </div>
+        </>
       )}
 
-      {/* GABUNGAN: MODAL ALAMAT VIA PORTAL DARI CODE 1 */}
+      {/* PORTAL MODAL ALAMAT */}
       {mounted && typeof document !== 'undefined' && isAddressModalOpen && createPortal(
         <div className="modal-overlay active" style={{ display: 'flex' }}>
           <div className="modal active" style={{ background: '#4F46E5', borderRadius: '16px', maxWidth: '500px', width: '90%', position: 'relative', overflow: 'hidden', padding: 0 }}>
@@ -553,8 +560,8 @@ export default function DetailPage() {
         document.body
       )}
 
-      {/* MODAL PERINGATAN MERAH */}
-      {mounted && isWarningModalOpen && createPortal(
+      {/* PORTAL MODAL PERINGATAN MERAH */}
+      {mounted && typeof document !== 'undefined' && isWarningModalOpen && createPortal(
         <div className="modal-overlay active" id="modalOverlay" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
           <div className="modal modal-sm active" id="warningModal" style={{ background: 'white', padding: '2rem', borderRadius: '12px', textAlign: 'center', maxWidth: '400px', width: '90%', position: 'relative' }}>
             <button className="modal-close" onClick={closeAllModals} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#6B7280' }}><i className="ph ph-x"></i></button>

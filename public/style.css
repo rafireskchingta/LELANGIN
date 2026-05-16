@@ -519,6 +519,120 @@ body {
   transform: rotate(180deg);
 }
 
+.role-switcher-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  background-color: #F3F4F6;
+  border-radius: 999px;
+  padding: 4px;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+  max-width: 100%;
+}
+
+.role-btn {
+  background: transparent;
+  border: none;
+  font-weight: 700;
+  width: 140px;
+  min-width: 120px;
+  font-family: inherit;
+  padding: 0.85rem 0.9rem;
+  border-radius: 999px;
+  color: var(--text-main);
+  transition: color 0.3s ease, background-color 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+}
+
+.role-btn:hover,
+.role-btn.active {
+  color: var(--primary);
+}
+
+.role-slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  bottom: 4px;
+  background-color: var(--primary);
+  border-radius: 999px;
+  transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  z-index: 0;
+}
+
+.tabs-nav-bar {
+  display: flex;
+  position: relative;
+  width: 100%;
+  border-bottom: 2px solid #E5E7EB;
+  overflow: hidden;
+}
+
+.tabs-nav-bar .tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 1rem 0;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.tabs-nav-bar .tab-item.active {
+  color: var(--text-main);
+}
+
+.tabs-nav-bar .tab-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: var(--indicator-width, 33.3333%);
+  background-color: var(--primary);
+  transform: translateX(var(--indicator-x, 0));
+  transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), width 0.3s ease;
+}
+
+.countdown-box-alert {
+  background-color: #FFF5F5;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  color: var(--text-main);
+}
+
+.countdown-box-alert__time {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--danger);
+}
+
+@media (max-width: 640px) {
+  .role-switcher-container {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .role-btn {
+    width: 120px;
+    padding: 0.75rem 0.85rem;
+    font-size: 0.95rem;
+  }
+
+  .tabs-nav-bar .tab-item {
+    padding: 0.8rem 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .countdown-box-alert {
+    padding: 0.85rem 1rem;
+  }
+}
+
 /* Footer */
 .footer {
   background-color: var(--primary);
