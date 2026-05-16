@@ -81,7 +81,8 @@ export default function CustomTimePicker({ value, onChange, placeholder = "-- : 
       {isOpen && (
         <div className="custom-timepicker-dropdown" style={{
           position: 'absolute',
-          top: 'calc(100% + 8px)',
+          bottom: 'calc(100% + 8px)',
+          top: 'auto',
           left: alignRight ? 'auto' : 0,
           right: alignRight ? 0 : 'auto',
           background: '#FFFFFF',

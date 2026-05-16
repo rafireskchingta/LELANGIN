@@ -230,6 +230,21 @@ export default function AdminEditProdukPage({ params }) {
     );
   }
 
+  const kategoriOptions = [
+    { value: 'Elektronik', label: 'Elektronik' },
+    { value: 'Seni', label: 'Seni' },
+    { value: 'Hobi', label: 'Hobi' },
+  ];
+
+  const lokasiOptions = [
+    { value: 'Banten', label: 'Banten' },
+    { value: 'DKI Jakarta', label: 'DKI Jakarta' },
+    { value: 'Jawa Barat', label: 'Jawa Barat' },
+    { value: 'Jawa Tengah', label: 'Jawa Tengah' },
+    { value: 'DI Yogyakarta', label: 'DI Yogyakarta' },
+    { value: 'Jawa Timur', label: 'Jawa Timur' }
+  ];
+
   const kondisiFisikOptions = [
     { value: 'Sangat Baik', label: 'Sangat Baik' },
     { value: 'Baik', label: 'Baik' },
@@ -299,11 +314,7 @@ export default function AdminEditProdukPage({ params }) {
               </div>
               <div className="form-group-edit" style={{ flex: 1 }}>
                 <label>KATEGORI</label>
-                <select name="kategori" value={formData.kategori} onChange={handleChange} className="admin-select-input">
-                  <option value="Elektronik">Elektronik</option>
-                  <option value="Seni">Seni</option>
-                  <option value="Hobi">Hobi</option>
-                </select>
+                <CustomSelect options={kategoriOptions} value={formData.kategori} onChange={(v) => handleSelectChange('kategori', v)} placeholder="Pilih Kategori" />
               </div>
             </div>
 
@@ -443,7 +454,7 @@ export default function AdminEditProdukPage({ params }) {
             <h3 className="admin-edit-section-title" style={{ marginTop: '2rem' }}>DETAIL LELANG</h3>
             <div className="form-group-edit" style={{ marginBottom: '1rem' }}>
               <label>LOKASI BARANG</label>
-              <input type="text" name="lokasi" value={formData.lokasi} onChange={handleChange} />
+              <CustomSelect options={lokasiOptions} value={formData.lokasi} onChange={(v) => handleSelectChange('lokasi', v)} placeholder="Pilih Lokasi" />
             </div>
             
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
