@@ -101,7 +101,7 @@ export default function AkunLayout({ children }) {
               <div className="sidebar-pic">{user.avatar}</div>
               <div className="sidebar-user">
                 <h3>{user.username || user.nama}</h3>
-                <span style={{ fontSize: '0.75rem', color: user.role === 'penjual' ? '#059669' : 'var(--primary)', fontWeight: 600 }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600 }}>
                   {user.role === 'penjual' ? 'Penjual' : 'Pembeli'}
                 </span>
               </div>
