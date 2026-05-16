@@ -286,6 +286,11 @@ export default function TambahProdukPage() {
     { value: 'Tidak Ada', label: 'Tidak Ada' },
   ];
 
+  const tahunOptions = Array.from({ length: 100 }, (_, i) => {
+    const year = String(new Date().getFullYear() - i);
+    return { value: year, label: year };
+  });
+
   const todayDate = new Date();
   
   // Calculate max date based on start date (or today if none selected)
@@ -329,7 +334,12 @@ export default function TambahProdukPage() {
         <div className="form-horizontal-group"><label>Merk <span className="required">*</span></label><div className="input-wrapper"><input type="text" value={merk} onChange={(e) => setMerk(e.target.value)} className={formErrors.merk ? 'error-shake' : ''} /></div></div>
         <div className="form-horizontal-group"><label>Model <span className="required">*</span></label><div className="input-wrapper"><input type="text" value={model} onChange={(e) => setModel(e.target.value)} className={formErrors.model ? 'error-shake' : ''} /></div></div>
         <div className="form-horizontal-group"><label>Warna <span className="required">*</span></label><div className="input-wrapper"><input type="text" value={warna} onChange={(e) => setWarna(e.target.value)} className={formErrors.warna ? 'error-shake' : ''} /></div></div>
-        <div className="form-horizontal-group"><label>Tahun Produksi <span className="required">*</span></label><div className="input-wrapper"><input type="number" value={tahunProduk} onChange={(e) => setTahunProduk(e.target.value)} className={formErrors.tahunProduk ? 'error-shake' : ''} /></div></div>
+        <div className="form-horizontal-group">
+          <label>Tahun Produksi <span className="required">*</span></label>
+          <div className="input-wrapper">
+            <CustomSelect options={tahunOptions} value={tahunProduk} onChange={setTahunProduk} placeholder="Pilih Tahun Produksi" error={formErrors.tahunProduk} />
+          </div>
+        </div>
         <div className="form-horizontal-group"><label>Daya Listrik</label><div className="input-wrapper"><input type="text" value={dayaListrik} onChange={(e) => setDayaListrik(e.target.value)} /></div></div>
         <div className="form-horizontal-group"><label>Kapasitas</label><div className="input-wrapper"><input type="text" value={kapasitas} onChange={(e) => setKapasitas(e.target.value)} /></div></div>
         <div className="form-horizontal-group"><label>Tegangan</label><div className="input-wrapper"><input type="text" value={tegangan} onChange={(e) => setTegangan(e.target.value)} /></div></div>
