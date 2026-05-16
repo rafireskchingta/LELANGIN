@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 // TAMBAHAN: Import useSearchParams untuk menangkap parameter URL
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { fetchProductDetail, fetchProductBids } from '../../../src/services/productService';
@@ -27,6 +28,14 @@ export default function DetailPage() {
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [isHistoryOpen, setIsHistoryOpen] = useState(true); // Default terbuka
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
+
+  // Cek status pembayaran dari localStorage (dummy)
+  useEffect(() => {
+    const paid = localStorage.getItem(`paid_${productId}`);
+    if (paid === 'true') setIsPaid(true);
+  }, [productId]);
 
   // --- HELPERS ---
   const showToast = (msg, type = 'success') => {
@@ -381,35 +390,84 @@ export default function DetailPage() {
               </div>
             </div>
 
-            <div className="countdown-section text-center" style={{ marginBottom: '2rem' }}>
-              <p>Sisa Waktu Lelang :</p>
-              <div className="countdown-timer" style={{ color: '#EF4444', fontWeight: 'bold', fontSize: '1.5rem' }}>
-                {timeLeft}
-              </div>
-              <div className="progress-bar" style={{ background: '#E5E7EB', height: '8px', borderRadius: '4px', marginTop: '0.5rem', overflow: 'hidden' }}>
-                <div className="progress-fill" style={{ width: timeLeft === 'Waktu Habis' ? '100%' : '75%', background: '#EF4444', height: '100%' }}></div>
-              </div>
-            </div>
-
-            {/* FORM INLINE + PERBAIKAN BUG NO 1: Warna Biru Rp */}
-            <div className="ajukan-penawaran" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginTop: '1rem', borderTop: '1px solid #E5E7EB', paddingTop: '1.5rem', flexWrap: 'wrap' }}>
-              <h2 className="text-primary section-title" style={{ margin: 0, whiteSpace: 'nowrap', color: '#4F46E5', fontSize: '1.2rem' }}>Ajukan Penawaran</h2>
-              <form className="penawaran-form" id="formPenawaran" onSubmit={handleSubmitBid} style={{ margin: 0, flex: '1 1 250px' }}>
-                <div className="input-bid-group" style={{ display: 'flex', width: '100%' }}>
-                  <span className="rp-label" style={{ padding: '0.75rem 1rem', background: '#4F46E5', color: 'white', border: '1px solid #4F46E5', borderRight: 'none', borderRadius: '8px 0 0 8px', fontWeight: 'bold' }}>Rp</span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={bidValue}
-                    onChange={(e) => setBidValue(formatRibuanInput(e.target.value))}
-                    placeholder="Masukan Nominal Penawaran"
-                    required
-                    style={{ flex: 1, padding: '0.75rem', border: '1px solid #D1D5DB', outline: 'none', fontSize: '1rem', minWidth: '0' }}
-                  />
-                  <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem', background: '#4F46E5', color: 'white', borderRadius: '0 8px 8px 0', border: '1px solid #4F46E5', cursor: 'pointer', fontWeight: 'bold' }}>Tawar</button>
+            {product.status !== 'selesai' ? (
+              <>
+                <div className="countdown-section text-center" style={{ marginBottom: '2rem' }}>
+                  <p>Sisa Waktu Lelang :</p>
+                  <div className="countdown-timer" style={{ color: '#EF4444', fontWeight: 'bold', fontSize: '1.5rem' }}>
+                    {timeLeft}
+                  </div>
+                  <div className="progress-bar" style={{ background: '#E5E7EB', height: '8px', borderRadius: '4px', marginTop: '0.5rem', overflow: 'hidden' }}>
+                    <div className="progress-fill" style={{ width: timeLeft === 'Waktu Habis' ? '100%' : '75%', background: '#EF4444', height: '100%' }}></div>
+                  </div>
                 </div>
-              </form>
-            </div>
+
+                <div className="ajukan-penawaran" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginTop: '1rem', borderTop: '1px solid #E5E7EB', paddingTop: '1.5rem', flexWrap: 'wrap' }}>
+                  <h2 className="text-primary section-title" style={{ margin: 0, whiteSpace: 'nowrap', color: '#4F46E5', fontSize: '1.2rem' }}>Ajukan Penawaran</h2>
+                  <form className="penawaran-form" id="formPenawaran" onSubmit={handleSubmitBid} style={{ margin: 0, flex: '1 1 250px' }}>
+                    <div className="input-bid-group" style={{ display: 'flex', width: '100%' }}>
+                      <span className="rp-label" style={{ padding: '0.75rem 1rem', background: '#4F46E5', color: 'white', border: '1px solid #4F46E5', borderRight: 'none', borderRadius: '8px 0 0 8px', fontWeight: 'bold' }}>Rp</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={bidValue}
+                        onChange={(e) => setBidValue(formatRibuanInput(e.target.value))}
+                        placeholder="Masukan Nominal Penawaran"
+                        required
+                        style={{ flex: 1, padding: '0.75rem', border: '1px solid #D1D5DB', outline: 'none', fontSize: '1rem', minWidth: '0' }}
+                      />
+                      <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem', background: '#4F46E5', color: 'white', borderRadius: '0 8px 8px 0', border: '1px solid #4F46E5', cursor: 'pointer', fontWeight: 'bold' }}>Tawar</button>
+                    </div>
+                  </form>
+                </div>
+              </>
+            ) : (
+              <div style={{ marginTop: '2rem' }}>
+                {isWinning ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                    {isPaid ? (
+                      <button 
+                        disabled
+                        style={{ padding: '0.7rem 3.5rem', background: '#10B981', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'default', opacity: 0.85 }}
+                      >
+                        ✓ Sudah Dibayar
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => router.push(`/pembayaran/${productId}`)}
+                        style={{ padding: '0.7rem 3.5rem', background: '#4F46E5', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'background 0.3s' }}
+                        onMouseOver={(e) => e.currentTarget.style.background = '#4338CA'}
+                        onMouseOut={(e) => e.currentTarget.style.background = '#4F46E5'}
+                      >
+                        Lakukan Pembayaran
+                      </button>
+                    )}
+                    {isPaid ? (
+                      <button 
+                        onClick={() => setIsAddressModalOpen(true)}
+                        style={{ padding: '0.7rem 3.5rem', background: 'white', color: '#4F46E5', border: '1px solid #4F46E5', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'background 0.3s' }}
+                        onMouseOver={(e) => e.currentTarget.style.background = '#F5F3FF'}
+                        onMouseOut={(e) => e.currentTarget.style.background = 'white'}
+                      >
+                        Lakukan Pengiriman
+                      </button>
+                    ) : (
+                      <button 
+                        disabled
+                        style={{ padding: '0.7rem 3.5rem', background: '#E5E7EB', color: '#9CA3AF', border: '1px solid #D1D5DB', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'not-allowed', opacity: 0.7 }}
+                        title="Lakukan pembayaran terlebih dahulu"
+                      >
+                        Lakukan Pengiriman
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '1.5rem', background: '#F3F4F6', borderRadius: '8px', color: '#6B7280', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                    Lelang telah berakhir.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -449,19 +507,63 @@ export default function DetailPage() {
         </>
       )}
 
-      {/* PERBAIKAN BUG NO 5: Modal Peringatan Merah */}
-      <div className={`modal-overlay ${isWarningModalOpen ? 'active' : ''}`} id="modalOverlay" style={{ display: isWarningModalOpen ? 'flex' : 'none', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
-        <div className={`modal modal-sm ${isWarningModalOpen ? 'active' : ''}`} id="warningModal" style={{ background: 'white', padding: '2rem', borderRadius: '12px', textAlign: 'center', maxWidth: '400px', width: '90%', position: 'relative' }}>
-          <button className="modal-close" onClick={closeAllModals} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#6B7280' }}><i className="ph ph-x"></i></button>
-          <div className="modal-header">
-            <h2 style={{ color: '#EF4444', marginBottom: '1rem', fontSize: '1.5rem' }}>Peringatan!</h2>
-            <p style={{ color: '#4B5563', fontWeight: 500, lineHeight: '1.6' }}>
-              {modalMessage}
-            </p>
+      {/* MODAL ALAMAT */}
+      {typeof document !== 'undefined' && createPortal(
+        <div className={`modal-overlay ${isAddressModalOpen ? 'active' : ''}`} style={{ display: isAddressModalOpen ? 'flex' : 'none' }}>
+          <div className={`modal ${isAddressModalOpen ? 'active' : ''}`} style={{ background: '#4F46E5', borderRadius: '16px', maxWidth: '500px', width: '90%', position: 'relative', overflow: 'hidden', padding: 0, display: isAddressModalOpen ? 'block' : 'none' }}>
+            <div style={{ padding: '1.5rem', color: 'white', textAlign: 'center' }}>
+              <h2 style={{ margin: 0, fontSize: '1.4rem' }}>Masukkan Detail Alamat Anda!</h2>
+            </div>
+            <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0 0 16px 16px' }}>
+              <p style={{ color: '#6B7280', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Untuk membuat pesanan, silahkan tambahkan alamat pengiriman</p>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const addressData = Object.fromEntries(formData.entries());
+                localStorage.setItem(`address_${productId}`, JSON.stringify(addressData));
+                router.push(`/pengiriman/${productId}`);
+              }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                  <input name="namaLengkap" placeholder="Nama Lengkap" required style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none' }} />
+                  <input name="nomorTelp" placeholder="Nomor Telp" required style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none' }} />
+                </div>
+                <input name="kota" placeholder="Kota" required style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} />
+                <input name="kecamatan" placeholder="Kecamatan" required style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} />
+                <input name="alamatLengkap" placeholder="Masukkan Nama Jalan, Gedung, No.Rumah" required style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} />
+                <input name="kodePos" placeholder="Kode Pos" required style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} />
+                <input name="detailLainnya" placeholder="Detail Lainnya (Cth: Blok/Unit No, Patokan)" style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1.5rem' }} />
+                
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                  <button type="button" onClick={() => setIsAddressModalOpen(false)} style={{ padding: '0.75rem 2rem', background: '#F3F4F6', color: '#374151', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+                    Kembali
+                  </button>
+                  <button type="submit" style={{ padding: '0.75rem 2rem', background: '#4F46E5', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+                    Lanjut
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-          <button type="button" className="btn-secondary" onClick={closeAllModals} style={{ marginTop: '1.5rem', padding: '0.75rem 2rem', background: '#F3F4F6', color: '#374151', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Kembali</button>
-        </div>
-      </div>
+        </div>,
+        document.body
+      )}
+
+      {/* PERBAIKAN BUG NO 5: Modal Peringatan Merah */}
+      {typeof document !== 'undefined' && createPortal(
+        <div className={`modal-overlay ${isWarningModalOpen ? 'active' : ''}`} id="modalOverlay" style={{ display: isWarningModalOpen ? 'flex' : 'none', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+          <div className={`modal modal-sm ${isWarningModalOpen ? 'active' : ''}`} id="warningModal" style={{ background: 'white', padding: '2rem', borderRadius: '12px', textAlign: 'center', maxWidth: '400px', width: '90%', position: 'relative' }}>
+            <button className="modal-close" onClick={() => setIsWarningModalOpen(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#6B7280' }}><i className="ph ph-x"></i></button>
+            <div className="modal-header">
+              <h2 style={{ color: '#EF4444', marginBottom: '1rem', fontSize: '1.5rem' }}>Peringatan!</h2>
+              <p style={{ color: '#4B5563', fontWeight: 500, lineHeight: '1.6' }}>
+                {modalMessage}
+              </p>
+            </div>
+            <button type="button" className="btn-secondary" onClick={() => setIsWarningModalOpen(false)} style={{ marginTop: '1.5rem', padding: '0.75rem 2rem', background: '#F3F4F6', color: '#374151', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Kembali</button>
+          </div>
+        </div>,
+        document.body
+      )}
     </main>
   );
 }
