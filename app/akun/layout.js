@@ -28,7 +28,8 @@ export default function AkunLayout({ children }) {
               setUser({
                 username: parsed.username || '',
                 nama: parsed.nama || '',
-                avatar: (parsed.nama || 'U').charAt(0).toUpperCase()
+                avatar: (parsed.nama || 'U').charAt(0).toUpperCase(),
+                role: parsed.role || 'pembeli' // SINKRONISASI: Menjaga role tetap aman dari cache local
               });
               setLoaded(true);
               return;
@@ -82,7 +83,6 @@ export default function AkunLayout({ children }) {
     router.push('/');
   };
 
-  // Determine active nav item
   const isActive = (path) => {
     if (path === '/akun' && pathname === '/akun') return 'active';
     if (path !== '/akun' && pathname.startsWith(path)) return 'active';
@@ -98,6 +98,7 @@ export default function AkunLayout({ children }) {
         <div className="akun-layout-split">
           <aside className="akun-sidebar">
             <div className="sidebar-profile">
+              {/* HASIL GABUNGAN: Fitur Animasi Shimmer dari Code Hijau */}
               {!loaded ? (
                 <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                   <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', marginRight: '1rem', flexShrink: 0 }}></div>
@@ -112,6 +113,7 @@ export default function AkunLayout({ children }) {
                   <div className="sidebar-pic">{user.avatar}</div>
                   <div className="sidebar-user">
                     <h3>{user.username || user.nama}</h3>
+                    {/* KHUSUS: Warna teks role dikunci tetap biru var(--primary) */}
                     <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600 }}>
                       {user.role === 'penjual' ? 'Penjual' : 'Pembeli'}
                     </span>

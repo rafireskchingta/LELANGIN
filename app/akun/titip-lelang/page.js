@@ -36,7 +36,7 @@ export default function TitipLelangPage() {
 
         setUserId(session.user.id);
 
-        // Cek status penjual dari seller_applications
+        // Cek status penjual dari profiles
         const { data: sellerApp } = await supabase
           .from('profiles')
           .select('role')
@@ -47,7 +47,7 @@ export default function TitipLelangPage() {
         setIsPenjual(userIsPenjual);
 
         if (userIsPenjual) {
-          // Ambil produk titip lelang milik user ini
+          // Ambil produk titip lelang milik user ini (Sengaja filter status 'aktif' saja)
           const { data: produk, error: produkError } = await supabase
             .from('products')
             .select('id, nama_produk, kategori, harga_awal, status, waktu_selesai')
@@ -120,12 +120,24 @@ export default function TitipLelangPage() {
         <h2 style={{ color: 'var(--primary)', fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Produk Titip Lelang</h2>
       </div>
 
-      {/* Loading skeleton saat data belum siap */}
+      {/* HASIL GABUNGAN: High-Fidelity Shimmer Skeleton Loader dari Code Hijau */}
       {loading ? (
-        <div style={{ backgroundColor: '#FAFAFA', borderRadius: '8px', minHeight: '400px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-          <div style={{ width: '180px', height: '14px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-          <div style={{ width: '260px', height: '12px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+        <div style={{ backgroundColor: '#FAFAFA', borderRadius: '8px', minHeight: '400px', padding: '1.5rem' }}>
+          {/* Action bar Skeleton */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div style={{ width: '120px', height: '14px', borderRadius: '4px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <div style={{ width: '150px', height: '35px', borderRadius: '999px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+              <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+              <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+            </div>
+          </div>
+
+          {/* Content Placeholder Skeleton */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '280px', gap: '1.25rem' }}>
+            <div style={{ width: '260px', height: '16px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+            <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+          </div>
           <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
         </div>
       ) : !isPenjual ? (
@@ -154,6 +166,7 @@ export default function TitipLelangPage() {
                 style={{ width: 'auto', margin: 0, padding: '0.5rem 1.25rem', fontSize: '0.8rem', fontWeight: 600, borderRadius: '999px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
                 Tampilkan Seluruh Produk
               </Link>
+              {/* BEST PRACTICE: Menggunakan komponen Link dari Next.js */}
               <Link href="/akun/tambah-produk" title="Tambah produk"
                 style={{ border: 'none', background: '#EEF2FF', color: 'var(--primary)', width: '35px', height: '35px', borderRadius: '50%', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
                 <i className="ph ph-plus"></i>
@@ -191,7 +204,6 @@ export default function TitipLelangPage() {
                   </thead>
                   <tbody>
                     {produkList.map((p) => {
-                      // Handle capitalize status enum since it comes lowercase (e.g. 'aktif' -> 'Aktif')
                       const statusLabel = p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : 'Aktif';
                       return (
                         <tr key={p.id} style={{ borderBottom: '1px solid #F3F4F6', backgroundColor: selected.includes(p.id) ? '#EEF2FF' : 'transparent' }}>

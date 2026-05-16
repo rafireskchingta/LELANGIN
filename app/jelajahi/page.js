@@ -44,7 +44,7 @@ function JelajahiContent() {
   const [lokasi, setLokasi] = useState([]);
   const [tahunMin, setTahunMin] = useState('');
   const [tahunMax, setTahunMax] = useState('');
-  const [nowTime, setNowTime] = useState(new Date()); // Menggunakan nowTime dari Code Kanan
+  const [nowTime, setNowTime] = useState(new Date());
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 2010 + 1 }, (_, i) => currentYear - i);
@@ -155,7 +155,7 @@ function JelajahiContent() {
   }, [activeCategory, searchQuery, sortOrder]);
 
   const handleLokasiChange = (provinsi) => {
-    setLokasi(prev =>
+    setLocations(prev =>
       prev.includes(provinsi) ? prev.filter(p => p !== provinsi) : [...prev, provinsi]
     );
   };
@@ -171,13 +171,13 @@ function JelajahiContent() {
     setModalBids(bidsData || []);
   };
 
-  // --- 9. FORMATTER & PROGRESS TIMER BAR ---
+  // --- 9. FORMATTER ---
   const formatRupiah = (angka) => {
     if (!angka) return '0';
     return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   };
 
-  // REVISI GABUNGAN: Mendukung kembalian objek teks & persentase yang menyusut ke kiri
+  // PERBAIKAN LOGIKA: Hanya menampilkan nilai terbesar di sisa waktunya
   const calculateTimeLeft = (waktuSelesai, waktuMulai) => {
     if (!waktuSelesai) return { text: 'Waktu Habis', percent: 0 };
     
@@ -201,14 +201,16 @@ function JelajahiContent() {
     const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
     const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
 
-    const detikStr = String(detik).padStart(2, '0');
+    // KUNCI PERBAIKAN: Hanya return unit waktu terbesar yang tersedia
     let text = '';
     if (hari > 0) {
-      text = `${hari} Hari : ${jam} Jam : ${menit} Menit`;
+      text = `${hari} Hari`;
     } else if (jam > 0) {
-      text = `${jam} Jam : ${menit} Menit`;
+      text = `${jam} Jam`;
+    } else if (menit > 0) {
+      text = `${menit} Menit`;
     } else {
-      text = `${menit} Menit : ${detikStr} Detik`;
+      text = `${detik} Detik`;
     }
 
     return { text, percent };
@@ -366,7 +368,7 @@ function JelajahiContent() {
       </div>
     </main>
 
-      {/* --- GABUNGAN: ITEM DETAIL MODAL TETAP MEMAKAI CREATEPORTAL YANG AMAN --- */}
+      {/* --- PORTAL DETAIL MODAL QUICK VIEW --- */}
       {mounted && typeof document !== 'undefined' && createPortal(
         <div className={`modal-overlay ${isModalOpen ? 'active' : ''}`} id="itemDetailOverlay" onClick={(e) => { if (e.target.id === 'itemDetailOverlay') setIsModalOpen(false) }}>
         <div className={`modal modal-lg ${isModalOpen ? 'active' : ''}`} id="itemDetailModal" style={{ overflowY: 'auto', maxHeight: '90vh' }}>
@@ -480,7 +482,7 @@ function JelajahiContent() {
                   <div className="info-row"><span className="label">Lokasi Barang</span><span className="value">{selectedProduct.lokasi}</span></div>
                 </div>
 
-                {/* GABUNGAN: Fitur Progress Bar Animasi Menyusut dimasukkan di sini */}
+                {/* PROGRESS BAR ANIMASI MENYUSUT */}
                 {(() => {
                   const timerData = calculateTimeLeft(selectedProduct.waktu_selesai, selectedProduct.waktu_mulai || selectedProduct.created_at);
                   return (
