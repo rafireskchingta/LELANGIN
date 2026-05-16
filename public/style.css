@@ -572,20 +572,19 @@ body {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 99999;
+  z-index: 1000;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
-  padding: 1rem;
 }
 
 .modal-overlay.active {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .modal {
@@ -603,7 +602,6 @@ body {
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  pointer-events: auto;
 }
 
 .modal::-webkit-scrollbar {
@@ -2901,17 +2899,15 @@ body:has(.admin-layout-wrapper) {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  z-index: 99999;
+  z-index: 9999;
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s ease;
-  pointer-events: none;
-  padding: 1rem;
+  overflow-y: auto;
+  padding: 2rem 1rem;
 }
 
 .admin-modal-overlay.active {
@@ -2920,6 +2916,7 @@ body:has(.admin-layout-wrapper) {
 }
 
 .admin-modal {
+  margin: 2rem auto;
   background: #FFFFFF;
   border-radius: 16px;
   width: 100%;
@@ -2928,15 +2925,6 @@ body:has(.admin-layout-wrapper) {
   position: relative;
   transform: translateY(20px);
   transition: all 0.3s ease;
-  max-height: 90vh;
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  pointer-events: auto;
-}
-
-.admin-modal::-webkit-scrollbar {
-  display: none;
 }
 
 .admin-modal-overlay.active .admin-modal {
@@ -3131,10 +3119,8 @@ body:has(.admin-layout-wrapper) {
   background: #EEF2FF;
   border: 1px solid #E0E7FF;
   border-radius: 12px;
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.5rem;
   margin-top: 1rem;
-  min-width: 0;
-  container-type: inline-size;
 }
 
 .harga-terakhir-box label {
@@ -3144,17 +3130,13 @@ body:has(.admin-layout-wrapper) {
   font-weight: 600;
   text-transform: uppercase;
   margin-bottom: 0.25rem;
-  white-space: nowrap;
 }
 
 .harga-terakhir-box span {
   display: block;
-  font-size: clamp(0.75rem, 9cqw, 1.15rem);
+  font-size: 1.25rem;
   color: #4F46E5;
   font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .btn-tutup-detail {

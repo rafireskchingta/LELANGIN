@@ -18,8 +18,8 @@ export default function TambahProdukPage() {
 
   // Form states
   const [namaProduk, setNamaProduk] = useState("");
-  const [kategori, setKategori] = useState("");
-  const [kondisi, setKondisi] = useState("");
+  const [kategori, setKategori] = useState("Elektronik");
+  const [kondisi, setKondisi] = useState("Baru");
   const [merk, setMerk] = useState("");
   const [model, setModel] = useState("");
   const [warna, setWarna] = useState("");
@@ -88,8 +88,6 @@ export default function TambahProdukPage() {
     
     // Check text fields
     if (!namaProduk) errors.namaProduk = true;
-    if (!kategori) errors.kategori = true;
-    if (!kondisi) errors.kondisi = true;
     if (!merk) errors.merk = true;
     if (!model) errors.model = true;
     if (!warna) errors.warna = true;
@@ -240,17 +238,6 @@ export default function TambahProdukPage() {
     }
   };
 
-  const kategoriOptions = [
-    { value: 'Elektronik', label: 'Elektronik' },
-    { value: 'Seni', label: 'Seni' },
-    { value: 'Hobi', label: 'Hobi' },
-  ];
-
-  const kondisiOptions = [
-    { value: 'Baru', label: 'Baru' },
-    { value: 'Bekas', label: 'Bekas' },
-  ];
-
   const kondisiFisikOptions = [
     { value: 'Sangat Baik', label: 'Sangat Baik' },
     { value: 'Baik', label: 'Baik' },
@@ -286,11 +273,6 @@ export default function TambahProdukPage() {
     { value: 'Tidak Ada', label: 'Tidak Ada' },
   ];
 
-  const tahunOptions = Array.from({ length: 100 }, (_, i) => {
-    const year = String(new Date().getFullYear() - i);
-    return { value: year, label: year };
-  });
-
   const todayDate = new Date();
   
   // Calculate max date based on start date (or today if none selected)
@@ -318,28 +300,26 @@ export default function TambahProdukPage() {
         
         <div className="form-horizontal-group">
           <label>Kategori <span className="required">*</span></label>
-          <div className="input-wrapper">
-            <CustomSelect options={kategoriOptions} value={kategori} onChange={setKategori} placeholder="Pilih Kategori" error={formErrors.kategori} />
+          <div className="input-wrapper checkbox-list-inline">
+            <label><input type="radio" name="kategori" value="Elektronik" checked={kategori === 'Elektronik'} onChange={(e) => setKategori(e.target.value)} /> Elektronik</label>
+            <label><input type="radio" name="kategori" value="Seni" checked={kategori === 'Seni'} onChange={(e) => setKategori(e.target.value)} /> Seni</label>
+            <label><input type="radio" name="kategori" value="Hobi" checked={kategori === 'Hobi'} onChange={(e) => setKategori(e.target.value)} /> Hobi</label>
           </div>
         </div>
 
         <h3 className="sub-title">Info Produk</h3>
         <div className="form-horizontal-group">
           <label>Kondisi <span className="required">*</span></label>
-          <div className="input-wrapper">
-            <CustomSelect options={kondisiOptions} value={kondisi} onChange={setKondisi} placeholder="Pilih Kondisi" error={formErrors.kondisi} />
+          <div className="input-wrapper checkbox-list-inline">
+            <label><input type="radio" name="kondisi" value="Baru" checked={kondisi === 'Baru'} onChange={(e) => setKondisi(e.target.value)} /> Baru</label>
+            <label><input type="radio" name="kondisi" value="Bekas" checked={kondisi === 'Bekas'} onChange={(e) => setKondisi(e.target.value)} /> Bekas</label>
           </div>
         </div>
         
         <div className="form-horizontal-group"><label>Merk <span className="required">*</span></label><div className="input-wrapper"><input type="text" value={merk} onChange={(e) => setMerk(e.target.value)} className={formErrors.merk ? 'error-shake' : ''} /></div></div>
         <div className="form-horizontal-group"><label>Model <span className="required">*</span></label><div className="input-wrapper"><input type="text" value={model} onChange={(e) => setModel(e.target.value)} className={formErrors.model ? 'error-shake' : ''} /></div></div>
         <div className="form-horizontal-group"><label>Warna <span className="required">*</span></label><div className="input-wrapper"><input type="text" value={warna} onChange={(e) => setWarna(e.target.value)} className={formErrors.warna ? 'error-shake' : ''} /></div></div>
-        <div className="form-horizontal-group">
-          <label>Tahun Produksi <span className="required">*</span></label>
-          <div className="input-wrapper">
-            <CustomSelect options={tahunOptions} value={tahunProduk} onChange={setTahunProduk} placeholder="Pilih Tahun Produksi" error={formErrors.tahunProduk} />
-          </div>
-        </div>
+        <div className="form-horizontal-group"><label>Tahun Produksi <span className="required">*</span></label><div className="input-wrapper"><input type="number" value={tahunProduk} onChange={(e) => setTahunProduk(e.target.value)} className={formErrors.tahunProduk ? 'error-shake' : ''} /></div></div>
         <div className="form-horizontal-group"><label>Daya Listrik</label><div className="input-wrapper"><input type="text" value={dayaListrik} onChange={(e) => setDayaListrik(e.target.value)} /></div></div>
         <div className="form-horizontal-group"><label>Kapasitas</label><div className="input-wrapper"><input type="text" value={kapasitas} onChange={(e) => setKapasitas(e.target.value)} /></div></div>
         <div className="form-horizontal-group"><label>Tegangan</label><div className="input-wrapper"><input type="text" value={tegangan} onChange={(e) => setTegangan(e.target.value)} /></div></div>

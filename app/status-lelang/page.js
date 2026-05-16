@@ -537,7 +537,7 @@ function StatusLelangContent() {
                       <div className="countdown-timer" style={{ color: '#EF4444', fontWeight: 'bold', fontSize: '1.2rem', marginBottom: '0.5rem' }}>
                         {timerData.text}
                       </div>
-                      <div className="progress-bar" style={{ background: '#E5E7EB', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div className="progress-bar" style={{ width: '100%', background: '#E5E7EB', height: '8px', borderRadius: '4px', overflow: 'hidden', marginTop: '0.75rem' }}>
                         <div className="progress-fill" style={{ width: `${timerData.percent}%`, background: '#EF4444', height: '100%', transition: 'width 1s linear' }}></div>
                       </div>
                     </div>

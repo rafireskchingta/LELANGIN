@@ -121,24 +121,11 @@ export default function TitipLelangPage() {
       </div>
 
       {/* Loading skeleton saat data belum siap */}
-      {/* Loading skeleton saat data belum siap */}
       {loading ? (
-        <div style={{ backgroundColor: '#FAFAFA', borderRadius: '8px', minHeight: '400px', padding: '1.5rem' }}>
-          {/* Action bar Skeleton */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-            <div style={{ width: '120px', height: '14px', borderRadius: '4px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <div style={{ width: '150px', height: '35px', borderRadius: '999px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-              <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-              <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-            </div>
-          </div>
-          
-          {/* Empty State Skeleton */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '280px', gap: '1.25rem' }}>
-            <div style={{ width: '260px', height: '16px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-            <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
-          </div>
+        <div style={{ backgroundColor: '#FAFAFA', borderRadius: '8px', minHeight: '400px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+          <div style={{ width: '180px', height: '14px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+          <div style={{ width: '260px', height: '12px', borderRadius: '6px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
           <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
         </div>
       ) : !isPenjual ? (
@@ -167,10 +154,10 @@ export default function TitipLelangPage() {
                 style={{ width: 'auto', margin: 0, padding: '0.5rem 1.25rem', fontSize: '0.8rem', fontWeight: 600, borderRadius: '999px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
                 Tampilkan Seluruh Produk
               </Link>
-              <button onClick={() => router.push('/akun/tambah-produk')} title="Tambah produk"
+              <Link href="/akun/tambah-produk" title="Tambah produk"
                 style={{ border: 'none', background: '#EEF2FF', color: 'var(--primary)', width: '35px', height: '35px', borderRadius: '50%', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
                 <i className="ph ph-plus"></i>
-              </button>
+              </Link>
               <button title="Hapus produk dipilih" onClick={handleHapus} disabled={deleting}
                 style={{ border: 'none', background: selected.length > 0 ? '#FEE2E2' : '#EEF2FF', color: selected.length > 0 ? '#DC2626' : '#9CA3AF', width: '35px', height: '35px', borderRadius: '50%', fontSize: '1.2rem', cursor: selected.length > 0 ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <i className={deleting ? 'ph ph-spinner' : 'ph ph-trash'}></i>
@@ -182,10 +169,10 @@ export default function TitipLelangPage() {
             /* Kosong — belum ada produk */
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '280px', gap: '1.25rem' }}>
               <p style={{ fontWeight: 500, fontSize: '1rem', color: '#6B7280' }}>Tambahkan produk untuk mulai lelang.</p>
-              <button onClick={() => router.push('/akun/tambah-produk')}
-                style={{ border: 'none', cursor: 'pointer', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#EEF2FF', color: 'var(--primary)', fontSize: '2.5rem', boxShadow: '0 4px 10px rgba(79,70,229,0.1)' }}>
+              <Link href="/akun/tambah-produk"
+                style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#EEF2FF', color: 'var(--primary)', fontSize: '2.5rem', boxShadow: '0 4px 10px rgba(79,70,229,0.1)' }}>
                 <i className="ph ph-plus"></i>
-              </button>
+              </Link>
             </div>
           ) : (
             <>
@@ -238,13 +225,13 @@ export default function TitipLelangPage() {
               </div>
 
               <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'center' }}>
-                <button onClick={() => router.push('/akun/tambah-produk')}
-                  style={{ border: 'none', background: 'none', cursor: 'pointer', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontSize: '0.875rem', fontWeight: 500, padding: 0 }}>
+                <Link href="/akun/tambah-produk"
+                  style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontSize: '0.875rem', fontWeight: 500 }}>
                   <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#EEF2FF', fontSize: '0.9rem' }}>
                     <i className="ph ph-plus"></i>
                   </span>
                   Titipkan Produk Baru
-                </button>
+                </Link>
               </div>
             </>
           )}
