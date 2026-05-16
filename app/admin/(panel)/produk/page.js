@@ -68,10 +68,45 @@ function AdminProdukContent() {
     }
   };
 
-  const openDetailModal = (product) => {
+  const [highestBidInfo, setHighestBidInfo] = useState(null);
+
+  const openDetailModal = async (product) => {
     setSelectedProduct(product);
     setActiveImageUrl(product.image_urls?.[0] || null);
     setIsDetailModalOpen(true);
+    setHighestBidInfo(null); // Reset while loading
+
+    try {
+      // Fetch highest bid for "Harga Terakhir" & "Pemenang"
+      const { data, error } = await supabase
+        .from('bids')
+        .select('amount, profiles(full_name, username)')
+        .eq('product_id', product.id)
+        .order('amount', { ascending: false })
+        .limit(1);
+
+      if (data && data.length > 0) {
+        setHighestBidInfo(data[0]);
+      } else {
+        setHighestBidInfo({ amount: product.harga_awal, profiles: null });
+      }
+    } catch (err) {
+      console.error('Error fetching bids:', err.message);
+      setHighestBidInfo({ amount: product.harga_awal, profiles: null });
+    }
+  };
+
+  const formatDateId = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).replace(/\./g, ':');
   };
 
   const formatRupiah = (angka) => {
@@ -311,18 +346,40 @@ function AdminProdukContent() {
                   </div>
                   <div className="detail-item">
                     <label>WAKTU MULAI</label>
-                    <span>{selectedProduct.waktu_mulai ? new Date(selectedProduct.waktu_mulai).toLocaleString() : '-'}</span>
+                    <span>{formatDateId(selectedProduct.waktu_mulai)}</span>
                   </div>
                   <div className="detail-item">
                     <label>WAKTU SELESAI</label>
-                    <span>{selectedProduct.waktu_selesai ? new Date(selectedProduct.waktu_selesai).toLocaleString() : '-'}</span>
+                    <span>{formatDateId(selectedProduct.waktu_selesai)}</span>
                   </div>
-                  <div className="harga-terakhir-box">
-                    <label>HARGA AWAL</label>
-                    <span>{formatRupiah(selectedProduct.harga_awal || 0)}</span>
+                  
+                  {/* Container for prices */}
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                    <div className="harga-terakhir-box" style={{ flex: 1, margin: 0 }}>
+                      <label>HARGA AWAL</label>
+                      <span>{formatRupiah(selectedProduct.harga_awal || 0)}</span>
+                    </div>
+                    <div className="harga-terakhir-box" style={{ flex: 1, margin: 0, background: '#EEF2FF', color: '#4F46E5', borderColor: '#C7D2FE' }}>
+                      <label style={{ color: '#4F46E5' }}>HARGA SAAT INI</label>
+                      <span>{highestBidInfo ? formatRupiah(highestBidInfo.amount) : 'Memuat...'}</span>
+                    </div>
                   </div>
 
-                  <div style={{ gridColumn: '1 / -1', marginTop: 'auto' }}>
+                  {/* Pemenang / Penawar Tertinggi */}
+                  <div className="detail-item" style={{ gridColumn: '1 / -1', background: '#F9FAFB', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #E5E7EB', marginTop: '0.5rem' }}>
+                    <label style={{ display: 'block', marginBottom: '0.25rem', color: '#6B7280' }}>
+                      {selectedProduct.status?.toLowerCase() === 'selesai' ? 'PEMENANG LELANG' : 'PENAWAR TERTINGGI'}
+                    </label>
+                    <span style={{ fontWeight: 'bold', color: '#111827', fontSize: '1rem' }}>
+                      {highestBidInfo && highestBidInfo.profiles ? (
+                        `${highestBidInfo.profiles.full_name || '-'} (@${highestBidInfo.profiles.username || '-'})`
+                      ) : (
+                        highestBidInfo ? 'Belum ada penawaran' : 'Memuat...'
+                      )}
+                    </span>
+                  </div>
+
+                  <div style={{ gridColumn: '1 / -1', marginTop: 'auto', paddingTop: '1rem' }}>
                     <button className="btn-tutup-detail" onClick={() => setIsDetailModalOpen(false)}>Tutup Detail</button>
                   </div>
                 </div>

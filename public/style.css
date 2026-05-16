@@ -3131,8 +3131,10 @@ body:has(.admin-layout-wrapper) {
   background: #EEF2FF;
   border: 1px solid #E0E7FF;
   border-radius: 12px;
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 1rem;
   margin-top: 1rem;
+  min-width: 0;
+  container-type: inline-size;
 }
 
 .harga-terakhir-box label {
@@ -3142,13 +3144,17 @@ body:has(.admin-layout-wrapper) {
   font-weight: 600;
   text-transform: uppercase;
   margin-bottom: 0.25rem;
+  white-space: nowrap;
 }
 
 .harga-terakhir-box span {
   display: block;
-  font-size: 1.25rem;
+  font-size: clamp(0.75rem, 9cqw, 1.15rem);
   color: #4F46E5;
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .btn-tutup-detail {
