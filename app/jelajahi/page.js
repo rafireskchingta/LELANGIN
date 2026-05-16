@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, Suspense, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 // Import supabase untuk koneksi user dan favorit
@@ -12,11 +11,6 @@ function JelajahiContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialCategory = searchParams.get('kategori') || 'Semua';
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // --- 1. STATE UI ---
   const [isFilterOpen, setIsFilterOpen] = useState(true);
@@ -29,6 +23,12 @@ function JelajahiContent() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState([]); // Berisi kumpulan product_id
+  const [nowTime, setNowTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeModalImage, setActiveModalImage] = useState('/assets/placeholder.png');
@@ -45,7 +45,6 @@ function JelajahiContent() {
   const [lokasi, setLokasi] = useState([]);
   const [tahunMin, setTahunMin] = useState('');
   const [tahunMax, setTahunMax] = useState('');
-  const [currentTime, setCurrentTime] = useState(new Date());
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 2010 + 1 }, (_, i) => currentYear - i);
@@ -136,14 +135,6 @@ function JelajahiContent() {
     return () => clearTimeout(timeoutId);
   }, [searchInput]);
 
-  // TIMER UNTUK UPDATE REAL-TIME (Agar detik berjalan)
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   // --- 7. LOGIKA FETCH DATA PRODUK ---
   const loadProducts = async () => {
     setLoading(true);
@@ -188,32 +179,42 @@ function JelajahiContent() {
     return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   };
 
-  const calculateTimeLeft = (waktuSelesai, isShort = false) => {
-    if (!waktuSelesai) return 'Waktu Habis';
-    const selisihMs = new Date(waktuSelesai) - currentTime;
-    if (selisihMs <= 0) return 'Waktu Habis';
+  const calculateTimeLeft = (waktuSelesai, waktuMulai) => {
+    if (!waktuSelesai) return { text: 'Waktu Habis', percent: 100 };
+    
+    const end = new Date(waktuSelesai);
+    const start = new Date(waktuMulai || end.getTime() - 1000 * 60 * 60 * 24); // Fallback 1 hari
+    const selisihMs = end - nowTime;
+
+    let percent = 0;
+    const totalDuration = end - start;
+    const elapsed = nowTime - start;
+    if (totalDuration > 0) {
+      percent = (elapsed / totalDuration) * 100;
+      if (percent < 0) percent = 0;
+      if (percent > 100) percent = 100;
+    }
+
+    if (selisihMs <= 0) return { text: 'Waktu Habis', percent: 100 };
 
     const hari = Math.floor(selisihMs / (1000 * 60 * 60 * 24));
     const jam = Math.floor((selisihMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
     const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
 
-    if (isShort) {
-      if (hari > 0) return `${hari} Hari`;
-      if (jam > 0) return `${jam} Jam`;
-      if (menit > 0) return `${menit} Menit`;
-      const detikStr = String(detik).padStart(2, '0');
-      return `${detikStr} Detik`;
+    let text;
+    if (hari > 0) {
+      text = `${hari} Hari : ${jam} Jam : ${menit} Menit`;
+    } else if (jam > 0) {
+      text = `${jam} Jam : ${menit} Menit`;
+    } else {
+      text = `${menit} Menit : ${detik} Detik`;
     }
 
-    const detikStr = String(detik).padStart(2, '0');
-    if (hari > 0) return `${hari} Hari : ${jam} Jam : ${menit} Menit : ${detikStr} Detik`;
-    if (jam > 0) return `${jam} Jam : ${menit} Menit : ${detikStr} Detik`;
-    return `${menit} Menit : ${detikStr} Detik`;
+    return { text, percent };
   };
 
   return (
-    <>
     <main className="page-container">
       <div className="page-header mt-2">
         <h2><i className="ph ph-books"></i> Jelajahi Lelang</h2>
@@ -334,7 +335,7 @@ function JelajahiContent() {
             ) : (
               products.map((product) => (
                 <div key={product.id} onClick={() => openModal(product)} className="auction-card card-jelajahi" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', cursor: 'pointer', height: '100%' }}>
-                  <div className="badge-time"><i className="ph ph-clock"></i> {calculateTimeLeft(product.waktu_selesai, true)}</div>
+                  <div className="badge-time"><i className="ph ph-clock"></i> {calculateTimeLeft(product.waktu_selesai).text}</div>
                   <img src={product.image_urls?.[0] || '/assets/placeholder.png'} alt={product.nama_produk} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem', marginTop: '1rem' }}>
                     <div className="auction-price" style={{ marginBottom: 0, fontSize: '1.25rem', color: 'var(--primary)' }}>
@@ -360,11 +361,9 @@ function JelajahiContent() {
           </div>
         </section>
       </div>
-    </main>
 
       {/* --- ITEM DETAIL MODAL (QUICK VIEW) --- */}
-      {mounted && typeof document !== 'undefined' && createPortal(
-        <div className={`modal-overlay ${isModalOpen ? 'active' : ''}`} id="itemDetailOverlay" onClick={(e) => { if (e.target.id === 'itemDetailOverlay') setIsModalOpen(false) }}>
+      <div className={`modal-overlay ${isModalOpen ? 'active' : ''}`} id="itemDetailOverlay" onClick={(e) => { if (e.target.id === 'itemDetailOverlay') setIsModalOpen(false) }}>
         <div className={`modal modal-lg ${isModalOpen ? 'active' : ''}`} id="itemDetailModal" style={{ overflowY: 'auto', maxHeight: '90vh' }}>
           <button className="modal-close" onClick={() => setIsModalOpen(false)} style={{ zIndex: 10 }}><i className="ph ph-x"></i></button>
 
@@ -497,12 +496,20 @@ function JelajahiContent() {
                   <div className="info-row"><span className="label">Lokasi Barang</span><span className="value">{selectedProduct.lokasi}</span></div>
                 </div>
 
-                <div className="countdown-section">
-                  <p>Sisa Waktu Lelang :</p>
-                  <div className="countdown-timer" style={{ color: 'var(--danger)', fontWeight: 'bold' }}>
-                    {calculateTimeLeft(selectedProduct.waktu_selesai, false)}
-                  </div>
-                </div>
+                {(() => {
+                  const timerData = calculateTimeLeft(selectedProduct.waktu_selesai, selectedProduct.waktu_mulai || selectedProduct.created_at);
+                  return (
+                    <div className="countdown-section text-center" style={{ marginBottom: '1.5rem', marginTop: '1.5rem' }}>
+                      <p>Sisa Waktu Lelang :</p>
+                      <div className="countdown-timer" style={{ color: '#EF4444', fontWeight: 'bold', fontSize: '1.2rem', marginBottom: '0.5rem' }}>
+                        {timerData.text}
+                      </div>
+                      <div className="progress-bar" style={{ width: '100%', background: '#E5E7EB', height: '8px', borderRadius: '4px', overflow: 'hidden', marginTop: '0.75rem' }}>
+                        <div className="progress-fill" style={{ width: `${timerData.percent}%`, background: '#EF4444', height: '100%', transition: 'width 1s linear' }}></div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <button className="btn-primary-full" onClick={() => router.push(`/jelajahi/${selectedProduct.id}`)}>Lihat Detail Penuh</button>
               </div>
@@ -511,8 +518,7 @@ function JelajahiContent() {
           )}
         </div>
       </div>
-      , document.body)}
-    </>
+    </main>
   );
 }
 
