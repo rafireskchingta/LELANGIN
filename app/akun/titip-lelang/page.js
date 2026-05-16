@@ -166,11 +166,10 @@ export default function TitipLelangPage() {
                 style={{ width: 'auto', margin: 0, padding: '0.5rem 1.25rem', fontSize: '0.8rem', fontWeight: 600, borderRadius: '999px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
                 Tampilkan Seluruh Produk
               </Link>
-              {/* BEST PRACTICE: Menggunakan komponen Link dari Next.js */}
-              <Link href="/akun/tambah-produk" title="Tambah produk"
+              <button onClick={() => router.push('/akun/tambah-produk')} title="Tambah produk"
                 style={{ border: 'none', background: '#EEF2FF', color: 'var(--primary)', width: '35px', height: '35px', borderRadius: '50%', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
                 <i className="ph ph-plus"></i>
-              </Link>
+              </button>
               <button title="Hapus produk dipilih" onClick={handleHapus} disabled={deleting}
                 style={{ border: 'none', background: selected.length > 0 ? '#FEE2E2' : '#EEF2FF', color: selected.length > 0 ? '#DC2626' : '#9CA3AF', width: '35px', height: '35px', borderRadius: '50%', fontSize: '1.2rem', cursor: selected.length > 0 ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <i className={deleting ? 'ph ph-spinner' : 'ph ph-trash'}></i>
@@ -182,10 +181,10 @@ export default function TitipLelangPage() {
             /* Kosong — belum ada produk */
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '280px', gap: '1.25rem' }}>
               <p style={{ fontWeight: 500, fontSize: '1rem', color: '#6B7280' }}>Tambahkan produk untuk mulai lelang.</p>
-              <Link href="/akun/tambah-produk"
-                style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#EEF2FF', color: 'var(--primary)', fontSize: '2.5rem', boxShadow: '0 4px 10px rgba(79,70,229,0.1)' }}>
+              <button onClick={() => router.push('/akun/tambah-produk')}
+                style={{ border: 'none', cursor: 'pointer', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#EEF2FF', color: 'var(--primary)', fontSize: '2.5rem', boxShadow: '0 4px 10px rgba(79,70,229,0.1)' }}>
                 <i className="ph ph-plus"></i>
-              </Link>
+              </button>
             </div>
           ) : (
             <>
@@ -237,13 +236,13 @@ export default function TitipLelangPage() {
               </div>
 
               <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'center' }}>
-                <Link href="/akun/tambah-produk"
-                  style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontSize: '0.875rem', fontWeight: 500 }}>
+                <button onClick={() => router.push('/akun/tambah-produk')}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontSize: '0.875rem', fontWeight: 500, padding: 0 }}>
                   <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '26px', borderRadius: '50%', backgroundColor: '#EEF2FF', fontSize: '0.9rem' }}>
                     <i className="ph ph-plus"></i>
                   </span>
                   Titipkan Produk Baru
-                </Link>
+                </button>
               </div>
             </>
           )}
