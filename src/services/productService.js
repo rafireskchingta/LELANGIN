@@ -26,6 +26,7 @@ export async function fetchProducts(options = {}) {
         tahun_produksi,
         waktu_mulai,
         waktu_selesai,
+        created_at,
         status,
         seller_id,
         merk,

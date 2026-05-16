@@ -23,6 +23,12 @@ function JelajahiContent() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState([]); // Berisi kumpulan product_id
+  const [nowTime, setNowTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeModalImage, setActiveModalImage] = useState('/assets/placeholder.png');
@@ -173,18 +179,39 @@ function JelajahiContent() {
     return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   };
 
-  const calculateTimeLeft = (waktuSelesai) => {
-    if (!waktuSelesai) return 'Waktu Habis';
-    const selisihMs = new Date(waktuSelesai) - new Date();
-    if (selisihMs <= 0) return 'Waktu Habis';
+  const calculateTimeLeft = (waktuSelesai, waktuMulai) => {
+    if (!waktuSelesai) return { text: 'Waktu Habis', percent: 100 };
+    
+    const end = new Date(waktuSelesai);
+    const start = new Date(waktuMulai || end.getTime() - 1000 * 60 * 60 * 24); // Fallback 1 hari
+    const selisihMs = end - nowTime;
+
+    let percent = 0;
+    const totalDuration = end - start;
+    const elapsed = nowTime - start;
+    if (totalDuration > 0) {
+      percent = (elapsed / totalDuration) * 100;
+      if (percent < 0) percent = 0;
+      if (percent > 100) percent = 100;
+    }
+
+    if (selisihMs <= 0) return { text: 'Waktu Habis', percent: 100 };
 
     const hari = Math.floor(selisihMs / (1000 * 60 * 60 * 24));
     const jam = Math.floor((selisihMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
+    const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
 
-    if (hari > 0) return `${hari} Hari : ${jam} Jam : ${menit} Menit`;
-    if (jam > 0) return `${jam} Jam : ${menit} Menit`;
-    return `${menit} Menit`;
+    let text;
+    if (hari > 0) {
+      text = `${hari} Hari : ${jam} Jam : ${menit} Menit`;
+    } else if (jam > 0) {
+      text = `${jam} Jam : ${menit} Menit`;
+    } else {
+      text = `${menit} Menit : ${detik} Detik`;
+    }
+
+    return { text, percent };
   };
 
   return (
@@ -308,7 +335,7 @@ function JelajahiContent() {
             ) : (
               products.map((product) => (
                 <div key={product.id} onClick={() => openModal(product)} className="auction-card card-jelajahi" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', cursor: 'pointer', height: '100%' }}>
-                  <div className="badge-time"><i className="ph ph-clock"></i> {calculateTimeLeft(product.waktu_selesai)}</div>
+                  <div className="badge-time"><i className="ph ph-clock"></i> {calculateTimeLeft(product.waktu_selesai).text}</div>
                   <img src={product.image_urls?.[0] || '/assets/placeholder.png'} alt={product.nama_produk} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem', marginTop: '1rem' }}>
                     <div className="auction-price" style={{ marginBottom: 0, fontSize: '1.25rem', color: 'var(--primary)' }}>
@@ -469,12 +496,20 @@ function JelajahiContent() {
                   <div className="info-row"><span className="label">Lokasi Barang</span><span className="value">{selectedProduct.lokasi}</span></div>
                 </div>
 
-                <div className="countdown-section">
-                  <p>Sisa Waktu Lelang :</p>
-                  <div className="countdown-timer" style={{ color: 'var(--danger)', fontWeight: 'bold' }}>
-                    {calculateTimeLeft(selectedProduct.waktu_selesai)}
-                  </div>
-                </div>
+                {(() => {
+                  const timerData = calculateTimeLeft(selectedProduct.waktu_selesai, selectedProduct.waktu_mulai || selectedProduct.created_at);
+                  return (
+                    <div className="countdown-section text-center" style={{ marginBottom: '1.5rem', marginTop: '1.5rem' }}>
+                      <p>Sisa Waktu Lelang :</p>
+                      <div className="countdown-timer" style={{ color: '#EF4444', fontWeight: 'bold', fontSize: '1.2rem', marginBottom: '0.5rem' }}>
+                        {timerData.text}
+                      </div>
+                      <div className="progress-bar" style={{ width: '100%', background: '#E5E7EB', height: '8px', borderRadius: '4px', overflow: 'hidden', marginTop: '0.75rem' }}>
+                        <div className="progress-fill" style={{ width: `${timerData.percent}%`, background: '#EF4444', height: '100%', transition: 'width 1s linear' }}></div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <button className="btn-primary-full" onClick={() => router.push(`/jelajahi/${selectedProduct.id}`)}>Lihat Detail Penuh</button>
               </div>
