@@ -98,13 +98,26 @@ export default function AkunLayout({ children }) {
         <div className="akun-layout-split">
           <aside className="akun-sidebar">
             <div className="sidebar-profile">
-              <div className="sidebar-pic">{user.avatar}</div>
-              <div className="sidebar-user">
-                <h3>{user.username || user.nama}</h3>
-                <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600 }}>
-                  {user.role === 'penjual' ? 'Penjual' : 'Pembeli'}
-                </span>
-              </div>
+              {!loaded ? (
+                <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                  <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', marginRight: '1rem', flexShrink: 0 }}></div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+                    <div style={{ width: '80%', height: '14px', borderRadius: '4px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+                    <div style={{ width: '50%', height: '10px', borderRadius: '4px', background: 'linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }}></div>
+                  </div>
+                  <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
+                </div>
+              ) : (
+                <>
+                  <div className="sidebar-pic">{user.avatar}</div>
+                  <div className="sidebar-user">
+                    <h3>{user.username || user.nama}</h3>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600 }}>
+                      {user.role === 'penjual' ? 'Penjual' : 'Pembeli'}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
             <ul className="sidebar-nav">
               <li><Link href="/akun" className={isActive('/akun')}><i className="ph ph-smiley"></i> Akun Saya</Link></li>
