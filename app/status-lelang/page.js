@@ -328,13 +328,22 @@ function StatusLelangContent() {
               </div>
 
               <div>
-                <span style={{
-                  background: (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#ECFDF5' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#FEF2F2' : '#E0E7FF'),
-                  color: (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#059669' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#DC2626' : 'var(--primary)'),
-                  padding: '0.5rem 1.25rem', borderRadius: '20px', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem'
-                }}>
-                  {activeTab === 'Semua' ? 'Aktif' : activeTab}
-                </span>
+                {(() => {
+                  const timeLeft = calculateTimeLeft(item.waktu_selesai);
+                  const isSelesai = timeLeft === 'Waktu Habis';
+                  const bg = (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#ECFDF5' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#FEF2F2' : (activeTab === 'Semua' && isSelesai ? '#F3F4F6' : '#E0E7FF'));
+                  const textColor = (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#059669' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#DC2626' : (activeTab === 'Semua' && isSelesai ? '#6B7280' : 'var(--primary)'));
+                  const text = activeTab === 'Semua' ? (isSelesai ? 'Waktu Habis' : 'Aktif') : activeTab;
+                  return (
+                    <span style={{
+                      background: bg,
+                      color: textColor,
+                      padding: '0.5rem 1.25rem', borderRadius: '20px', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem'
+                    }}>
+                      {text}
+                    </span>
+                  );
+                })()}
               </div>
             </div>
           ))
@@ -459,17 +468,6 @@ function StatusLelangContent() {
                     <button className="btn-primary-full" onClick={() => { setIsModalOpen(false); router.push(`/jelajahi/${selectedItem.id}?from=status-lelang`); }}>
                       Lihat Detail Penuh
                     </button>
-
-                    {activeRole === 'pembeli' && activeTab === 'Menang Lelang' && (
-                      <button style={{ padding: '0.75rem', borderRadius: '8px', fontSize: '1rem', fontWeight: 700, background: '#10B981', color: 'white', border: 'none', cursor: 'pointer' }} onClick={() => { setIsModalOpen(false); router.push(`/status-lelang/pembayaran/${selectedItem.id}`); }}>
-                        Lanjut Pembayaran
-                      </button>
-                    )}
-                    {activeRole === 'penjual' && activeTab === 'Selesai' && modalBids.length > 0 && (
-                      <button style={{ padding: '0.75rem', borderRadius: '8px', fontSize: '1rem', fontWeight: 700, background: '#4F46E5', color: 'white', border: 'none', cursor: 'pointer' }} onClick={() => { setIsModalOpen(false); router.push(`/status-lelang/pengiriman/penjual/${selectedItem.id}`); }}>
-                        Proses Pengiriman Barang
-                      </button>
-                    )}
                   </div>
 
                 </div>

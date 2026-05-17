@@ -31,16 +31,27 @@ export default function DetailPage() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false); 
   const [isPaid, setIsPaid] = useState(false); 
+  const [isAddressFilled, setIsAddressFilled] = useState(false);
+  const [addressErrors, setAddressErrors] = useState({});
+  const [isSellerCancelModalOpen, setIsSellerCancelModalOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [isShipped, setIsShipped] = useState(false);
 
   // PERBAIKAN: Set mounted menjadi true setelah komponen masuk ke client-side
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Cek status pembayaran dari localStorage (dummy)
+  // Cek status pembayaran dan alamat dari localStorage (dummy)
   useEffect(() => {
     const paid = localStorage.getItem(`paid_${productId}`);
     if (paid === 'true') setIsPaid(true);
+    
+    const address = localStorage.getItem(`address_${productId}`);
+    if (address) setIsAddressFilled(true);
+    
+    const shipped = localStorage.getItem(`shipped_${productId}`);
+    if (shipped === 'true') setIsShipped(true);
   }, [productId]);
 
   // --- HELPERS ---
@@ -54,6 +65,7 @@ export default function DetailPage() {
 
   const closeAllModals = () => {
     setIsWarningModalOpen(false);
+    setIsSellerCancelModalOpen(false);
   };
 
   // --- EFEK UTAMA: Load Data & Real-time ---
@@ -315,170 +327,280 @@ export default function DetailPage() {
               ))}
             </div>
 
-            <div className="riwayat-section border-rounded" style={{ marginTop: '1.5rem', overflow: 'hidden', border: '1px solid #E5E7EB' }}>
-              <button
-                className="riwayat-header"
-                onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-                style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: '#FFFFFF', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <i className="ph ph-clock-counter-clockwise" style={{ fontSize: '1.2rem' }}></i>
-                  Riwayat Penawaran ({bids.length})
-                </div>
-                <i className="ph ph-caret-down" style={{ transition: 'transform 0.3s', transform: isHistoryOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}></i>
-              </button>
+            {!(currentUser && product.seller_id === currentUser.id && (product.status === 'selesai' || timeLeft === 'Waktu Habis')) && (
+              <div className="riwayat-section border-rounded" style={{ marginTop: '1.5rem', overflow: 'hidden', border: '1px solid #E5E7EB' }}>
+                <button
+                  className="riwayat-header"
+                  onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+                  style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: '#FFFFFF', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <i className="ph ph-clock-counter-clockwise" style={{ fontSize: '1.2rem' }}></i>
+                    Riwayat Penawaran ({bids.length})
+                  </div>
+                  <i className="ph ph-caret-down" style={{ transition: 'transform 0.3s', transform: isHistoryOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}></i>
+                </button>
 
-              <div className="riwayat-body" style={{
-                maxHeight: isHistoryOpen ? '250px' : '0px',
-                overflowY: 'auto',
-                transition: 'max-height 0.3s ease-in-out',
-                background: '#F9FAFB',
-                borderTop: isHistoryOpen ? '1px solid #E5E7EB' : 'none'
-              }}>
-                <div style={{ padding: '1rem' }}>
-                  {bids.length === 0 ? (
-                    <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Belum ada penawaran</div>
-                  ) : (
-                    bids.slice(0, 15).map((bid) => (
-                      <div key={bid.id} className="riwayat-item" style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.75rem', marginBottom: '0.75rem', borderBottom: '1px solid #E5E7EB' }}>
-                        <span style={{ fontWeight: 500 }}>@{bid.profiles?.username || 'User'}</span>
-                        <span className="price-blue" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
-                          Rp {formatCurrency(bid.amount)}
-                        </span>
-                      </div>
-                    ))
-                  )}
+                <div className="riwayat-body" style={{
+                  maxHeight: isHistoryOpen ? '250px' : '0px',
+                  overflowY: 'auto',
+                  transition: 'max-height 0.3s ease-in-out',
+                  background: '#F9FAFB',
+                  borderTop: isHistoryOpen ? '1px solid #E5E7EB' : 'none'
+                }}>
+                  <div style={{ padding: '1rem' }}>
+                    {bids.length === 0 ? (
+                      <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Belum ada penawaran</div>
+                    ) : (
+                      bids.slice(0, 15).map((bid) => (
+                        <div key={bid.id} className="riwayat-item" style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.75rem', marginBottom: '0.75rem', borderBottom: '1px solid #E5E7EB' }}>
+                          <span style={{ fontWeight: 500 }}>@{bid.profiles?.username || 'User'}</span>
+                          <span className="price-blue" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
+                            Rp {formatCurrency(bid.amount)}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* --- KANAN: INFO & FORM --- */}
           <div className="detail-right">
-            <h1 className="detail-title" style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>{product.nama_produk}</h1>
-
-            <div className="bid-highest-box border-rounded" style={{ border: boxBorder, background: boxBg, padding: '1.5rem', transition: 'all 0.3s ease' }}>
-              <div className="flex-bw" style={{ marginBottom: '0.5rem' }}>
-                <span className="text-muted" style={{ color: labelColor, fontWeight: 600 }}>{labelText}</span>
-                {hasBids && bids[0].profiles ? (
-                  <span className="user-tag" style={{ background: isWinning ? '#10B981' : (hasUserBid ? '#EF4444' : '#6B7280'), color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold' }}>
-                    @{bids[0].profiles.username}
-                  </span>
-                ) : (
-                  <span className="user-tag">-</span>
-                )}
-              </div>
-              <div className="price-huge text-right" style={{ color: priceColor, fontSize: '2.2rem', fontWeight: 800 }}>
-                Rp {formatCurrency(currentDisplayPrice)}
-              </div>
-            </div>
-
-            <table className="specs-table mt-1" style={{ marginTop: '2rem', width: '100%', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
-                  <th style={{ paddingBottom: '0.5rem' }}>Merk</th>
-                  <th style={{ paddingBottom: '0.5rem' }}>Tahun Pembuatan</th>
-                  <th style={{ paddingBottom: '0.5rem' }}>Model</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style={{ paddingTop: '0.5rem' }}>{product.merk || '-'}</td>
-                  <td style={{ paddingTop: '0.5rem' }}>{product.tahun_produksi || '-'}</td>
-                  <td style={{ paddingTop: '0.5rem' }}>{product.model || '-'}</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <div className="info-lelang-section border-top-bottom" style={{ borderTop: '1px solid #E5E7EB', borderBottom: '1px solid #E5E7EB', padding: '1.5rem 0', margin: '1.5rem 0' }}>
-              <h4 style={{ marginBottom: '1rem' }}>Informasi Lelang</h4>
-              <div className="info-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <span className="label" style={{ color: 'var(--text-muted)' }}>Lelang Berakhir</span>
-                <span className="value" style={{ fontWeight: 600 }}>{formatDate(product.waktu_selesai)}</span>
-              </div>
-              <div className="info-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span className="label" style={{ color: 'var(--text-muted)' }}>Lokasi Barang</span>
-                <span className="value" style={{ fontWeight: 600 }}>{product.lokasi}</span>
-              </div>
-            </div>
-
-            {product.status !== 'selesai' && timeLeft !== 'Waktu Habis' ? (
+            {(currentUser && product.seller_id === currentUser.id && (product.status === 'selesai' || timeLeft === 'Waktu Habis')) ? (
               <>
-                <div className="countdown-section text-center" style={{ marginBottom: '2rem' }}>
-                  <p>Sisa Waktu Lelang :</p>
-                  <div className="countdown-timer" style={{ color: '#EF4444', fontWeight: 'bold', fontSize: '1.5rem' }}>
-                    {timeLeft}
-                  </div>
-                  <div className="progress-bar" style={{ background: '#E5E7EB', height: '8px', borderRadius: '4px', marginTop: '0.5rem', overflow: 'hidden' }}>
-                    <div className="progress-fill" style={{ width: `${progressPercent}%`, background: '#EF4444', height: '100%', transition: 'width 1s linear' }}></div>
+                <h1 className="detail-title" style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#4F46E5' }}>{product.nama_produk}</h1>
+                <p style={{ color: '#6B7280', fontSize: '1.1rem', marginBottom: '1.5rem' }}>Lelang Telah Berakhir!</p>
+                
+                <hr style={{ border: 'none', borderTop: '1px solid #E5E7EB', marginBottom: '1.5rem' }} />
+
+                <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                  <p style={{ color: '#6B7280', marginBottom: '0.5rem' }}>Pemenang Lelang</p>
+                  <span style={{ background: '#4F46E5', color: 'white', padding: '0.5rem 1.5rem', borderRadius: '999px', fontWeight: 'bold', fontSize: '1.1rem', display: 'inline-block' }}>
+                    {hasBids && bids[0].profiles ? `@${bids[0].profiles.username}` : '-'}
+                  </span>
+                </div>
+
+                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                  <p style={{ color: '#6B7280', marginBottom: '0.5rem' }}>Nominal Lelang</p>
+                  <div style={{ color: '#10B981', fontSize: '2.5rem', fontWeight: 800 }}>
+                    Rp {formatCurrency(hasBids ? bids[0].amount : product.harga_awal)}
                   </div>
                 </div>
 
-                <div className="ajukan-penawaran" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginTop: '1rem', borderTop: '1px solid #E5E7EB', paddingTop: '1.5rem', flexWrap: 'wrap' }}>
-                  <h2 className="text-primary section-title" style={{ margin: 0, whiteSpace: 'nowrap', color: '#4F46E5', fontSize: '1.2rem' }}>Ajukan Penawaran</h2>
-                  <form className="penawaran-form" id="formPenawaran" onSubmit={handleSubmitBid} style={{ margin: 0, flex: '1 1 250px' }}>
-                    <div className="input-bid-group" style={{ display: 'flex', width: '100%' }}>
-                      <span className="rp-label" style={{ padding: '0.75rem 1rem', background: '#4F46E5', color: 'white', border: '1px solid #4F46E5', borderRight: 'none', borderRadius: '8px 0 0 8px', fontWeight: 'bold' }}>Rp</span>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={bidValue}
-                        onChange={(e) => setBidValue(formatRibuanInput(e.target.value))}
-                        placeholder="Masukan Nominal Penawaran"
-                        required
-                        style={{ flex: 1, padding: '0.75rem', border: '1px solid #D1D5DB', outline: 'none', fontSize: '1rem', minWidth: '0' }}
-                      />
-                      <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem', background: '#4F46E5', color: 'white', borderRadius: '0 8px 8px 0', border: '1px solid #4F46E5', cursor: 'pointer', fontWeight: 'bold' }}>Tawar</button>
+                <div className="riwayat-section border-rounded" style={{ marginBottom: '2rem', overflow: 'hidden', border: '1px solid #E5E7EB', borderRadius: '8px' }}>
+                  <button
+                    className="riwayat-header"
+                    onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+                    style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: '#FFFFFF', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <i className="ph ph-clock-counter-clockwise" style={{ fontSize: '1.2rem' }}></i>
+                      Riwayat Penawaran ({bids.length})
                     </div>
-                  </form>
+                    <i className="ph ph-caret-down" style={{ transition: 'transform 0.3s', transform: isHistoryOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}></i>
+                  </button>
+
+                  <div className="riwayat-body" style={{
+                    maxHeight: isHistoryOpen ? '200px' : '0px',
+                    overflowY: 'auto',
+                    transition: 'max-height 0.3s ease-in-out',
+                    background: '#F9FAFB',
+                    borderTop: isHistoryOpen ? '1px solid #E5E7EB' : 'none'
+                  }}>
+                    <div style={{ padding: '1rem' }}>
+                      {bids.length === 0 ? (
+                        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Belum ada penawaran</div>
+                      ) : (
+                        bids.slice(0, 15).map((bid) => (
+                          <div key={bid.id} className="riwayat-item" style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.75rem', marginBottom: '0.75rem', borderBottom: '1px solid #E5E7EB' }}>
+                            <span style={{ fontWeight: 500 }}>@{bid.profiles?.username || 'User'}</span>
+                            <span className="price-blue" style={{ color: '#4F46E5', fontWeight: 'bold' }}>
+                              Rp {formatCurrency(bid.amount)}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </>
-            ) : (
-              <div style={{ marginTop: '2rem' }}>
-                {isWinning ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-                    {isPaid ? (
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+                  {isShipped ? (
+                    <button 
+                      disabled
+                      style={{ width: '100%', maxWidth: '300px', padding: '0.85rem', background: '#E5E7EB', color: '#9CA3AF', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1.05rem', cursor: 'not-allowed' }}
+                    >
+                      Produk Sudah Terkirim
+                    </button>
+                  ) : (
+                    <>
                       <button 
-                        disabled
-                        style={{ padding: '0.7rem 3.5rem', background: '#10B981', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'default', opacity: 0.85 }}
-                      >
-                        ✓ Sudah Dibayar
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={() => router.push(`/pembayaran/${productId}`)}
-                        style={{ padding: '0.7rem 3.5rem', background: '#4F46E5', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'background 0.3s' }}
+                        onClick={() => {
+                          if (!isAddressFilled) {
+                            showToast('Pembeli belum mengisi alamat pengiriman.', 'error');
+                          } else {
+                            router.push(`/pengiriman/penjual/${productId}`);
+                          }
+                        }}
+                        style={{ width: '100%', maxWidth: '300px', padding: '0.85rem', background: '#4F46E5', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1.05rem', cursor: 'pointer', transition: 'background 0.3s' }}
                         onMouseOver={(e) => e.currentTarget.style.background = '#4338CA'}
                         onMouseOut={(e) => e.currentTarget.style.background = '#4F46E5'}
                       >
-                        Lakukan Pembayaran
-                      </button>
-                    )}
-                    {isPaid ? (
-                      <button 
-                        onClick={() => setIsAddressModalOpen(true)}
-                        style={{ padding: '0.7rem 3.5rem', background: 'white', color: '#4F46E5', border: '1px solid #4F46E5', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'background 0.3s' }}
-                        onMouseOver={(e) => e.currentTarget.style.background = '#F5F3FF'}
-                        onMouseOut={(e) => e.currentTarget.style.background = 'white'}
-                      >
                         Lakukan Pengiriman
                       </button>
+                      
+                      <button 
+                        onClick={() => setIsSellerCancelModalOpen(true)}
+                        style={{ width: '100%', maxWidth: '300px', padding: '0.85rem', background: '#FEE2E2', color: '#EF4444', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1.05rem', cursor: 'pointer', transition: 'background 0.3s' }}
+                        onMouseOver={(e) => e.currentTarget.style.background = '#FECACA'}
+                        onMouseOut={(e) => e.currentTarget.style.background = '#FEE2E2'}
+                      >
+                        Batalkan Lelang
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <h1 className="detail-title" style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>{product.nama_produk}</h1>
+
+                <div className="bid-highest-box border-rounded" style={{ border: boxBorder, background: boxBg, padding: '1.5rem', transition: 'all 0.3s ease' }}>
+                  <div className="flex-bw" style={{ marginBottom: '0.5rem' }}>
+                    <span className="text-muted" style={{ color: labelColor, fontWeight: 600 }}>{labelText}</span>
+                    {hasBids && bids[0].profiles ? (
+                      <span className="user-tag" style={{ background: isWinning ? '#10B981' : (hasUserBid ? '#EF4444' : '#6B7280'), color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                        @{bids[0].profiles.username}
+                      </span>
                     ) : (
-                      <button 
-                        disabled
-                        style={{ padding: '0.7rem 3.5rem', background: '#E5E7EB', color: '#9CA3AF', border: '1px solid #D1D5DB', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'not-allowed', opacity: 0.7 }}
-                        title="Lakukan pembayaran terlebih dahulu"
-                      >
-                        Lakukan Pengiriman
-                      </button>
+                      <span className="user-tag">-</span>
                     )}
                   </div>
+                  <div className="price-huge text-right" style={{ color: priceColor, fontSize: '2.2rem', fontWeight: 800 }}>
+                    Rp {formatCurrency(currentDisplayPrice)}
+                  </div>
+                </div>
+
+                <table className="specs-table mt-1" style={{ marginTop: '2rem', width: '100%', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      <th style={{ paddingBottom: '0.5rem' }}>Merk</th>
+                      <th style={{ paddingBottom: '0.5rem' }}>Tahun Pembuatan</th>
+                      <th style={{ paddingBottom: '0.5rem' }}>Model</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style={{ paddingTop: '0.5rem' }}>{product.merk || '-'}</td>
+                      <td style={{ paddingTop: '0.5rem' }}>{product.tahun_produksi || '-'}</td>
+                      <td style={{ paddingTop: '0.5rem' }}>{product.model || '-'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div className="info-lelang-section border-top-bottom" style={{ borderTop: '1px solid #E5E7EB', borderBottom: '1px solid #E5E7EB', padding: '1.5rem 0', margin: '1.5rem 0' }}>
+                  <h4 style={{ marginBottom: '1rem' }}>Informasi Lelang</h4>
+                  <div className="info-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span className="label" style={{ color: 'var(--text-muted)' }}>Lelang Berakhir</span>
+                    <span className="value" style={{ fontWeight: 600 }}>{formatDate(product.waktu_selesai)}</span>
+                  </div>
+                  <div className="info-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span className="label" style={{ color: 'var(--text-muted)' }}>Lokasi Barang</span>
+                    <span className="value" style={{ fontWeight: 600 }}>{product.lokasi}</span>
+                  </div>
+                </div>
+
+                {product.status !== 'selesai' && timeLeft !== 'Waktu Habis' ? (
+                  <>
+                    <div className="countdown-section text-center" style={{ marginBottom: '2rem' }}>
+                      <p>Sisa Waktu Lelang :</p>
+                      <div className="countdown-timer" style={{ color: '#EF4444', fontWeight: 'bold', fontSize: '1.5rem' }}>
+                        {timeLeft}
+                      </div>
+                      <div className="progress-bar" style={{ background: '#E5E7EB', height: '8px', borderRadius: '4px', marginTop: '0.5rem', overflow: 'hidden' }}>
+                        <div className="progress-fill" style={{ width: `${progressPercent}%`, background: '#EF4444', height: '100%', transition: 'width 1s linear' }}></div>
+                      </div>
+                    </div>
+
+                    <div className="ajukan-penawaran" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginTop: '1rem', borderTop: '1px solid #E5E7EB', paddingTop: '1.5rem', flexWrap: 'wrap' }}>
+                      <h2 className="text-primary section-title" style={{ margin: 0, whiteSpace: 'nowrap', color: '#4F46E5', fontSize: '1.2rem' }}>Ajukan Penawaran</h2>
+                      <form className="penawaran-form" id="formPenawaran" onSubmit={handleSubmitBid} style={{ margin: 0, flex: '1 1 250px' }}>
+                        <div className="input-bid-group" style={{ display: 'flex', width: '100%' }}>
+                          <span className="rp-label" style={{ padding: '0.75rem 1rem', background: '#4F46E5', color: 'white', border: '1px solid #4F46E5', borderRight: 'none', borderRadius: '8px 0 0 8px', fontWeight: 'bold' }}>Rp</span>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={bidValue}
+                            onChange={(e) => setBidValue(formatRibuanInput(e.target.value))}
+                            placeholder="Masukan Nominal Penawaran"
+                            required
+                            style={{ flex: 1, padding: '0.75rem', border: '1px solid #D1D5DB', outline: 'none', fontSize: '1rem', minWidth: '0' }}
+                          />
+                          <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem', background: '#4F46E5', color: 'white', borderRadius: '0 8px 8px 0', border: '1px solid #4F46E5', cursor: 'pointer', fontWeight: 'bold' }}>Tawar</button>
+                        </div>
+                      </form>
+                    </div>
+                  </>
                 ) : (
-                  <div style={{ textAlign: 'center', padding: '1.5rem', background: '#F3F4F6', borderRadius: '8px', color: '#6B7280', fontWeight: 'bold', fontSize: '1.1rem' }}>
-                    Lelang telah berakhir.
+                  <div style={{ marginTop: '2rem' }}>
+                    {isWinning ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                        {isPaid ? (
+                          <button 
+                            disabled
+                            style={{ padding: '0.7rem 3.5rem', background: '#10B981', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'default', opacity: 0.85 }}
+                          >
+                            ✓ Sudah Dibayar
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => router.push(`/pembayaran/${productId}`)}
+                            style={{ padding: '0.7rem 3.5rem', background: '#4F46E5', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'background 0.3s' }}
+                            onMouseOver={(e) => e.currentTarget.style.background = '#4338CA'}
+                            onMouseOut={(e) => e.currentTarget.style.background = '#4F46E5'}
+                          >
+                            Lakukan Pembayaran
+                          </button>
+                        )}
+                        {isPaid ? (
+                          isAddressFilled ? (
+                            <button 
+                              disabled
+                              style={{ padding: '0.7rem 3.5rem', background: '#10B981', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'default', opacity: 0.85 }}
+                            >
+                              ✓ Alamat Terisi
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => setIsAddressModalOpen(true)}
+                              style={{ padding: '0.7rem 3.5rem', background: 'white', color: '#4F46E5', border: '1px solid #4F46E5', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'background 0.3s' }}
+                              onMouseOver={(e) => e.currentTarget.style.background = '#F5F3FF'}
+                              onMouseOut={(e) => e.currentTarget.style.background = 'white'}
+                            >
+                              Lakukan Pengiriman
+                            </button>
+                          )
+                        ) : (
+                          <button 
+                            disabled
+                            style={{ padding: '0.7rem 3.5rem', background: '#E5E7EB', color: '#9CA3AF', border: '1px solid #D1D5DB', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'not-allowed', opacity: 0.7 }}
+                            title="Lakukan pembayaran terlebih dahulu"
+                          >
+                            Lakukan Pengiriman
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '1.5rem', background: '#F3F4F6', borderRadius: '8px', color: '#6B7280', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                        Lelang telah berakhir.
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
+              </>
             )}
           </div>
         </div>
@@ -528,21 +650,38 @@ export default function DetailPage() {
             </div>
             <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0 0 16px 16px' }}>
               <p style={{ color: '#6B7280', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Untuk membuat pesanan, silahkan tambahkan alamat pengiriman</p>
-              <form onSubmit={(e) => {
+              <form noValidate onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const addressData = Object.fromEntries(formData.entries());
+                
+                const errors = {};
+                if (!addressData.namaLengkap) errors.namaLengkap = true;
+                if (!addressData.nomorTelp) errors.nomorTelp = true;
+                if (!addressData.kota) errors.kota = true;
+                if (!addressData.kecamatan) errors.kecamatan = true;
+                if (!addressData.alamatLengkap) errors.alamatLengkap = true;
+                if (!addressData.kodePos) errors.kodePos = true;
+
+                if (Object.keys(errors).length > 0) {
+                  setAddressErrors(errors);
+                  showToast('Mohon lengkapi semua field yang diwajibkan!', 'error');
+                  return;
+                }
+
                 localStorage.setItem(`address_${productId}`, JSON.stringify(addressData));
-                router.push(`/pengiriman/${productId}`);
+                setIsAddressFilled(true);
+                setIsAddressModalOpen(false);
+                showToast('Alamat berhasil disimpan!', 'success');
               }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  <input name="namaLengkap" placeholder="Nama Lengkap" required style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none' }} />
-                  <input name="nomorTelp" placeholder="Nomor Telp" required style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none' }} />
+                  <input name="namaLengkap" placeholder="Nama Lengkap" className={addressErrors.namaLengkap ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.namaLengkap ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none' }} onChange={() => setAddressErrors(prev => ({...prev, namaLengkap: false}))} />
+                  <input name="nomorTelp" placeholder="Nomor Telp" className={addressErrors.nomorTelp ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.nomorTelp ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none' }} onChange={() => setAddressErrors(prev => ({...prev, nomorTelp: false}))} />
                 </div>
-                <input name="kota" placeholder="Kota" required style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} />
-                <input name="kecamatan" placeholder="Kecamatan" required style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} />
-                <input name="alamatLengkap" placeholder="Masukkan Nama Jalan, Gedung, No.Rumah" required style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} />
-                <input name="kodePos" placeholder="Kode Pos" required style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} />
+                <input name="kota" placeholder="Kota" className={addressErrors.kota ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.kota ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, kota: false}))} />
+                <input name="kecamatan" placeholder="Kecamatan" className={addressErrors.kecamatan ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.kecamatan ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, kecamatan: false}))} />
+                <input name="alamatLengkap" placeholder="Masukkan Nama Jalan, Gedung, No.Rumah" className={addressErrors.alamatLengkap ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.alamatLengkap ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, alamatLengkap: false}))} />
+                <input name="kodePos" placeholder="Kode Pos" className={addressErrors.kodePos ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.kodePos ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, kodePos: false}))} />
                 <input name="detailLainnya" placeholder="Detail Lainnya (Cth: Blok/Unit No, Patokan)" style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1.5rem' }} />
                 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
