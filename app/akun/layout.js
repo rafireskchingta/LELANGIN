@@ -85,7 +85,8 @@ export default function AkunLayout({ children }) {
 
   const isActive = (path) => {
     if (path === '/akun' && pathname === '/akun') return 'active';
-    if (path !== '/akun' && pathname.startsWith(path)) return 'active';
+    if (path === '/akun/titip-lelang' && (pathname.startsWith('/akun/titip-lelang') || pathname.startsWith('/akun/tambah-produk'))) return 'active';
+    if (path !== '/akun' && path !== '/akun/titip-lelang' && pathname.startsWith(path)) return 'active';
     return '';
   };
 
