@@ -3031,6 +3031,7 @@ body:has(.admin-layout-wrapper) {
 .admin-modal-overlay.active {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
 }
 
 .admin-modal {

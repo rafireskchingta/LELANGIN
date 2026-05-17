@@ -263,7 +263,7 @@ function AdminProdukContent() {
 
       {/* Detail Produk Modal */}
       {mounted && createPortal(
-        <div className={`admin-modal-overlay ${isDetailModalOpen ? 'active' : ''}`} onClick={(e) => { if (e.target.classList.contains('admin-modal-overlay')) setIsDetailModalOpen(false) }}>
+        <div className={`admin-modal-overlay ${isDetailModalOpen ? 'active' : ''}`} onClick={(e) => { if (e.target.classList.contains('admin-modal-overlay')) setIsDetailModalOpen(false) }} onWheel={(e) => { if (e.target.classList.contains('admin-modal-overlay')) { const container = document.querySelector('.admin-content-container > .page-transition-enter') || document.querySelector('.admin-content-container'); if (container) container.scrollTop += e.deltaY; } }}>
           <div className="admin-modal modal-large">
             <button className="admin-modal-close" onClick={() => setIsDetailModalOpen(false)} style={{ right: '1.5rem' }}>
               <i className="ph ph-x" style={{ background: '#F3F4F6', padding: '0.4rem', borderRadius: '8px', fontSize: '1rem' }}></i>
