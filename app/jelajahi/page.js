@@ -352,7 +352,7 @@ function JelajahiContent() {
                       onClick={(e) => toggleFavorite(product.id, e)}
                     ></i>
                   </div>
-                  <div className="auction-title" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600, flexGrow: 1 }}>
+                  <div className="auction-title" style={{ marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600, flexGrow: 1, color: '#000' }}>
                     {product.nama_produk}
                   </div>
                   <div className="auction-meta" style={{ fontSize: '0.8rem', color: '#6B7280', marginTop: 'auto' }}>
