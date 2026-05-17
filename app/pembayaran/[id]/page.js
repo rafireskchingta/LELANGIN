@@ -61,17 +61,67 @@ export default function PembayaranPage() {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   };
 
-  const handlePay = () => {
-    // Simpan flag pembayaran ke localStorage (dummy)
-    localStorage.setItem(`paid_${productId}`, 'true');
-    if (typeof window !== 'undefined' && window.showToast) {
-      window.showToast('Pembayaran berhasil dikonfirmasi! Silakan lanjutkan pengiriman.', 'success');
-    } else {
-      alert('Pembayaran berhasil dikonfirmasi!');
+  const handlePay = async () => {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        if (typeof window !== 'undefined' && window.showToast) window.showToast('Silakan login terlebih dahulu.', 'error');
+        return;
+      }
+
+      // Cek apakah transaksi sudah ada untuk produk ini
+      const { data: existing } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('product_id', productId)
+        .eq('winner_id', user.id)
+        .maybeSingle();
+
+      let dbError = null;
+
+      if (existing) {
+        // Sudah ada → update status saja
+        const { error } = await supabase
+          .from('transactions')
+          .update({ status_transaksi: 'diproses' })
+          .eq('id', existing.id);
+        dbError = error;
+      } else {
+        // Belum ada → buat transaksi baru
+        const { error } = await supabase
+          .from('transactions')
+          .insert({
+            product_id: productId,
+            winner_id: user.id,
+            status_transaksi: 'diproses',
+          });
+        dbError = error;
+      }
+
+      if (dbError) {
+        console.error('[Pembayaran] DB Error:', dbError.message, dbError.code, dbError.details);
+        if (typeof window !== 'undefined' && window.showToast) {
+          window.showToast('Gagal simpan transaksi: ' + dbError.message, 'error');
+        }
+        return;
+      }
+
+      // Simpan flag ke localStorage sebagai backup UI state
+      localStorage.setItem(`paid_${productId}`, 'true');
+
+      if (typeof window !== 'undefined' && window.showToast) {
+        window.showToast('Pembayaran berhasil dikonfirmasi! Silakan lanjutkan pengiriman.', 'success');
+      }
+      setTimeout(() => {
+        router.push(`/jelajahi/${productId}`);
+      }, 1500);
+
+    } catch (err) {
+      console.error('[Pembayaran] Error tidak terduga:', err.message);
+      if (typeof window !== 'undefined' && window.showToast) {
+        window.showToast('Terjadi kesalahan: ' + err.message, 'error');
+      }
     }
-    setTimeout(() => {
-      router.push(`/jelajahi/${productId}`);
-    }, 1500);
   };
 
   if (isLoading) {

@@ -10,6 +10,18 @@ export default function PengirimanPenjualPage() {
   const router = useRouter();
   const params = useParams();
   const productId = params.id;
+
+  // Hitung estimasi pengiriman dinamis: 5–7 hari dari sekarang
+  const getEstimasiPengiriman = () => {
+    const today = new Date();
+    const start = new Date(today); start.setDate(today.getDate() + 5);
+    const end = new Date(today); end.setDate(today.getDate() + 7);
+    const opts = { day: 'numeric', month: 'long', year: 'numeric' };
+    if (start.getMonth() === end.getMonth()) {
+      return `${start.getDate()} - ${end.toLocaleDateString('id-ID', opts)}`;
+    }
+    return `${start.toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })} - ${end.toLocaleDateString('id-ID', opts)}`;
+  };
   
   const [mounted, setMounted] = useState(false);
   const [product, setProduct] = useState(null);
@@ -130,7 +142,7 @@ export default function PengirimanPenjualPage() {
         <div style={{ padding: '2rem', borderTop: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <div style={{ fontWeight: 'bold', color: '#111827', marginBottom: '0.25rem' }}>Opsi Pengiriman : Hemat Kargo</div>
-            <div style={{ color: '#6B7280', fontSize: '0.85rem' }}>Estimasi Tiba 3 - 4 April 2026</div>
+            <div style={{ color: '#6B7280', fontSize: '0.85rem' }}>Estimasi Tiba {getEstimasiPengiriman()}</div>
           </div>
           <div style={{ fontWeight: 500, color: '#111827' }}>
             Rp {formatCurrency(shippingCost)}

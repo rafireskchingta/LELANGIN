@@ -672,7 +672,10 @@ export default function DetailPage() {
                 localStorage.setItem(`address_${productId}`, JSON.stringify(addressData));
                 setIsAddressFilled(true);
                 setIsAddressModalOpen(false);
-                showToast('Alamat berhasil disimpan!', 'success');
+                showToast('Alamat berhasil disimpan! Mengarahkan ke halaman pengiriman...', 'success');
+                setTimeout(() => {
+                  router.push(`/pengiriman/${productId}`);
+                }, 1000);
               }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                   <input name="namaLengkap" placeholder="Nama Lengkap" className={addressErrors.namaLengkap ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.namaLengkap ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none' }} onChange={() => setAddressErrors(prev => ({...prev, namaLengkap: false}))} />
