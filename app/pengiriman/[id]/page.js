@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { fetchProductDetail } from '../../../src/services/productService';
+import { useAdminGuard } from '../../../src/hooks/useAdminGuard';
 
 export default function PengirimanPage() {
+  useAdminGuard();
   const router = useRouter();
   const params = useParams();
   const productId = params.id;

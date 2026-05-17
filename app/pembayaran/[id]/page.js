@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { fetchProductDetail } from '../../../src/services/productService';
 import { supabase } from '../../../src/lib/supabase';
+import { useAdminGuard } from '../../../src/hooks/useAdminGuard';
 
 export default function PembayaranPage() {
+  useAdminGuard();
   const router = useRouter();
   const params = useParams();
   const productId = params.id;

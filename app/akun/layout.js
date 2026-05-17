@@ -48,6 +48,18 @@ export default function AkunLayout({ children }) {
           .eq('id', session.user.id)
           .single();
 
+        // GUARD: Jika user adalah admin, logout otomatis dan redirect ke beranda
+        if (profile?.role === 'admin') {
+          localStorage.removeItem('lelangin_user');
+          localStorage.removeItem('isLoggedIn');
+          await supabase.auth.signOut();
+          if (typeof window !== 'undefined' && window.showToast) {
+            window.showToast('Akun admin tidak dapat mengakses halaman pengguna.', 'error');
+          }
+          router.push('/');
+          return;
+        }
+
         setUser({
           username: profile?.username || '',
           nama: profile?.full_name || session.user.email.split('@')[0],

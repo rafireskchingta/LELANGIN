@@ -6,8 +6,10 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '../../src/lib/supabase';
 import { fetchProducts, fetchProductBids } from '../../src/services/productService';
+import { useAdminGuard } from '../../src/hooks/useAdminGuard';
 
 function JelajahiContent() {
+  useAdminGuard();
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialCategory = searchParams.get('kategori') || 'Semua';

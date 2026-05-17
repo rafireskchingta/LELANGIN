@@ -5,8 +5,10 @@ import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../../src/lib/supabase';
 import { fetchProductBids } from '../../src/services/productService';
+import { useAdminGuard } from '../../src/hooks/useAdminGuard';
 
 function StatusLelangContent() {
+  useAdminGuard();
   const router = useRouter();
   const searchParams = useSearchParams();
   const initRole = searchParams.get('role') || 'pembeli';
