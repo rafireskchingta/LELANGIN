@@ -155,7 +155,7 @@ function JelajahiContent() {
   }, [activeCategory, searchQuery, sortOrder]);
 
   const handleLokasiChange = (provinsi) => {
-    setLocations(prev =>
+    setLokasi(prev =>
       prev.includes(provinsi) ? prev.filter(p => p !== provinsi) : [...prev, provinsi]
     );
   };

@@ -28,6 +28,7 @@ function StatusLelangContent() {
   const [userRole, setUserRole] = useState('pembeli');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [nowTime, setNowTime] = useState(new Date());
 
   // --- 3. STATE SEARCH (DEBOUNCE) ---
   const [searchInput, setSearchInput] = useState('');
@@ -58,6 +59,12 @@ function StatusLelangContent() {
     };
     getUser();
   }, [activeRole]);
+
+  // TIMER REAL-TIME
+  useEffect(() => {
+    const timer = setInterval(() => setNowTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // DEBOUNCE SEARCH FILTER
   useEffect(() => {
@@ -202,18 +209,34 @@ function StatusLelangContent() {
     return `${tanggal} pukul ${waktu}`;
   };
 
-  const calculateTimeLeft = (waktuSelesai) => {
-    if (!waktuSelesai) return 'Waktu Habis';
-    const selisihMs = new Date(waktuSelesai) - new Date();
-    if (selisihMs <= 0) return 'Waktu Habis';
+  const calculateTimeLeft = (waktuSelesai, waktuMulai) => {
+    if (!waktuSelesai) return { text: 'Waktu Habis', percent: 0 };
+    const end = new Date(waktuSelesai);
+    const start = new Date(waktuMulai || end.getTime() - 1000 * 60 * 60 * 24);
+    const selisihMs = end - nowTime;
+
+    if (selisihMs <= 0) return { text: 'Waktu Habis', percent: 0 };
+
+    const totalDuration = end - start;
+    let percent = 100;
+    if (totalDuration > 0) {
+      percent = (selisihMs / totalDuration) * 100;
+      if (percent < 0) percent = 0;
+      if (percent > 100) percent = 100;
+    }
 
     const hari = Math.floor(selisihMs / (1000 * 60 * 60 * 24));
     const jam = Math.floor((selisihMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
+    const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
 
-    if (hari > 0) return `${hari} Hari`;
-    if (jam > 0) return `${jam} Jam`;
-    return `${menit} Menit`;
+    let text = '';
+    if (hari > 0) text = `${hari} Hari`;
+    else if (jam > 0) text = `${jam} Jam`;
+    else if (menit > 0) text = `${menit} Menit`;
+    else text = `${detik} Detik`;
+
+    return { text, percent };
   };
 
   const getPriceColor = () => {
@@ -329,8 +352,8 @@ function StatusLelangContent() {
 
               <div>
                 {(() => {
-                  const timeLeft = calculateTimeLeft(item.waktu_selesai);
-                  const isSelesai = timeLeft === 'Waktu Habis';
+                  const { text: timeLeftText, percent } = calculateTimeLeft(item.waktu_selesai, item.created_at);
+                  const isSelesai = timeLeftText === 'Waktu Habis';
                   const bg = (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#ECFDF5' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#FEF2F2' : (activeTab === 'Semua' && isSelesai ? '#F3F4F6' : '#E0E7FF'));
                   const textColor = (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#059669' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#DC2626' : (activeTab === 'Semua' && isSelesai ? '#6B7280' : 'var(--primary)'));
                   const text = activeTab === 'Semua' ? (isSelesai ? 'Waktu Habis' : 'Aktif') : activeTab;
@@ -455,12 +478,20 @@ function StatusLelangContent() {
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6B7280' }}>Lokasi Barang</span><span style={{ fontWeight: 600 }}>{selectedItem.lokasi}</span></div>
                     </div>
 
-                    <div className="countdown-section" style={{ background: '#FFF5F5', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', textAlign: 'center' }}>
-                      <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem', color: '#4B5563' }}>Sisa Waktu Lelang :</p>
-                      <div style={{ color: 'var(--danger)', fontWeight: 800, fontSize: '1.25rem' }}>
-                        {calculateTimeLeft(selectedItem.waktu_selesai)}
-                      </div>
-                    </div>
+                    {(() => {
+                       const { text: timerText, percent } = calculateTimeLeft(selectedItem.waktu_selesai, selectedItem.created_at);
+                       return (
+                         <div className="countdown-section" style={{ background: '#FFF5F5', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', textAlign: 'center' }}>
+                           <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem', color: '#4B5563' }}>Sisa Waktu Lelang :</p>
+                           <div style={{ color: 'var(--danger)', fontWeight: 800, fontSize: '1.25rem', marginBottom: '0.5rem' }}>
+                             {timerText}
+                           </div>
+                           <div style={{ width: '100%', background: '#E5E7EB', height: '8px', borderRadius: '4px', overflow: 'hidden', marginTop: '0.5rem' }}>
+                             <div style={{ width: `${percent}%`, background: '#EF4444', height: '100%', transition: 'width 1s linear' }}></div>
+                           </div>
+                         </div>
+                       );
+                     })()}
                   </div>
 
                   {/* TOMBOL ALUR TRANSAKSI SAKTI TETAP AMAN */}
