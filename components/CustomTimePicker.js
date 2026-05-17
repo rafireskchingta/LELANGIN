@@ -55,6 +55,16 @@ export default function CustomTimePicker({ value, onChange, placeholder = "-- : 
 
   return (
     <div className="custom-timepicker-container" ref={dropdownRef} style={{ position: 'relative', width: '100%' }}>
+      <style>{`
+        @keyframes popInDropdown {
+          0% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-pop-in {
+          animation: popInDropdown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          transform-origin: top center;
+        }
+      `}</style>
       <div 
         className={`custom-timepicker-input ${error ? 'error-shake' : ''}`} 
         onClick={() => setIsOpen(!isOpen)}
@@ -79,7 +89,7 @@ export default function CustomTimePicker({ value, onChange, placeholder = "-- : 
       </div>
 
       {isOpen && (
-        <div className="custom-timepicker-dropdown" style={{
+        <div className="custom-timepicker-dropdown animate-pop-in" style={{
           position: 'absolute',
           bottom: 'calc(100% + 8px)',
           top: 'auto',

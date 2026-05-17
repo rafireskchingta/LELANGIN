@@ -19,7 +19,8 @@ export default function CustomDatePicker({ value, onChange, placeholder = "Pilih
     if (showMonthDropdown && monthScrollRef.current) {
       const activeItem = monthScrollRef.current.querySelector('[data-active="true"]');
       if (activeItem) {
-        activeItem.scrollIntoView({ block: 'center', behavior: 'auto' });
+        const container = monthScrollRef.current;
+        container.scrollTop = activeItem.offsetTop - container.offsetTop - (container.clientHeight / 2) + (activeItem.clientHeight / 2);
       }
     }
   }, [showMonthDropdown]);
@@ -28,7 +29,8 @@ export default function CustomDatePicker({ value, onChange, placeholder = "Pilih
     if (showYearDropdown && yearScrollRef.current) {
       const activeItem = yearScrollRef.current.querySelector('[data-active="true"]');
       if (activeItem) {
-        activeItem.scrollIntoView({ block: 'center', behavior: 'auto' });
+        const container = yearScrollRef.current;
+        container.scrollTop = activeItem.offsetTop - container.offsetTop - (container.clientHeight / 2) + (activeItem.clientHeight / 2);
       }
     }
   }, [showYearDropdown]);
@@ -148,6 +150,16 @@ export default function CustomDatePicker({ value, onChange, placeholder = "Pilih
 
   return (
     <div className="custom-datepicker-container" ref={dropdownRef} style={{ position: 'relative', width: '100%' }}>
+      <style>{`
+        @keyframes popInDropdown {
+          0% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-pop-in {
+          animation: popInDropdown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          transform-origin: top center;
+        }
+      `}</style>
       <div
         className={`custom-datepicker-input ${error ? 'error-shake' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
@@ -172,7 +184,7 @@ export default function CustomDatePicker({ value, onChange, placeholder = "Pilih
       </div>
 
       {isOpen && (
-        <div className="custom-datepicker-dropdown" style={{
+        <div className="custom-datepicker-dropdown animate-pop-in" style={{
           position: 'absolute',
           bottom: 'calc(100% + 8px)',
           top: 'auto',
@@ -216,6 +228,7 @@ export default function CustomDatePicker({ value, onChange, placeholder = "Pilih
               </div>
               {showMonthDropdown && (
                 <div
+                  className="animate-pop-in"
                   ref={monthScrollRef}
                   style={{
                     position: 'absolute',
@@ -275,6 +288,7 @@ export default function CustomDatePicker({ value, onChange, placeholder = "Pilih
               </div>
               {showYearDropdown && (
                 <div
+                  className="animate-pop-in"
                   ref={yearScrollRef}
                   style={{
                     position: 'absolute',
