@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import CustomDatePicker from '../../../components/CustomDatePicker';
 import CustomTimePicker from '../../../components/CustomTimePicker';
@@ -13,6 +14,9 @@ export default function TambahProdukPage() {
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState(null);
   const [toast, setToast] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [modalScrollY, setModalScrollY] = useState(0);
+  const [modalPageHeight, setModalPageHeight] = useState(0);
   const [formErrors, setFormErrors] = useState({});
   const fileInputRef = useRef(null);
 
@@ -229,8 +233,7 @@ export default function TambahProdukPage() {
 
       if (insertError) throw insertError;
 
-      alert('Berhasil menambah produk! Produk dalam status "Menunggu" persetujuan Admin.');
-      router.push('/status-lelang?role=penjual');
+      setShowSuccessModal(true);
 
     } catch (error) {
       console.error(error);
@@ -467,6 +470,96 @@ export default function TambahProdukPage() {
           </button>
         </div>
       </form>
+
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: toast.type === 'error' ? '#FEE2E2' : '#D1FAE5',
+          color: toast.type === 'error' ? '#991B1B' : '#065F46',
+          padding: '1rem 1.5rem',
+          borderRadius: '8px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          zIndex: 99999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          fontWeight: 500,
+          animation: 'slideInRight 0.3s ease-out'
+        }}>
+          <i className={toast.type === 'error' ? 'ph-bold ph-warning-circle' : 'ph-bold ph-check-circle'} style={{ fontSize: '1.25rem' }}></i>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* --- MODAL SUKSES --- */}
+      {showSuccessModal && typeof document !== 'undefined' && createPortal(
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 999999,
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          backgroundColor: 'rgba(255, 255, 255, 0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'auto'
+        }}>
+          <div style={{ 
+            background: 'white',
+            borderRadius: '16px',
+            maxWidth: '400px', 
+            textAlign: 'center', 
+            padding: '2.5rem',
+            width: '90%',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            position: 'relative'
+          }}>
+            <div style={{ marginBottom: '1.5rem', color: '#10B981', display: 'flex', justifyContent: 'center' }}>
+              <i className="ph-fill ph-check-circle" style={{ fontSize: '5rem' }}></i>
+            </div>
+            <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', color: '#111827', fontWeight: 800 }}>
+              Produk Berhasil Dititipkan!
+            </h3>
+            <p style={{ color: '#6B7280', marginBottom: '2.5rem', lineHeight: 1.6 }}>
+              Barang lelang Anda telah berhasil ditambahkan dan sedang menunggu persetujuan.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <button 
+                type="button"
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  router.push('/akun/titip-lelang');
+                }}
+                className="btn-primary-full" 
+                style={{ width: '100%', padding: '0.85rem', borderRadius: '999px', fontSize: '1rem' }}
+              >
+                Kembali
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  router.push('/status-lelang?role=penjual');
+                }}
+                style={{ width: '100%', padding: '0.85rem', borderRadius: '999px', background: 'white', border: '1px solid #4F46E5', color: '#4F46E5', fontWeight: 600, cursor: 'pointer', fontSize: '1rem', transition: 'all 0.2s' }}
+                onMouseOver={(e) => { e.target.style.background = '#EEF2FF'; }}
+                onMouseOut={(e) => { e.target.style.background = 'white'; }}
+              >
+                Lihat Status Lelang
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   );
 }
