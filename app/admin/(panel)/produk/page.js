@@ -357,9 +357,9 @@ function AdminProdukContent() {
                   
                   {/* Container for prices */}
                   <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                    <div className="harga-terakhir-box" style={{ flex: 1, margin: 0 }}>
-                      <label>HARGA AWAL</label>
-                      <span>{formatRupiah(selectedProduct.harga_awal || 0)}</span>
+                    <div className="harga-terakhir-box" style={{ flex: 1, margin: 0, background: '#FFFFFF', color: '#111827', borderColor: '#111827' }}>
+                      <label style={{ color: '#6B7280' }}>HARGA AWAL</label>
+                      <span style={{ color: '#111827' }}>{formatRupiah(selectedProduct.harga_awal || 0)}</span>
                     </div>
                     <div className="harga-terakhir-box" style={{ flex: 1, margin: 0, background: '#EEF2FF', color: '#4F46E5', borderColor: '#C7D2FE' }}>
                       <label style={{ color: '#4F46E5' }}>HARGA SAAT INI</label>
