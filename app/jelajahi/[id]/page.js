@@ -342,11 +342,13 @@ export default function DetailPage() {
                 </button>
 
                 <div className="riwayat-body" style={{
-                  maxHeight: isHistoryOpen ? '250px' : '0px',
-                  overflowY: 'auto',
-                  transition: 'max-height 0.3s ease-in-out',
+                  maxHeight: isHistoryOpen ? '250px' : '0',
+                  opacity: isHistoryOpen ? 1 : 0,
+                  visibility: isHistoryOpen ? 'visible' : 'hidden',
+                  overflowY: isHistoryOpen ? 'auto' : 'hidden',
+                  transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0.4s ease',
                   background: '#F9FAFB',
-                  borderTop: isHistoryOpen ? '1px solid #E5E7EB' : 'none'
+                  borderTop: isHistoryOpen ? '1px solid #E5E7EB' : '1px solid transparent'
                 }}>
                   <div style={{ padding: '1rem' }}>
                     {bids.length === 0 ? (
@@ -404,11 +406,13 @@ export default function DetailPage() {
                   </button>
 
                   <div className="riwayat-body" style={{
-                    maxHeight: isHistoryOpen ? '200px' : '0px',
-                    overflowY: 'auto',
-                    transition: 'max-height 0.3s ease-in-out',
+                    maxHeight: isHistoryOpen ? '250px' : '0',
+                    opacity: isHistoryOpen ? 1 : 0,
+                    visibility: isHistoryOpen ? 'visible' : 'hidden',
+                    overflowY: isHistoryOpen ? 'auto' : 'hidden',
+                    transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0.4s ease',
                     background: '#F9FAFB',
-                    borderTop: isHistoryOpen ? '1px solid #E5E7EB' : 'none'
+                    borderTop: isHistoryOpen ? '1px solid #E5E7EB' : '1px solid transparent'
                   }}>
                     <div style={{ padding: '1rem' }}>
                       {bids.length === 0 ? (

@@ -410,23 +410,27 @@ function JelajahiContent() {
                       <i className="ph ph-clock-counter-clockwise"></i>
                       Riwayat Penawaran ({modalBids.length})
                     </div>
-                    <i className={`ph ph-caret-right ml-auto ${isModalHistoryOpen ? 'ph-caret-down' : ''}`} style={{ transition: 'transform 0.3s' }}></i>
+                    <i className="ph ph-caret-right ml-auto" style={{ transition: 'transform 0.3s', transform: isModalHistoryOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}></i>
                   </button>
 
-                  {isModalHistoryOpen && (
-                    <div className="riwayat-body" id="bodyRiwayat" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                      {modalBids.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '1rem' }}>Belum ada penawaran</div>
-                      ) : (
-                        modalBids.slice(0, 3).map((bid) => (
-                          <div key={bid.id} className="riwayat-item">
-                            <span>@{bid.profiles?.username || 'User'}</span>
-                            <span className="price-blue">Rp {formatRupiah(bid.amount)}</span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
+                  <div className="riwayat-body" id="bodyRiwayat" style={{ 
+                    maxHeight: isModalHistoryOpen ? '200px' : '0', 
+                    opacity: isModalHistoryOpen ? 1 : 0,
+                    visibility: isModalHistoryOpen ? 'visible' : 'hidden',
+                    overflowY: isModalHistoryOpen ? 'auto' : 'hidden',
+                    transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0.4s ease'
+                  }}>
+                    {modalBids.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '1rem' }}>Belum ada penawaran</div>
+                    ) : (
+                      modalBids.slice(0, 3).map((bid) => (
+                        <div key={bid.id} className="riwayat-item">
+                          <span>@{bid.profiles?.username || 'User'}</span>
+                          <span className="price-blue">Rp {formatRupiah(bid.amount)}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
 
