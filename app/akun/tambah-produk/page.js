@@ -515,45 +515,43 @@ export default function TambahProdukPage() {
           <div style={{ 
             background: 'white',
             borderRadius: '16px',
-            maxWidth: '400px', 
+            maxWidth: '500px', 
             textAlign: 'center', 
             padding: '2.5rem',
             width: '90%',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             position: 'relative'
           }}>
-            <div style={{ marginBottom: '1.5rem', color: '#10B981', display: 'flex', justifyContent: 'center' }}>
-              <i className="ph-fill ph-check-circle" style={{ fontSize: '5rem' }}></i>
-            </div>
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', color: '#111827', fontWeight: 800 }}>
+            <h3 style={{ fontSize: '1.4rem', marginBottom: '1rem', color: '#4F46E5', fontWeight: 800 }}>
               Produk Berhasil Dititipkan!
             </h3>
-            <p style={{ color: '#6B7280', marginBottom: '2.5rem', lineHeight: 1.6 }}>
+            <p style={{ color: '#6B7280', marginBottom: '2.5rem', lineHeight: 1.6, fontSize: '0.9rem' }}>
               Barang lelang Anda telah berhasil ditambahkan dan sedang menunggu persetujuan.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <button 
-                type="button"
-                onClick={() => {
-                  setShowSuccessModal(false);
-                  router.push('/akun/titip-lelang');
-                }}
-                className="btn-primary-full" 
-                style={{ width: '100%', padding: '0.85rem', borderRadius: '999px', fontSize: '1rem' }}
-              >
-                Kembali
-              </button>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', justifyContent: 'center' }}>
               <button 
                 type="button"
                 onClick={() => {
                   setShowSuccessModal(false);
                   router.push('/status-lelang?role=penjual');
                 }}
-                style={{ width: '100%', padding: '0.85rem', borderRadius: '999px', background: 'white', border: '1px solid #4F46E5', color: '#4F46E5', fontWeight: 600, cursor: 'pointer', fontSize: '1rem', transition: 'all 0.2s' }}
+                style={{ flex: 1, padding: '0.85rem', borderRadius: '999px', background: '#4F46E5', color: 'white', border: 'none', fontWeight: 600, cursor: 'pointer', fontSize: '1rem', transition: 'all 0.2s' }}
+                onMouseOver={(e) => { e.target.style.background = '#4338CA'; }}
+                onMouseOut={(e) => { e.target.style.background = '#4F46E5'; }}
+              >
+                Lihat Status Lelang
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  router.push('/akun/titip-lelang');
+                }}
+                style={{ flex: 1, padding: '0.85rem', borderRadius: '999px', background: 'white', border: '1px solid #4F46E5', color: '#4F46E5', fontWeight: 600, cursor: 'pointer', fontSize: '1rem', transition: 'all 0.2s' }}
                 onMouseOver={(e) => { e.target.style.background = '#EEF2FF'; }}
                 onMouseOut={(e) => { e.target.style.background = 'white'; }}
               >
-                Lihat Status Lelang
+                Kembali
               </button>
             </div>
           </div>
