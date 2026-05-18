@@ -75,8 +75,8 @@ export default function Navbar() {
   return (
     <header className="header">
       <div className="logo-section">
-        <div className="logo-icon">
-          <i className="ph ph-gavel"></i>
+        <div className="logo-icon" style={{ background: 'transparent' }}>
+          <img src="/assets/logo.png" alt="Lelangin Logo" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
         </div>
         <h2>Lelangin</h2>
       </div>
