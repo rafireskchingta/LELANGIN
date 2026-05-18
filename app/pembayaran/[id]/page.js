@@ -80,20 +80,20 @@ export default function PembayaranPage() {
       let dbError = null;
 
       if (existing) {
-        // Sudah ada → update status saja
+        // Sudah ada → update status ke menunggu_alamat
         const { error } = await supabase
           .from('transactions')
-          .update({ status_transaksi: 'diproses' })
+          .update({ status_transaksi: 'menunggu_alamat' })
           .eq('id', existing.id);
         dbError = error;
       } else {
-        // Belum ada → buat transaksi baru
+        // Belum ada → buat transaksi baru langsung dengan menunggu_alamat
         const { error } = await supabase
           .from('transactions')
           .insert({
             product_id: productId,
             winner_id: user.id,
-            status_transaksi: 'diproses',
+            status_transaksi: 'menunggu_alamat',
           });
         dbError = error;
       }
@@ -106,11 +106,8 @@ export default function PembayaranPage() {
         return;
       }
 
-      // Simpan flag ke localStorage sebagai backup UI state
-      localStorage.setItem(`paid_${productId}`, 'true');
-
       if (typeof window !== 'undefined' && window.showToast) {
-        window.showToast('Pembayaran berhasil dikonfirmasi! Silakan lanjutkan pengiriman.', 'success');
+        window.showToast('Pembayaran berhasil dikonfirmasi! Silakan isi alamat pengiriman.', 'success');
       }
       setTimeout(() => {
         router.push(`/jelajahi/${productId}`);

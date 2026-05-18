@@ -93,7 +93,7 @@ export default function PengirimanPage() {
 
       const trx = trxList[0];
 
-      // Update transaksi dengan setiap field alamat ke kolom masing-masing
+      // Update transaksi: simpan alamat + ubah status ke 'diproses'
       const { error: updateError, data: updateData } = await supabase
         .from('transactions')
         .update({
@@ -104,7 +104,7 @@ export default function PengirimanPage() {
           alamat_lengkap: address.alamatLengkap || null,
           kode_pos: address.kodePos || null,
           detail_lainnya: address.detailLainnya || null,
-          status_transaksi: 'dikirim',
+          status_transaksi: 'diproses',
         })
         .eq('id', trx.id)
         .select();
@@ -121,7 +121,7 @@ export default function PengirimanPage() {
             kota: address.kota || null,
             alamat_lengkap: address.alamatLengkap || null,
             kode_pos: address.kodePos || null,
-            status_transaksi: 'dikirim',
+            status_transaksi: 'diproses',
           })
           .eq('id', trx.id);
         if (minimalError) throw new Error('Gagal update: ' + minimalError.message);
@@ -129,14 +129,13 @@ export default function PengirimanPage() {
 
       // Bersihkan localStorage
       localStorage.removeItem(`address_${productId}`);
-      localStorage.removeItem(`paid_${productId}`);
 
       if (typeof window !== 'undefined' && window.showToast) {
-        window.showToast('Pengiriman berhasil dikonfirmasi! Pesanan Anda sedang diproses.', 'success');
+        window.showToast('Alamat berhasil dikonfirmasi! Pesanan Anda sedang diproses.', 'success');
       }
 
       setTimeout(() => {
-        router.push('/status-lelang');
+        window.location.href = `/jelajahi/${productId}`;
       }, 1500);
 
     } catch (error) {
@@ -181,7 +180,24 @@ export default function PengirimanPage() {
             </p>
           </div>
         </div>
-        <button onClick={() => router.push(`/jelajahi/${productId}`)} style={{ color: '#4F46E5', background: 'none', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Ubah</button>
+        <button onClick={async () => {
+          // Ketika Ubah diklik, kembalikan status ke menunggu_alamat agar
+          // tombol 'Alamat Terisi' di halaman detail kembali biru (bukan hijau)
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              await supabase
+                .from('transactions')
+                .update({ status_transaksi: 'menunggu_alamat' })
+                .eq('product_id', productId)
+                .eq('winner_id', user.id);
+            }
+          } catch (e) {
+            console.error('[Ubah Alamat] Gagal reset status:', e.message);
+          }
+          localStorage.removeItem(`address_${productId}`);
+          window.location.href = `/jelajahi/${productId}?refresh=${Date.now()}`;
+        }} style={{ color: '#4F46E5', background: 'none', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Ubah</button>
       </div>
 
       <div style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', border: '1px solid #E5E7EB', marginBottom: '2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>

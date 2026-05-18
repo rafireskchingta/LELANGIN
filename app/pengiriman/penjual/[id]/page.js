@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { fetchProductDetail } from '../../../../src/services/productService';
+import { supabase } from '../../../../src/lib/supabase';
 import { useAdminGuard } from '../../../../src/hooks/useAdminGuard';
 
 export default function PengirimanPenjualPage() {
@@ -35,33 +36,73 @@ export default function PengirimanPenjualPage() {
       try {
         const data = await fetchProductDetail(productId);
         setProduct(data);
+
+        // Ambil alamat pembeli dari DB (tabel transactions)
+        const { data: trx } = await supabase
+          .from('transactions')
+          .select('recipient_name, phone_number, kota, kecamatan, alamat_lengkap, kode_pos, detail_lainnya')
+          .eq('product_id', productId)
+          .maybeSingle();
+
+        if (trx && trx.alamat_lengkap) {
+          setBuyerAddress({
+            namaLengkap: trx.recipient_name,
+            nomorTelp: trx.phone_number,
+            kota: trx.kota,
+            kecamatan: trx.kecamatan,
+            alamatLengkap: trx.alamat_lengkap,
+            kodePos: trx.kode_pos,
+          });
+        } else {
+          // Fallback ke localStorage jika DB belum ada
+          const savedAddress = localStorage.getItem(`address_${productId}`);
+          if (savedAddress) {
+            try {
+              setBuyerAddress(JSON.parse(savedAddress));
+            } catch (e) {
+              console.error('Failed to parse address', e);
+            }
+          }
+        }
       } catch (e) {
         console.error(e);
       }
     };
     loadData();
-
-    // Get address from localStorage
-    const savedAddress = localStorage.getItem(`address_${productId}`);
-    if (savedAddress) {
-      try {
-        setBuyerAddress(JSON.parse(savedAddress));
-      } catch (e) {
-        console.error('Failed to parse address', e);
-      }
-    }
   }, [productId]);
 
-  const handleKirim = () => {
-    // Dummy logic
-    localStorage.setItem(`shipped_${productId}`, 'true');
-    
-    if (typeof window !== 'undefined' && window.showToast) {
-      window.showToast('Produk berhasil dikirim!', 'success');
-    } else {
-      alert('Produk berhasil dikirim!');
+  const handleKirim = async () => {
+    try {
+      // Cari transaksi berdasarkan product_id
+      const { data: trxList, error: trxError } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('product_id', productId)
+        .maybeSingle();
+
+      if (trxError) throw new Error('Gagal query transaksi: ' + trxError.message);
+      if (!trxList) throw new Error('Transaksi tidak ditemukan.');
+
+      // Update status ke 'dikirim'
+      const { error: updateError } = await supabase
+        .from('transactions')
+        .update({ status_transaksi: 'dikirim' })
+        .eq('id', trxList.id);
+
+      if (updateError) throw new Error('Gagal update status: ' + updateError.message);
+
+      if (typeof window !== 'undefined' && window.showToast) {
+        window.showToast('Produk berhasil dikirim!', 'success');
+      } else {
+        alert('Produk berhasil dikirim!');
+      }
+      router.push(`/jelajahi/${productId}`);
+    } catch (err) {
+      console.error('[Kirim] Error:', err.message);
+      if (typeof window !== 'undefined' && window.showToast) {
+        window.showToast('Gagal: ' + err.message, 'error');
+      }
     }
-    router.push(`/jelajahi/${productId}`);
   };
 
   const formatCurrency = (val) => {

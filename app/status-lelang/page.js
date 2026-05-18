@@ -112,8 +112,48 @@ function StatusLelangContent() {
               fetchedData = extractUniqueProducts(activeBids);
               break;
             case 'Menang Lelang':
-              const { data: wins } = await supabase.from('transactions').select('products(*)').eq('winner_id', currentUser.id).in('status_transaksi', ['menunggu_pembayaran', 'diproses']);
-              fetchedData = extractUniqueProducts(wins);
+              const { data: winningBids } = await supabase
+                .from('bids')
+                .select('products(*)')
+                .eq('bidder_id', currentUser.id)
+                .eq('is_winning_bid', true)
+                .lt('products.waktu_selesai', now);
+              
+              let wonProducts = extractUniqueProducts(winningBids);
+
+              if (wonProducts.length > 0) {
+                const { data: existingTrx } = await supabase
+                  .from('transactions')
+                  .select('product_id, status_transaksi, id')
+                  .in('product_id', wonProducts.map(p => p.id));
+                
+                const existingMap = {};
+                (existingTrx || []).forEach(t => existingMap[t.product_id] = t);
+
+                for (const p of wonProducts) {
+                  if (!existingMap[p.id]) {
+                    const { data: newTrx } = await supabase
+                      .from('transactions')
+                      .insert({
+                        product_id: p.id,
+                        winner_id: currentUser.id,
+                        status_transaksi: 'menunggu_pembayaran'
+                      })
+                      .select('product_id, status_transaksi, id')
+                      .single();
+                    if (newTrx) existingMap[p.id] = newTrx;
+                  }
+                }
+
+                fetchedData = wonProducts.filter(p => {
+                  const s = existingMap[p.id]?.status_transaksi;
+                  return s === 'menunggu_pembayaran' || s === 'menunggu_alamat' || s === 'diproses';
+                }).map(p => ({
+                   ...p,
+                   _trx_status: existingMap[p.id]?.status_transaksi,
+                   _trx_id: existingMap[p.id]?.id
+                }));
+              }
               break;
             case 'Kalah Lelang':
               const { data: lostBids } = await supabase.from('bids').select('products(*)').eq('bidder_id', currentUser.id).eq('is_winning_bid', false).lt('products.waktu_selesai', now);
@@ -122,8 +162,14 @@ function StatusLelangContent() {
             case 'Dikirim':
             case 'Selesai':
             case 'Dibatalkan':
-              const { data: trxStatus } = await supabase.from('transactions').select('products(*)').eq('winner_id', currentUser.id).eq('status_transaksi', activeTab.toLowerCase());
-              fetchedData = extractUniqueProducts(trxStatus);
+              const { data: trxStatus } = await supabase.from('transactions').select('products(*), status_transaksi, id').eq('winner_id', currentUser.id).eq('status_transaksi', activeTab.toLowerCase());
+              if (trxStatus) {
+                fetchedData = trxStatus.filter(t => t.products).map(t => ({
+                  ...t.products,
+                  _trx_status: t.status_transaksi,
+                  _trx_id: t.id
+                }));
+              }
               break;
             case 'Semua':
             default:
@@ -132,35 +178,97 @@ function StatusLelangContent() {
               break;
           }
         } else {
-          let query = supabase.from('products').select('*').eq('seller_id', currentUser.id);
+          if (activeTab === 'Selesai') {
+            // Ambil semua produk penjual yang waktunya sudah habis
+            const { data: finishedProducts, error: prodError } = await supabase
+              .from('products')
+              .select('*')
+              .eq('seller_id', currentUser.id)
+              .lt('waktu_selesai', now);
 
-          switch (activeTab) {
-            case 'Menunggu':
-              query = query.eq('status', 'menunggu');
-              break;
-            case 'Aktif':
-              query = query.eq('status', 'aktif').gt('waktu_selesai', now);
-              break;
-            case 'Selesai':
-              query = query.lt('waktu_selesai', now);
-              break;
-            case 'Dibatalkan':
-              query = query.eq('status', 'dibatalkan');
-              break;
-            case 'Semua':
-            default: break;
+            if (prodError) throw prodError;
+
+            if (finishedProducts && finishedProducts.length > 0) {
+              const { data: existingTrx } = await supabase
+                .from('transactions')
+                .select('product_id, id, status_transaksi')
+                .in('product_id', finishedProducts.map(p => p.id));
+              
+              const existingMap = {};
+              (existingTrx || []).forEach(t => existingMap[t.product_id] = t);
+
+              for (const p of finishedProducts) {
+                if (!existingMap[p.id]) {
+                  // Cari pemenang
+                  const { data: topBid } = await supabase
+                    .from('bids')
+                    .select('bidder_id')
+                    .eq('product_id', p.id)
+                    .eq('is_winning_bid', true)
+                    .maybeSingle();
+                  
+                  if (topBid) {
+                    const { data: newTrx } = await supabase
+                      .from('transactions')
+                      .insert({
+                        product_id: p.id,
+                        winner_id: topBid.bidder_id,
+                        status_transaksi: 'menunggu_pembayaran'
+                      })
+                      .select('product_id, id, status_transaksi')
+                      .single();
+                    if (newTrx) existingMap[p.id] = newTrx;
+                  }
+                }
+              }
+
+              // Gabungkan data produk + status transaksi ke dalam satu objek
+              fetchedData = finishedProducts
+                .filter(p => existingMap[p.id]) // hanya yang ada transaksi (ada pemenang)
+                .map(p => ({
+                  ...p,
+                  _trx_status: existingMap[p.id].status_transaksi,
+                  _trx_id: existingMap[p.id].id,
+                }));
+            }
+          } else {
+            let query = supabase.from('products').select('*').eq('seller_id', currentUser.id);
+
+            switch (activeTab) {
+              case 'Menunggu':
+                query = query.eq('status', 'menunggu');
+                break;
+              case 'Aktif':
+                query = query.eq('status', 'aktif').gt('waktu_selesai', now);
+                break;
+              case 'Dibatalkan':
+                query = query.eq('status', 'dibatalkan');
+                break;
+              case 'Semua':
+              default: break;
+            }
+
+            const { data, error } = await query.order('created_at', { ascending: false });
+            if (error) throw error;
+            fetchedData = data || [];
           }
-
-          const { data, error } = await query.order('created_at', { ascending: false });
-          if (error) throw error;
-          fetchedData = data || [];
         }
 
         if (searchQuery) {
           fetchedData = fetchedData.filter(item => item && item.nama_produk && item.nama_produk.toLowerCase().includes(searchQuery));
         }
 
-        setItems(fetchedData);
+        // Pastikan tidak ada id produk yang ganda (misal akibat duplikasi transaksi di DB)
+        const uniqueItems = [];
+        const seenIds = new Set();
+        for (const item of fetchedData) {
+          if (item && item.id && !seenIds.has(item.id)) {
+            seenIds.add(item.id);
+            uniqueItems.push(item);
+          }
+        }
+
+        setItems(uniqueItems);
       } catch (error) {
         console.error("Gagal menarik data:", error);
       }
@@ -241,15 +349,35 @@ function StatusLelangContent() {
     return { text, percent };
   };
 
-  const getPriceColor = () => {
-    if (activeRole === 'pembeli') {
-      if (activeTab === 'Menang Lelang') return '#10B981';
-      if (activeTab === 'Kalah Lelang') return '#EF4444';
-    } else {
-      if (activeTab === 'Selesai') return '#10B981';
-      if (activeTab === 'Dibatalkan') return '#EF4444';
+  const getStatusBadge = (item) => {
+    // Untuk tab Selesai penjual, tampilkan badge status transaksi
+    if (activeRole === 'penjual' && activeTab === 'Selesai' && item._trx_status) {
+      const map = {
+        menunggu_pembayaran: { label: 'Menunggu Bayar', bg: '#FEF3C7', color: '#B45309' },
+        menunggu_alamat:     { label: 'Menunggu Alamat', bg: '#DBEAFE', color: '#1D4ED8' },
+        diproses:            { label: 'Diproses', bg: '#EDE9FE', color: '#6D28D9' },
+        dikirim:             { label: 'Dikirim', bg: '#ECFDF5', color: '#059669' },
+        selesai:             { label: 'Selesai', bg: '#D1FAE5', color: '#047857' },
+      };
+      const s = map[item._trx_status] || { label: item._trx_status, bg: '#F3F4F6', color: '#6B7280' };
+      return (
+        <span style={{ background: s.bg, color: s.color, padding: '0.5rem 1.25rem', borderRadius: '20px', fontWeight: 700, fontSize: '0.85rem' }}>
+          {s.label}
+        </span>
+      );
     }
-    return 'var(--text-main)';
+
+    // Default badge (waktu)
+    const { text: timeLeftText } = calculateTimeLeft(item.waktu_selesai, item.created_at);
+    const isSelesai = timeLeftText === 'Waktu Habis';
+    const bg = (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#ECFDF5' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#FEF2F2' : (activeTab === 'Semua' && isSelesai ? '#F3F4F6' : '#E0E7FF'));
+    const textColor = (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#059669' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#DC2626' : (activeTab === 'Semua' && isSelesai ? '#6B7280' : 'var(--primary)'));
+    const text = activeTab === 'Semua' ? (isSelesai ? 'Waktu Habis' : 'Aktif') : activeTab;
+    return (
+      <span style={{ background: bg, color: textColor, padding: '0.5rem 1.25rem', borderRadius: '20px', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {text}
+      </span>
+    );
   };
 
   const getPriceLabel = () => {
@@ -259,6 +387,17 @@ function StatusLelangContent() {
     } else {
       if (activeTab === 'Selesai') return 'Terjual Seharga';
       return 'Bid Tertinggi Saat Ini';
+    }
+  };
+
+  const getPriceColor = () => {
+    if (activeRole === 'pembeli') {
+      if (activeTab === 'Menang Lelang') return '#059669';
+      if (activeTab === 'Kalah Lelang') return '#DC2626';
+      return 'var(--primary)';
+    } else {
+      if (activeTab === 'Selesai') return '#059669';
+      return 'var(--primary)';
     }
   };
 

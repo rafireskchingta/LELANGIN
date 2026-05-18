@@ -42,17 +42,54 @@ export default function DetailPage() {
     setMounted(true);
   }, []);
 
-  // Cek status pembayaran dan alamat dari localStorage (dummy)
+  // Cek status transaksi dari DB (sumber kebenaran utama)
   useEffect(() => {
-    const paid = localStorage.getItem(`paid_${productId}`);
-    if (paid === 'true') setIsPaid(true);
-    
-    const address = localStorage.getItem(`address_${productId}`);
-    if (address) setIsAddressFilled(true);
-    
-    const shipped = localStorage.getItem(`shipped_${productId}`);
-    if (shipped === 'true') setIsShipped(true);
-  }, [productId]);
+    if (!productId) return;
+    const checkTransactionStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      let { data: trx } = await supabase
+        .from('transactions')
+        .select('status_transaksi')
+        .eq('product_id', productId)
+        .eq('winner_id', user.id)
+        .maybeSingle();
+
+      // Auto-create jika lelang selesai dan user adalah pemenang
+      if (!trx && timeLeft === 'Waktu Habis' && bids.length > 0 && bids[0].bidder_id === user.id) {
+        const { data: newTrx, error } = await supabase
+          .from('transactions')
+          .insert({
+            product_id: productId,
+            winner_id: user.id,
+            status_transaksi: 'menunggu_pembayaran'
+          })
+          .select('status_transaksi')
+          .single();
+        if (!error && newTrx) {
+          trx = newTrx;
+        }
+      }
+
+      if (!trx) {
+        setIsPaid(false);
+        setIsAddressFilled(false);
+        setIsShipped(false);
+        return;
+      }
+
+      const status = trx.status_transaksi;
+      // menunggu_pembayaran: belum bayar
+      // menunggu_alamat: sudah bayar, belum isi alamat
+      // diproses: sudah bayar & sudah isi alamat
+      // dikirim / selesai: sudah dikirim
+      setIsPaid(status === 'menunggu_alamat' || status === 'diproses' || status === 'dikirim' || status === 'selesai');
+      setIsAddressFilled(status === 'diproses' || status === 'dikirim' || status === 'selesai');
+      setIsShipped(status === 'dikirim' || status === 'selesai');
+    };
+    checkTransactionStatus();
+  }, [productId, timeLeft, bids]);
 
   // --- HELPERS ---
   const showToast = (msg, type = 'success') => {
@@ -678,7 +715,7 @@ export default function DetailPage() {
                 setIsAddressModalOpen(false);
                 showToast('Alamat berhasil disimpan! Mengarahkan ke halaman pengiriman...', 'success');
                 setTimeout(() => {
-                  router.push(`/pengiriman/${productId}`);
+                  window.location.href = `/pengiriman/${productId}`;
                 }, 1000);
               }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
