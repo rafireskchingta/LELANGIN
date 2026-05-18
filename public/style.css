@@ -1155,6 +1155,7 @@ body {
 .item-detail-layout {
   display: flex;
   gap: 2.5rem;
+  align-items: center;
 }
 
 .item-detail-image {
@@ -1239,7 +1240,8 @@ body {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 1.5rem;
-  text-align: center;
+  text-align: left;
+  table-layout: fixed;
 }
 
 .specs-table th {
@@ -1311,6 +1313,7 @@ body {
   display: flex;
   gap: 3rem;
   margin-top: 1rem;
+  align-items: center;
 }
 
 .detail-left {

@@ -488,7 +488,7 @@ export default function DetailPage() {
                   </div>
                 </div>
 
-                <table className="specs-table mt-1" style={{ marginTop: '2rem', width: '100%', textAlign: 'left' }}>
+                <table className="specs-table mt-1" style={{ marginTop: '2rem', width: '100%', textAlign: 'left', tableLayout: 'fixed' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
                       <th style={{ paddingBottom: '0.5rem' }}>Merk</th>
