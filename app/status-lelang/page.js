@@ -516,133 +516,146 @@ function StatusLelangContent() {
 
       {/* --- OVERLAY DETIL POPUP UTUH (CREATEPORTAL) --- */}
       {mounted && typeof document !== 'undefined' && createPortal(
-        <div className={`modal-overlay ${isModalOpen ? 'active' : ''}`} onClick={(e) => { if (e.target.classList.contains('modal-overlay')) setIsModalOpen(false) }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999, backdropFilter: 'blur(12px)', opacity: isModalOpen ? 1 : 0, pointerEvents: isModalOpen ? 'auto' : 'none', transition: 'all 0.3s ease' }}>
-          <div className={`modal modal-lg ${isModalOpen ? 'active' : ''}`} style={{ background: 'white', borderRadius: '16px', maxWidth: '800px', width: '90%', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', position: 'relative', transform: isModalOpen ? 'translateY(0)' : 'translateY(20px)', transition: 'transform 0.3s ease' }}>
-            <button className="modal-close" onClick={() => setIsModalOpen(false)} style={{ zIndex: 10, position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem' }}><i className="ph ph-x"></i></button>
+        <div className={`modal-overlay ${isModalOpen ? 'active' : ''}`} id="statusDetailOverlay" onClick={(e) => { if (e.target.id === 'statusDetailOverlay') setIsModalOpen(false) }}>
+          <div className={`modal modal-lg ${isModalOpen ? 'active' : ''}`} id="statusDetailModal" style={{ overflowY: 'auto', maxHeight: '90vh' }}>
+            <button className="modal-close" onClick={() => setIsModalOpen(false)} style={{ zIndex: 10 }}><i className="ph ph-x"></i></button>
 
             {selectedItem && (
-              <div className="item-detail-layout" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+              <div className="item-detail-layout">
 
-                {/* KIRI */}
-                <div style={{ width: '100%' }}>
-                  <img src={activeModalImage} alt={selectedItem.nama_produk} style={{ width: '100%', height: '350px', objectFit: 'cover', borderRadius: '12px' }} />
+                {/* SISI KIRI */}
+                <div className="item-detail-image" style={{ maxWidth: '100%', overflow: 'hidden' }}>
+                  <img src={activeModalImage} className="main-img" alt={selectedItem.nama_produk} style={{ objectFit: 'cover', width: '100%', borderRadius: '8px' }} />
 
                   {selectedItem.image_urls?.length > 1 && (
                     <div style={{ width: '100%', overflow: 'hidden', marginTop: '1rem' }}>
                       <div className="small-gallery" style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}>
                         {selectedItem.image_urls.map((url, idx) => (
-                          <img key={idx} src={url} alt={`Thumb ${idx}`} onClick={() => setActiveModalImage(url)} style={{ width: '80px', height: '80px', flexShrink: 0, objectFit: 'cover', borderRadius: '8px', cursor: 'pointer', border: activeModalImage === url ? '2px solid var(--primary)' : '1px solid #E5E7EB', scrollSnapAlign: 'start' }} />
+                          <img
+                            key={idx}
+                            src={url}
+                            alt={`Thumb ${idx}`}
+                            onClick={() => setActiveModalImage(url)}
+                            className={`thumb ${activeModalImage === url ? 'active' : ''}`}
+                            style={{ flexShrink: 0, objectFit: 'cover', width: '80px', height: '80px', borderRadius: '4px', cursor: 'pointer', scrollSnapAlign: 'start' }}
+                          />
                         ))}
                       </div>
-                  </div>
+                    </div>
                   )}
 
-                  <div className="riwayat-section border-rounded" style={{ marginTop: '1rem', border: '1px solid #E5E7EB', borderRadius: '8px', padding: '1rem' }}>
-                    <button className="riwayat-header" onClick={() => setIsModalHistoryOpen(!isModalHistoryOpen)} style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+                  <div className="riwayat-section border-rounded" style={{ marginTop: '1rem' }}>
+                    <button
+                      className="riwayat-header"
+                      onClick={() => setIsModalHistoryOpen(!isModalHistoryOpen)}
+                      style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}
+                    >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <i className="ph ph-clock-counter-clockwise"></i>
                         Riwayat Penawaran ({modalBids.length})
                       </div>
-                      <i className={`ph ph-caret-right ${isModalHistoryOpen ? 'ph-caret-down' : ''}`} style={{ transition: 'transform 0.3s' }}></i>
+                      <i className="ph ph-caret-right ml-auto" style={{ transition: 'transform 0.3s', transform: isModalHistoryOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}></i>
                     </button>
 
-                    {isModalHistoryOpen && (
-                      <div className="riwayat-body" style={{ maxHeight: '150px', overflowY: 'auto', marginTop: '0.75rem' }}>
-                        {modalBids.length === 0 ? (
-                          <div style={{ textAlign: 'center', padding: '1rem', fontSize: '0.85rem', color: '#6B7280' }}>Belum ada penawaran</div>
-                        ) : (
-                          modalBids.slice(0, 3).map((bid) => (
-                            <div key={bid.id} className="riwayat-item" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px dashed #E5E7EB', fontSize: '0.85rem' }}>
-                              <span>@{bid.profiles?.username || 'User'}</span>
-                              <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Rp {formatRupiah(bid.amount)}</span>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* KANAN */}
-                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <h2 style={{ fontSize: '1.4rem', margin: '0 0 1rem 0', fontWeight: 700 }}>{selectedItem.nama_produk}</h2>
-
-                    {(() => {
-                      let bidStatusText = getPriceLabel();
-                      let bidStatusColor = getPriceColor();
-
-                      if (activeRole === 'pembeli' && (activeTab === 'Semua' || activeTab === 'Sedang Diikuti' || activeTab === 'Favorit')) {
-                        const isBiddedByUser = currentUser && modalBids.some(b => b.bidder_id === currentUser.id);
-                        const isOriginalHighest = currentUser && modalBids.length > 0 && modalBids[0].bidder_id === currentUser.id;
-
-                        if (modalBids.length === 0) {
-                          bidStatusText = 'Belum Ada Penawaran';
-                          bidStatusColor = 'var(--text-main)';
-                        } else if (isOriginalHighest) {
-                          bidStatusText = 'Anda Penawar Tertinggi Saat Ini!';
-                          bidStatusColor = '#10B981';
-                        } else if (isBiddedByUser) {
-                          bidStatusText = 'Harga Tertinggi saat ini:';
-                          bidStatusColor = '#EF4444';
-                        }
-                      }
-
-                      return (
-                        <div className="bid-section" style={{ padding: '0', marginBottom: '1rem' }}>
-                          <p style={{ color: bidStatusColor, fontWeight: 600, fontSize: '0.9rem', margin: '0 0 0.25rem 0' }}>{bidStatusText}</p>
-                          <h3 style={{ color: bidStatusColor, fontSize: '1.8rem', fontWeight: 800, margin: 0 }}>Rp {formatRupiah(modalBids.length > 0 ? modalBids[0].amount : (selectedItem.current_price || selectedItem.harga_awal))}</h3>
-                        </div>
-                      );
-                    })()}
-
-                    <table className="specs-table" style={{ width: '100%', borderCollapse: 'collapse', margin: '1.5rem 0', fontSize: '0.9rem' }}>
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid #E5E7EB', textAlign: 'left', color: '#6B7280' }}>
-                          <th style={{ paddingBottom: '0.5rem' }}>Merk</th>
-                          <th style={{ paddingBottom: '0.5rem' }}>Tahun</th>
-                          <th style={{ paddingBottom: '0.5rem' }}>Model</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr style={{ fontWeight: 500 }}>
-                          <td style={{ paddingTop: '0.5rem' }}>{selectedItem.merk || '-'}</td>
-                          <td style={{ paddingTop: '0.5rem' }}>{selectedItem.tahun_produksi || '-'}</td>
-                          <td style={{ paddingTop: '0.5rem' }}>{selectedItem.model || '-'}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-
-                    <div className="info-lelang-section" style={{ fontSize: '0.9rem', borderTop: '1px solid #E5E7EB', paddingTop: '1rem', marginBottom: '1.5rem' }}>
-                      <h4 style={{ margin: '0 0 0.75rem 0', fontWeight: 600 }}>Informasi Lelang</h4>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}><span style={{ color: '#6B7280' }}>Lelang Berakhir</span><span style={{ fontWeight: 600 }}>{formatTanggalPukul(selectedItem.waktu_selesai)}</span></div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#6B7280' }}>Lokasi Barang</span><span style={{ fontWeight: 600 }}>{selectedItem.lokasi}</span></div>
+                    <div className="riwayat-body" id="bodyRiwayatStatus" style={{ 
+                      maxHeight: isModalHistoryOpen ? '200px' : '0', 
+                      opacity: isModalHistoryOpen ? 1 : 0,
+                      visibility: isModalHistoryOpen ? 'visible' : 'hidden',
+                      overflowY: isModalHistoryOpen ? 'auto' : 'hidden',
+                      transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0.4s ease'
+                    }}>
+                      {modalBids.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '1rem' }}>Belum ada penawaran</div>
+                      ) : (
+                        modalBids.slice(0, 3).map((bid) => (
+                          <div key={bid.id} className="riwayat-item">
+                            <span>@{bid.profiles?.username || 'User'}</span>
+                            <span className="price-blue">Rp {formatRupiah(bid.amount)}</span>
+                          </div>
+                        ))
+                      )}
                     </div>
-
-                    {(() => {
-                       const { text: timerText, percent } = calculateTimeLeft(selectedItem.waktu_selesai, selectedItem.created_at);
-                       return (
-                         <div className="countdown-section" style={{ background: '#FFF5F5', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', textAlign: 'center' }}>
-                           <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem', color: '#4B5563' }}>Sisa Waktu Lelang :</p>
-                           <div style={{ color: 'var(--danger)', fontWeight: 800, fontSize: '1.25rem', marginBottom: '0.5rem' }}>
-                             {timerText}
-                           </div>
-                           <div style={{ width: '100%', background: '#E5E7EB', height: '8px', borderRadius: '4px', overflow: 'hidden', marginTop: '0.5rem' }}>
-                             <div style={{ width: `${percent}%`, background: '#EF4444', height: '100%', transition: 'width 1s linear' }}></div>
-                           </div>
-                         </div>
-                       );
-                     })()}
                   </div>
-
-                  {/* TOMBOL ALUR TRANSAKSI SAKTI TETAP AMAN */}
-                  <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
-                    <button className="btn-primary-full" onClick={() => { setIsModalOpen(false); router.push(`/jelajahi/${selectedItem.id}?from=status-lelang`); }}>
-                      Lihat Detail Penuh
-                    </button>
-                  </div>
-
                 </div>
+
+                {/* SISI KANAN */}
+                <div className="item-detail-info">
+                  <h2 style={{ fontSize: '1.4rem' }}>{selectedItem.nama_produk}</h2>
+
+                  {(() => {
+                    let bidStatusText = getPriceLabel();
+                    let bidStatusColor = getPriceColor();
+
+                    if (activeRole === 'pembeli' && (activeTab === 'Semua' || activeTab === 'Sedang Diikuti' || activeTab === 'Favorit')) {
+                      const isBiddedByUser = currentUser && modalBids.some(b => b.bidder_id === currentUser.id);
+                      const isOriginalHighest = currentUser && modalBids.length > 0 && modalBids[0].bidder_id === currentUser.id;
+
+                      if (modalBids.length === 0) {
+                        bidStatusText = 'Belum Ada Penawaran';
+                        bidStatusColor = 'var(--text-main)';
+                      } else if (isOriginalHighest) {
+                        bidStatusText = 'Anda Penawar Tertinggi Saat Ini!';
+                        bidStatusColor = '#10B981';
+                      } else if (isBiddedByUser) {
+                        bidStatusText = 'Harga Tertinggi saat ini:';
+                        bidStatusColor = '#EF4444';
+                      }
+                    }
+
+                    return (
+                      <div className="bid-section" style={{ padding: '0', marginBottom: '1rem' }}>
+                        <p style={{ color: bidStatusColor, fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.25rem' }}>{bidStatusText}</p>
+                        <h3 className="price-green" style={{ color: bidStatusColor, fontSize: '1.8rem', fontWeight: 800 }}>Rp {formatRupiah(modalBids.length > 0 ? modalBids[0].amount : (selectedItem.current_price || selectedItem.harga_awal))}</h3>
+                      </div>
+                    );
+                  })()}
+
+                  <hr style={{ border: 'none', borderTop: '1px solid #E5E7EB', margin: '0.5rem 0 1rem 0' }} />
+                  <table className="specs-table">
+                    <thead>
+                      <tr>
+                        <th>Merk</th>
+                        <th>Tahun</th>
+                        <th>Model</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>{selectedItem.merk || '-'}</td>
+                        <td>{selectedItem.tahun_produksi || '-'}</td>
+                        <td>{selectedItem.model || '-'}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <div className="info-legang-section">
+                    <h4>Informasi Lelang</h4>
+                    <div className="info-row"><span className="label">Lelang Berakhir</span><span className="value">{formatTanggalPukul(selectedItem.waktu_selesai)}</span></div>
+                    <div className="info-row"><span className="label">Lokasi Barang</span><span className="value">{selectedItem.lokasi}</span></div>
+                  </div>
+                  <hr style={{ border: 'none', borderTop: '1px solid #E5E7EB', margin: '0.5rem 0 0' }} />
+
+                  {/* PROGRESS BAR ANIMASI MENYUSUT */}
+                  {(() => {
+                    const timerData = calculateTimeLeft(selectedItem.waktu_selesai, selectedItem.created_at);
+                    return (
+                      <div className="countdown-section text-center" style={{ marginBottom: '1.5rem', marginTop: '1.5rem' }}>
+                        <p>Sisa Waktu Lelang :</p>
+                        <div className="countdown-timer" style={{ color: '#EF4444', fontWeight: 'bold', fontSize: '1.2rem', marginBottom: '0.5rem' }}>
+                          {timerData.text}
+                        </div>
+                        <div className="progress-bar" style={{ width: '100%', background: '#E5E7EB', height: '8px', borderRadius: '4px', overflow: 'hidden', marginTop: '0.75rem' }}>
+                          <div className="progress-fill" style={{ width: `${timerData.percent}%`, background: '#EF4444', height: '100%', transition: 'width 1s linear' }}></div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <button className="btn-primary-full" onClick={() => { setIsModalOpen(false); router.push(`/jelajahi/${selectedItem.id}?from=status-lelang`); }}>
+                    Lihat Detail Penuh
+                  </button>
+                </div>
+
               </div>
             )}
           </div>

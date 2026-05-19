@@ -463,6 +463,7 @@ function JelajahiContent() {
                   );
                 })()}
 
+                <hr style={{ border: 'none', borderTop: '1px solid #E5E7EB', margin: '0.5rem 0 1rem 0' }} />
                 <table className="specs-table">
                   <thead>
                     <tr>
@@ -487,6 +488,7 @@ function JelajahiContent() {
                   </span></div>
                   <div className="info-row"><span className="label">Lokasi Barang</span><span className="value">{selectedProduct.lokasi}</span></div>
                 </div>
+                <hr style={{ border: 'none', borderTop: '1px solid #E5E7EB', margin: '0.5rem 0 0' }} />
 
                 {/* PROGRESS BAR ANIMASI MENYUSUT */}
                 {(() => {
