@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { supabase } from '../../../../src/lib/supabase'; // Sesuaikan path jika error
+import CustomSelect from '../../../../components/CustomSelect';
 
 function AdminProdukContent() {
   const router = useRouter();
@@ -170,26 +171,30 @@ function AdminProdukContent() {
 
       {/* --- KONTROL FILTER & SORT BARU --- */}
       <div className="filter-controls" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', marginTop: '1rem' }}>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid #D1D5DB', background: '#FFF', color: '#374151', outline: 'none', cursor: 'pointer', fontFamily: 'inherit', minWidth: '160px' }}
-        >
-          <option value="Semua">Semua Status</option>
-          <option value="menunggu">Menunggu</option>
-          <option value="aktif">Aktif</option>
-          <option value="selesai">Selesai</option>
-          <option value="dibatalkan">Dibatalkan</option>
-        </select>
+        <div style={{ minWidth: '200px' }}>
+          <CustomSelect
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val)}
+            options={[
+              { value: 'Semua', label: 'Semua Status' },
+              { value: 'menunggu', label: 'Menunggu' },
+              { value: 'aktif', label: 'Aktif' },
+              { value: 'selesai', label: 'Selesai' },
+              { value: 'dibatalkan', label: 'Dibatalkan' }
+            ]}
+          />
+        </div>
 
-        <select
-          value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value)}
-          style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid #D1D5DB', background: '#FFF', color: '#374151', outline: 'none', cursor: 'pointer', fontFamily: 'inherit', minWidth: '180px' }}
-        >
-          <option value="terbaru">Ditambahkan Terbaru</option>
-          <option value="terlama">Ditambahkan Terlama</option>
-        </select>
+        <div style={{ minWidth: '220px' }}>
+          <CustomSelect
+            value={sortOrder}
+            onChange={(val) => setSortOrder(val)}
+            options={[
+              { value: 'terbaru', label: 'Ditambahkan Terbaru' },
+              { value: 'terlama', label: 'Ditambahkan Terlama' }
+            ]}
+          />
+        </div>
       </div>
 
       <div className="admin-products-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
