@@ -156,8 +156,35 @@ function StatusLelangContent() {
               }
               break;
             case 'Kalah Lelang':
-              const { data: lostBids } = await supabase.from('bids').select('products(*)').eq('bidder_id', currentUser.id).eq('is_winning_bid', false).lt('products.waktu_selesai', now);
-              fetchedData = extractUniqueProducts(lostBids);
+              // Tarik semua bid milik user yang produknya sudah selesai
+              const { data: myFinishedBids } = await supabase
+                .from('bids')
+                .select('products(*), is_winning_bid')
+                .eq('bidder_id', currentUser.id)
+                .lt('products.waktu_selesai', now);
+
+              if (myFinishedBids) {
+                const wonProductIds = new Set();
+                const lostProducts = [];
+
+                // 1. Identifikasi produk mana saja yang kita menangkan
+                myFinishedBids.forEach(bid => {
+                  if (bid.is_winning_bid && bid.products) {
+                    wonProductIds.add(bid.products.id);
+                  }
+                });
+
+                // 2. Kumpulkan produk yang kita bid, tapi BUKAN yang kita menangkan
+                const seenLost = new Set();
+                myFinishedBids.forEach(bid => {
+                  if (bid.products && !wonProductIds.has(bid.products.id) && !seenLost.has(bid.products.id)) {
+                    seenLost.add(bid.products.id);
+                    lostProducts.push(bid.products);
+                  }
+                });
+
+                fetchedData = lostProducts;
+              }
               break;
             case 'Dikirim':
             case 'Selesai':
@@ -396,7 +423,7 @@ function StatusLelangContent() {
     if (role === 'penjual') {
       const map = {
         menunggu_pembayaran: { label: 'Menunggu Pembayaran', bg: '#FEF3C7', color: '#B45309' },
-        menunggu_alamat:     { label: 'Menunggu Alamat', bg: '#DBEAFE', color: '#1D4ED8' },
+        menunggu_alamat:     { label: 'Menunggu Alamat', bg: '#FEF3C7', color: '#B45309' },
         diproses:            { label: 'Diproses', bg: '#EDE9FE', color: '#6D28D9' },
         dikirim:             { label: 'Dikirim', bg: '#ECFDF5', color: '#059669' },
         selesai:             { label: 'Selesai', bg: '#D1FAE5', color: '#047857' },
