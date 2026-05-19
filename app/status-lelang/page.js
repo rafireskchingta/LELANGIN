@@ -258,6 +258,29 @@ function StatusLelangContent() {
           fetchedData = fetchedData.filter(item => item && item.nama_produk && item.nama_produk.toLowerCase().includes(searchQuery));
         }
 
+        // Post-processing: Pastikan semua produk punya data transaksi jika ada
+        if (fetchedData.length > 0) {
+          const productIds = fetchedData.map(p => p.id).filter(Boolean);
+          if (productIds.length > 0) {
+            const { data: trxData } = await supabase.from('transactions').select('*').in('product_id', productIds);
+            if (trxData && trxData.length > 0) {
+              const trxMap = {};
+              trxData.forEach(t => trxMap[t.product_id] = t);
+              fetchedData = fetchedData.map(p => {
+                if (trxMap[p.id]) {
+                  return {
+                    ...p,
+                    _trx_status: trxMap[p.id].status_transaksi,
+                    _trx_winner_id: trxMap[p.id].winner_id,
+                    _trx_id: trxMap[p.id].id,
+                  };
+                }
+                return p;
+              });
+            }
+          }
+        }
+
         // Pastikan tidak ada id produk yang ganda (misal akibat duplikasi transaksi di DB)
         const uniqueItems = [];
         const seenIds = new Set();
@@ -349,33 +372,62 @@ function StatusLelangContent() {
     return { text, percent };
   };
 
-  const getStatusBadge = (item) => {
-    // Untuk tab Selesai penjual, tampilkan badge status transaksi
-    if (activeRole === 'penjual' && activeTab === 'Selesai' && item._trx_status) {
+  const getDefinitiveStatus = (item, role, userId) => {
+    if (item.status === 'dibatalkan') return { label: 'Dibatalkan', bg: '#FEF2F2', color: '#DC2626' };
+    
+    const now = new Date();
+    const start = new Date(item.waktu_mulai);
+    const end = new Date(item.waktu_selesai);
+
+    if (now < start) {
+      if (role === 'penjual') return { label: 'Menunggu', bg: '#F3F4F6', color: '#6B7280' };
+      return { label: 'Aktif', bg: '#E0E7FF', color: 'var(--primary)' }; 
+    }
+    
+    if (now >= start && now < end) {
+      return { label: 'Aktif', bg: '#E0E7FF', color: 'var(--primary)' };
+    }
+
+    if (!item._trx_status) {
+      if (role === 'penjual') return { label: 'Selesai', bg: '#F3F4F6', color: '#6B7280' }; 
+      return { label: 'Kalah Lelang', bg: '#FEF2F2', color: '#DC2626' }; 
+    }
+
+    if (role === 'penjual') {
       const map = {
-        menunggu_pembayaran: { label: 'Menunggu Bayar', bg: '#FEF3C7', color: '#B45309' },
+        menunggu_pembayaran: { label: 'Menunggu Pembayaran', bg: '#FEF3C7', color: '#B45309' },
         menunggu_alamat:     { label: 'Menunggu Alamat', bg: '#DBEAFE', color: '#1D4ED8' },
         diproses:            { label: 'Diproses', bg: '#EDE9FE', color: '#6D28D9' },
         dikirim:             { label: 'Dikirim', bg: '#ECFDF5', color: '#059669' },
         selesai:             { label: 'Selesai', bg: '#D1FAE5', color: '#047857' },
       };
-      const s = map[item._trx_status] || { label: item._trx_status, bg: '#F3F4F6', color: '#6B7280' };
-      return (
-        <span style={{ background: s.bg, color: s.color, padding: '0.5rem 1.25rem', borderRadius: '20px', fontWeight: 700, fontSize: '0.85rem' }}>
-          {s.label}
-        </span>
-      );
+      return map[item._trx_status] || { label: item._trx_status, bg: '#F3F4F6', color: '#6B7280' };
     }
 
-    // Default badge (waktu)
-    const { text: timeLeftText } = calculateTimeLeft(item.waktu_selesai, item.created_at);
-    const isSelesai = timeLeftText === 'Waktu Habis';
-    const bg = (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#ECFDF5' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#FEF2F2' : (activeTab === 'Semua' && isSelesai ? '#F3F4F6' : '#E0E7FF'));
-    const textColor = (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#059669' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#DC2626' : (activeTab === 'Semua' && isSelesai ? '#6B7280' : 'var(--primary)'));
-    const text = activeTab === 'Semua' ? (isSelesai ? 'Waktu Habis' : 'Aktif') : activeTab;
+    if (role === 'pembeli') {
+      if (item._trx_winner_id === userId) {
+        if (item._trx_status === 'menunggu_pembayaran' || item._trx_status === 'menunggu_alamat') {
+          return { label: 'Menang Lelang', bg: '#ECFDF5', color: '#059669' };
+        }
+        const map = {
+          diproses: { label: 'Diproses', bg: '#EDE9FE', color: '#6D28D9' },
+          dikirim:  { label: 'Dikirim', bg: '#ECFDF5', color: '#059669' },
+          selesai:  { label: 'Selesai', bg: '#D1FAE5', color: '#047857' },
+        };
+        return map[item._trx_status] || { label: 'Menang Lelang', bg: '#ECFDF5', color: '#059669' };
+      } else {
+        return { label: 'Kalah Lelang', bg: '#FEF2F2', color: '#DC2626' };
+      }
+    }
+
+    return { label: 'Selesai', bg: '#F3F4F6', color: '#6B7280' };
+  };
+
+  const getStatusBadge = (item) => {
+    const statusInfo = getDefinitiveStatus(item, activeRole, currentUser?.id);
     return (
-      <span style={{ background: bg, color: textColor, padding: '0.5rem 1.25rem', borderRadius: '20px', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        {text}
+      <span style={{ background: statusInfo.bg, color: statusInfo.color, padding: '0.5rem 1.25rem', borderRadius: '20px', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {statusInfo.label}
       </span>
     );
   };
@@ -493,18 +545,14 @@ function StatusLelangContent() {
 
               <div>
                 {(() => {
-                  const { text: timeLeftText, percent } = calculateTimeLeft(item.waktu_selesai, item.created_at);
-                  const isSelesai = timeLeftText === 'Waktu Habis';
-                  const bg = (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#ECFDF5' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#FEF2F2' : (activeTab === 'Semua' && isSelesai ? '#F3F4F6' : '#E0E7FF'));
-                  const textColor = (activeTab === 'Menang Lelang' || activeTab === 'Selesai') ? '#059669' : (activeTab === 'Kalah Lelang' || activeTab === 'Dibatalkan' ? '#DC2626' : (activeTab === 'Semua' && isSelesai ? '#6B7280' : 'var(--primary)'));
-                  const text = activeTab === 'Semua' ? (isSelesai ? 'Waktu Habis' : 'Aktif') : activeTab;
+                  const statusInfo = getDefinitiveStatus(item, activeRole, currentUser?.id);
                   return (
                     <span style={{
-                      background: bg,
-                      color: textColor,
+                      background: statusInfo.bg,
+                      color: statusInfo.color,
                       padding: '0.5rem 1.25rem', borderRadius: '20px', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem'
                     }}>
-                      {text}
+                      {statusInfo.label}
                     </span>
                   );
                 })()}
