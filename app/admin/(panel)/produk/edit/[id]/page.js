@@ -342,9 +342,24 @@ export default function AdminEditProdukPage({ params }) {
               <label>STATUS LELANG</label>
               <div className="status-lelang-group" style={{ opacity: 0.8 }}>
                 {/* Disabled buttons so they cannot be clicked anymore */}
-                <button type="button" disabled className={`status-lelang-btn ${formData.status === 'aktif' ? 'active' : ''}`} style={{ cursor: 'not-allowed' }}>AKTIF</button>
-                <button type="button" disabled className={`status-lelang-btn ${formData.status === 'selesai' ? 'active' : ''}`} style={{ cursor: 'not-allowed' }}>SELESAI</button>
-                <button type="button" disabled className={`status-lelang-btn ${formData.status === 'dibatalkan' ? 'active' : ''}`} style={{ cursor: 'not-allowed' }}>DIBATALKAN</button>
+                <button type="button" disabled className={`status-lelang-btn ${formData.status === 'aktif' ? 'active' : ''}`} style={{ 
+                  cursor: 'not-allowed',
+                  backgroundColor: formData.status === 'aktif' ? '#3B82F6' : '#FFFFFF',
+                  borderColor: formData.status === 'aktif' ? '#3B82F6' : '#E5E7EB',
+                  color: formData.status === 'aktif' ? '#FFFFFF' : '#6B7280'
+                }}>AKTIF</button>
+                <button type="button" disabled className={`status-lelang-btn ${formData.status === 'selesai' ? 'active' : ''}`} style={{ 
+                  cursor: 'not-allowed',
+                  backgroundColor: formData.status === 'selesai' ? '#10B981' : '#FFFFFF',
+                  borderColor: formData.status === 'selesai' ? '#10B981' : '#E5E7EB',
+                  color: formData.status === 'selesai' ? '#FFFFFF' : '#6B7280'
+                }}>SELESAI</button>
+                <button type="button" disabled className={`status-lelang-btn ${formData.status === 'dibatalkan' ? 'active' : ''}`} style={{ 
+                  cursor: 'not-allowed',
+                  backgroundColor: formData.status === 'dibatalkan' ? '#EF4444' : '#FFFFFF',
+                  borderColor: formData.status === 'dibatalkan' ? '#EF4444' : '#E5E7EB',
+                  color: formData.status === 'dibatalkan' ? '#FFFFFF' : '#6B7280'
+                }}>DIBATALKAN</button>
               </div>
             </div>
 
