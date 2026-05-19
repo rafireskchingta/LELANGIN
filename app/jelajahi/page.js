@@ -485,20 +485,19 @@ function JelajahiContent() {
                   );
                 })()}
 
-                <hr style={{ border: 'none', borderTop: '1px solid #E5E7EB', margin: '0.5rem 0 1rem 0' }} />
-                <table className="specs-table">
+                <table className="specs-table" style={{ width: '100%', textAlign: 'left', tableLayout: 'fixed', borderTop: '1px solid #E5E7EB', borderBottom: '1px solid #E5E7EB', margin: '1.5rem 0' }}>
                   <thead>
                     <tr>
-                      <th>Merk</th>
-                      <th>Tahun</th>
-                      <th>Model</th>
+                      <th style={{ paddingTop: '1rem', paddingBottom: '0.5rem' }}>Merk</th>
+                      <th style={{ paddingTop: '1rem', paddingBottom: '0.5rem' }}>Tahun</th>
+                      <th style={{ paddingTop: '1rem', paddingBottom: '0.5rem' }}>Model</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td>{selectedProduct.merk || '-'}</td>
-                      <td>{selectedProduct.tahun_produksi || '-'}</td>
-                      <td>{selectedProduct.model || '-'}</td>
+                      <td style={{ paddingTop: '0.5rem', paddingBottom: '1rem' }}>{selectedProduct.merk || '-'}</td>
+                      <td style={{ paddingTop: '0.5rem', paddingBottom: '1rem' }}>{selectedProduct.tahun_produksi || '-'}</td>
+                      <td style={{ paddingTop: '0.5rem', paddingBottom: '1rem' }}>{selectedProduct.model || '-'}</td>
                     </tr>
                   </tbody>
                 </table>

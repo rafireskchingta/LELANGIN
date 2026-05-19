@@ -546,24 +546,24 @@ export default function DetailPage() {
                   </div>
                 </div>
 
-                <table className="specs-table mt-1" style={{ marginTop: '2rem', width: '100%', textAlign: 'left', tableLayout: 'fixed' }}>
+                <table className="specs-table mt-1" style={{ marginTop: '2rem', width: '100%', textAlign: 'left', tableLayout: 'fixed', borderTop: '1px solid #E5E7EB', borderBottom: '1px solid #E5E7EB' }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
-                      <th style={{ paddingBottom: '0.5rem' }}>Merk</th>
-                      <th style={{ paddingBottom: '0.5rem' }}>Tahun Pembuatan</th>
-                      <th style={{ paddingBottom: '0.5rem' }}>Model</th>
+                    <tr>
+                      <th style={{ paddingTop: '1rem', paddingBottom: '0.5rem' }}>Merk</th>
+                      <th style={{ paddingTop: '1rem', paddingBottom: '0.5rem' }}>Tahun Pembuatan</th>
+                      <th style={{ paddingTop: '1rem', paddingBottom: '0.5rem' }}>Model</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td style={{ paddingTop: '0.5rem' }}>{product.merk || '-'}</td>
-                      <td style={{ paddingTop: '0.5rem' }}>{product.tahun_produksi || '-'}</td>
-                      <td style={{ paddingTop: '0.5rem' }}>{product.model || '-'}</td>
+                      <td style={{ paddingTop: '0.5rem', paddingBottom: '1rem' }}>{product.merk || '-'}</td>
+                      <td style={{ paddingTop: '0.5rem', paddingBottom: '1rem' }}>{product.tahun_produksi || '-'}</td>
+                      <td style={{ paddingTop: '0.5rem', paddingBottom: '1rem' }}>{product.model || '-'}</td>
                     </tr>
                   </tbody>
                 </table>
 
-                <div className="info-lelang-section border-top-bottom" style={{ borderTop: '1px solid #E5E7EB', borderBottom: '1px solid #E5E7EB', padding: '1.5rem 0', margin: '1.5rem 0' }}>
+                <div className="info-lelang-section" style={{ borderBottom: '1px solid #E5E7EB', padding: '1.5rem 0', margin: '0 0 1.5rem 0' }}>
                   <h4 style={{ marginBottom: '1rem' }}>Informasi Lelang</h4>
                   <div className="info-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <span className="label" style={{ color: 'var(--text-muted)' }}>Lelang Berakhir</span>
