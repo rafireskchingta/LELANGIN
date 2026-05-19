@@ -72,9 +72,8 @@ export default function DetailPage() {
 
       let { data: trx } = await supabase
         .from('transactions')
-        .select('status_transaksi')
+        .select('status_transaksi, recipient_name')
         .eq('product_id', productId)
-        .eq('winner_id', user.id)
         .maybeSingle();
 
       // Auto-create jika lelang selesai dan user adalah pemenang
@@ -101,12 +100,13 @@ export default function DetailPage() {
       }
 
       const status = trx.status_transaksi;
+      const hasRecipient = trx.recipient_name && trx.recipient_name.trim() !== '';
       // menunggu_pembayaran: belum bayar
       // menunggu_alamat: sudah bayar, belum isi alamat
       // diproses: sudah bayar & sudah isi alamat
       // dikirim / selesai: sudah dikirim
       setIsPaid(status === 'menunggu_alamat' || status === 'diproses' || status === 'dikirim' || status === 'selesai');
-      setIsAddressFilled(status === 'diproses' || status === 'dikirim' || status === 'selesai');
+      setIsAddressFilled(hasRecipient || status === 'diproses' || status === 'dikirim' || status === 'selesai');
       setIsShipped(status === 'dikirim' || status === 'selesai');
     };
     checkTransactionStatus();
