@@ -96,11 +96,15 @@ export default function PengirimanPenjualPage() {
       } else {
         alert('Produk berhasil dikirim!');
       }
-      router.push(`/jelajahi/${productId}`);
+      setTimeout(() => {
+        router.push(`/status-lelang?role=penjual`);
+      }, 1500);
     } catch (err) {
       console.error('[Kirim] Error:', err.message);
       if (typeof window !== 'undefined' && window.showToast) {
         window.showToast('Gagal: ' + err.message, 'error');
+      } else {
+        alert('Gagal: ' + err.message);
       }
     }
   };

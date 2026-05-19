@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter, useParams } from 'next/navigation';
 import { fetchProductDetail } from '../../../src/services/productService';
 import { supabase } from '../../../src/lib/supabase';
 import { useAdminGuard } from '../../../src/hooks/useAdminGuard';
+import CustomSelect from '../../../components/CustomSelect';
 
 export default function PengirimanPage() {
   useAdminGuard();
@@ -16,6 +18,10 @@ export default function PengirimanPage() {
   const [address, setAddress] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [addressErrors, setAddressErrors] = useState({});
+  const [selectedProvinsi, setSelectedProvinsi] = useState('');
+  const [mounted, setMounted] = useState(false);
 
   // Hitung estimasi pengiriman dinamis: 5–7 hari dari sekarang
   const getEstimasiPengiriman = () => {
@@ -37,6 +43,7 @@ export default function PengirimanPage() {
   };
 
   useEffect(() => {
+    setMounted(true);
     const loadData = async () => {
       try {
         const productData = await fetchProductDetail(productId);
@@ -132,16 +139,20 @@ export default function PengirimanPage() {
 
       if (typeof window !== 'undefined' && window.showToast) {
         window.showToast('Alamat berhasil dikonfirmasi! Pesanan Anda sedang diproses.', 'success');
+      } else {
+        alert('Alamat berhasil dikonfirmasi! Pesanan Anda sedang diproses.');
       }
 
       setTimeout(() => {
-        window.location.href = `/jelajahi/${productId}`;
+        router.push(`/status-lelang?role=pembeli`);
       }, 1500);
 
     } catch (error) {
       console.error('[Pengiriman] ERROR:', error.message);
       if (typeof window !== 'undefined' && window.showToast) {
         window.showToast('Gagal: ' + error.message, 'error');
+      } else {
+        alert('Gagal: ' + error.message);
       }
     } finally {
       setIsSubmitting(false);
@@ -176,27 +187,15 @@ export default function PengirimanPage() {
           <div>
             <p style={{ margin: 0, color: '#4B5563', lineHeight: '1.5' }}>
               {address.alamatLengkap}, {address.detailLainnya ? `(${address.detailLainnya})` : ''} <br/>
-              {address.kecamatan}, {address.kota}, {address.kodePos}
+              {address.kecamatan}, {address.kota}, {address.provinsi ? `${address.provinsi}, ` : ''}{address.kodePos}
             </p>
           </div>
         </div>
-        <button onClick={async () => {
-          // Ketika Ubah diklik, kembalikan status ke menunggu_alamat agar
-          // tombol 'Alamat Terisi' di halaman detail kembali biru (bukan hijau)
-          try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-              await supabase
-                .from('transactions')
-                .update({ status_transaksi: 'menunggu_alamat' })
-                .eq('product_id', productId)
-                .eq('winner_id', user.id);
-            }
-          } catch (e) {
-            console.error('[Ubah Alamat] Gagal reset status:', e.message);
+        <button onClick={() => {
+          if (address && address.provinsi) {
+            setSelectedProvinsi(address.provinsi);
           }
-          localStorage.removeItem(`address_${productId}`);
-          window.location.href = `/jelajahi/${productId}?refresh=${Date.now()}`;
+          setIsAddressModalOpen(true);
         }} style={{ color: '#4F46E5', background: 'none', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Ubah</button>
       </div>
 
@@ -276,6 +275,77 @@ export default function PengirimanPage() {
           </div>
         </div>
       </div>
+      {mounted && typeof document !== 'undefined' && isAddressModalOpen && createPortal(
+        <div className="modal-overlay active" style={{ display: 'flex', zIndex: 9999 }}>
+          <div className="modal active" style={{ background: '#4F46E5', borderRadius: '16px', maxWidth: '500px', width: '90%', position: 'relative', overflow: 'hidden', padding: 0 }}>
+            <div style={{ padding: '1.5rem', color: 'white', textAlign: 'center' }}>
+              <h2 style={{ margin: 0, fontSize: '1.4rem' }}>Masukkan Detail Alamat Anda!</h2>
+            </div>
+            <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0 0 16px 16px' }}>
+              <p style={{ color: '#6B7280', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Untuk membuat pesanan, silahkan tambahkan alamat pengiriman</p>
+              <form noValidate onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const addressData = Object.fromEntries(formData.entries());
+                addressData.provinsi = selectedProvinsi;
+                
+                const errors = {};
+                if (!addressData.namaLengkap) errors.namaLengkap = true;
+                if (!addressData.nomorTelp) errors.nomorTelp = true;
+                if (!addressData.provinsi) errors.provinsi = true;
+                if (!addressData.kota) errors.kota = true;
+                if (!addressData.kecamatan) errors.kecamatan = true;
+                if (!addressData.alamatLengkap) errors.alamatLengkap = true;
+                if (!addressData.kodePos) errors.kodePos = true;
+
+                if (Object.keys(errors).length > 0) {
+                  setAddressErrors(errors);
+                  if (typeof window !== 'undefined' && window.showToast) {
+                    window.showToast('Mohon lengkapi semua field yang diwajibkan!', 'error');
+                  } else {
+                    alert('Mohon lengkapi semua field yang diwajibkan!');
+                  }
+                  return;
+                }
+
+                setAddress(addressData);
+                localStorage.setItem(`address_${productId}`, JSON.stringify(addressData));
+                setIsAddressModalOpen(false);
+              }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                  <input name="namaLengkap" defaultValue={address?.namaLengkap || ''} placeholder="Nama Lengkap" className={addressErrors.namaLengkap ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.namaLengkap ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none' }} onChange={() => setAddressErrors(prev => ({...prev, namaLengkap: false}))} />
+                  <input name="nomorTelp" defaultValue={address?.nomorTelp || ''} placeholder="Nomor Telp" className={addressErrors.nomorTelp ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.nomorTelp ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none' }} onChange={() => setAddressErrors(prev => ({...prev, nomorTelp: false}))} />
+                </div>
+                <div style={{ marginBottom: '1rem', zIndex: 10 }}>
+                  <CustomSelect 
+                    value={selectedProvinsi}
+                    onChange={(val) => { setSelectedProvinsi(val); setAddressErrors(prev => ({...prev, provinsi: false})); }}
+                    options={['DKI Jakarta', 'Banten', 'Jawa Tengah', 'Jawa Barat', 'DI Yogyakarta', 'Jawa Timur'].map(p => ({ value: p, label: p }))}
+                    placeholder="Pilih Provinsi"
+                    error={addressErrors.provinsi}
+                    direction="down"
+                  />
+                </div>
+                <input name="kota" defaultValue={address?.kota || ''} placeholder="Kota" className={addressErrors.kota ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.kota ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, kota: false}))} />
+                <input name="kecamatan" defaultValue={address?.kecamatan || ''} placeholder="Kecamatan" className={addressErrors.kecamatan ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.kecamatan ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, kecamatan: false}))} />
+                <input name="alamatLengkap" defaultValue={address?.alamatLengkap || ''} placeholder="Masukkan Nama Jalan, Gedung, No.Rumah" className={addressErrors.alamatLengkap ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.alamatLengkap ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, alamatLengkap: false}))} />
+                <input name="kodePos" defaultValue={address?.kodePos || ''} inputMode="numeric" onInput={(e) => e.target.value = e.target.value.replace(/\D/g, '')} placeholder="Kode Pos" className={addressErrors.kodePos ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.kodePos ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, kodePos: false}))} />
+                <input name="detailLainnya" defaultValue={address?.detailLainnya || ''} placeholder="Detail Lainnya (Cth: Blok/Unit No, Patokan)" style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1.5rem' }} />
+                
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                  <button type="button" onClick={() => setIsAddressModalOpen(false)} style={{ padding: '0.75rem 2rem', background: '#F3F4F6', color: '#374151', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+                    Kembali
+                  </button>
+                  <button type="submit" style={{ padding: '0.75rem 2rem', background: '#4F46E5', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+                    Lanjut
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </main>
   );
 }

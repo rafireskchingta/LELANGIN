@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { fetchProductDetail, fetchProductBids } from '../../../src/services/productService';
 import { supabase } from '../../../src/lib/supabase';
+import CustomSelect from '../../../components/CustomSelect';
 
 export default function DetailPage() {
   const router = useRouter();
@@ -33,6 +34,8 @@ export default function DetailPage() {
   const [isPaid, setIsPaid] = useState(false); 
   const [isAddressFilled, setIsAddressFilled] = useState(false);
   const [addressErrors, setAddressErrors] = useState({});
+  const [savedAddress, setSavedAddress] = useState({});
+  const [selectedProvinsi, setSelectedProvinsi] = useState('');
   const [isSellerCancelModalOpen, setIsSellerCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [isShipped, setIsShipped] = useState(false);
@@ -40,7 +43,25 @@ export default function DetailPage() {
   // PERBAIKAN: Set mounted menjadi true setelah komponen masuk ke client-side
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('editAddress') === 'true') {
+        const stored = localStorage.getItem(`address_${productId}`);
+        if (stored) {
+          try { 
+            const parsed = JSON.parse(stored);
+            setSavedAddress(parsed); 
+            if (parsed.provinsi) setSelectedProvinsi(parsed.provinsi);
+          } catch(e){}
+        }
+        setIsAddressModalOpen(true);
+        window.history.replaceState({}, '', window.location.pathname);
+      } else {
+        setSavedAddress({});
+        setSelectedProvinsi('');
+      }
+    }
+  }, [productId]);
 
   // Cek status transaksi dari DB (sumber kebenaran utama)
   useEffect(() => {
@@ -588,55 +609,71 @@ export default function DetailPage() {
                 ) : (
                   <div style={{ marginTop: '2rem' }}>
                     {isWinning ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-                        {isPaid ? (
+                      isShipped ? (
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
                           <button 
                             disabled
-                            style={{ padding: '0.7rem 3.5rem', background: '#10B981', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'default', opacity: 0.85 }}
+                            style={{ width: '100%', maxWidth: '300px', padding: '0.85rem', background: '#E5E7EB', color: '#9CA3AF', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1.05rem', cursor: 'not-allowed' }}
                           >
-                            ✓ Sudah Dibayar
+                            Produk Sudah Terkirim
                           </button>
-                        ) : (
-                          <button 
-                            onClick={() => router.push(`/pembayaran/${productId}`)}
-                            style={{ padding: '0.7rem 3.5rem', background: '#4F46E5', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'background 0.3s' }}
-                            onMouseOver={(e) => e.currentTarget.style.background = '#4338CA'}
-                            onMouseOut={(e) => e.currentTarget.style.background = '#4F46E5'}
-                          >
-                            Lakukan Pembayaran
-                          </button>
-                        )}
-                        {isPaid ? (
-                          isAddressFilled ? (
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                          {isPaid ? (
                             <button 
                               disabled
                               style={{ padding: '0.7rem 3.5rem', background: '#10B981', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'default', opacity: 0.85 }}
                             >
-                              ✓ Alamat Terisi
+                              ✓ Sudah Dibayar
                             </button>
                           ) : (
                             <button 
-                              onClick={() => setIsAddressModalOpen(true)}
-                              style={{ padding: '0.7rem 3.5rem', background: 'white', color: '#4F46E5', border: '1px solid #4F46E5', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'background 0.3s' }}
-                              onMouseOver={(e) => e.currentTarget.style.background = '#F5F3FF'}
-                              onMouseOut={(e) => e.currentTarget.style.background = 'white'}
+                              onClick={() => router.push(`/pembayaran/${productId}`)}
+                              style={{ padding: '0.7rem 3.5rem', background: '#4F46E5', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'background 0.3s' }}
+                              onMouseOver={(e) => e.currentTarget.style.background = '#4338CA'}
+                              onMouseOut={(e) => e.currentTarget.style.background = '#4F46E5'}
+                            >
+                              Lakukan Pembayaran
+                            </button>
+                          )}
+                          {isPaid ? (
+                            isAddressFilled ? (
+                              <button 
+                                disabled
+                                style={{ padding: '0.7rem 3.5rem', background: '#10B981', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'default', opacity: 0.85 }}
+                              >
+                                ✓ Alamat Terisi
+                              </button>
+                            ) : (
+                              <button 
+                                onClick={() => setIsAddressModalOpen(true)}
+                                style={{ padding: '0.7rem 3.5rem', background: 'white', color: '#4F46E5', border: '1px solid #4F46E5', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'background 0.3s' }}
+                                onMouseOver={(e) => e.currentTarget.style.background = '#F5F3FF'}
+                                onMouseOut={(e) => e.currentTarget.style.background = 'white'}
+                              >
+                                Lakukan Pengiriman
+                              </button>
+                            )
+                          ) : (
+                            <button 
+                              disabled
+                              style={{ padding: '0.7rem 3.5rem', background: '#E5E7EB', color: '#9CA3AF', border: '1px solid #D1D5DB', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'not-allowed', opacity: 0.7 }}
+                              title="Lakukan pembayaran terlebih dahulu"
                             >
                               Lakukan Pengiriman
                             </button>
-                          )
-                        ) : (
-                          <button 
-                            disabled
-                            style={{ padding: '0.7rem 3.5rem', background: '#E5E7EB', color: '#9CA3AF', border: '1px solid #D1D5DB', borderRadius: '999px', fontWeight: 'bold', fontSize: '1rem', cursor: 'not-allowed', opacity: 0.7 }}
-                            title="Lakukan pembayaran terlebih dahulu"
-                          >
-                            Lakukan Pengiriman
-                          </button>
-                        )}
-                      </div>
+                          )}
+                        </div>
+                      )
                     ) : (
-                      <div style={{ textAlign: 'center', padding: '1.5rem', background: '#F3F4F6', borderRadius: '8px', color: '#6B7280', fontWeight: 'bold', fontSize: '1.1rem' }}>
-                        Lelang telah berakhir.
+                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <button 
+                          disabled
+                          style={{ width: '100%', maxWidth: '300px', padding: '0.85rem', background: '#E5E7EB', color: '#9CA3AF', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1.05rem', cursor: 'not-allowed' }}
+                        >
+                          Lelang telah berakhir.
+                        </button>
                       </div>
                     )}
                   </div>
@@ -695,10 +732,12 @@ export default function DetailPage() {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const addressData = Object.fromEntries(formData.entries());
+                addressData.provinsi = selectedProvinsi;
                 
                 const errors = {};
                 if (!addressData.namaLengkap) errors.namaLengkap = true;
                 if (!addressData.nomorTelp) errors.nomorTelp = true;
+                if (!addressData.provinsi) errors.provinsi = true;
                 if (!addressData.kota) errors.kota = true;
                 if (!addressData.kecamatan) errors.kecamatan = true;
                 if (!addressData.alamatLengkap) errors.alamatLengkap = true;
@@ -713,20 +752,29 @@ export default function DetailPage() {
                 localStorage.setItem(`address_${productId}`, JSON.stringify(addressData));
                 setIsAddressFilled(true);
                 setIsAddressModalOpen(false);
-                showToast('Alamat berhasil disimpan! Mengarahkan ke halaman pengiriman...', 'success');
                 setTimeout(() => {
                   window.location.href = `/pengiriman/${productId}`;
                 }, 1000);
               }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  <input name="namaLengkap" placeholder="Nama Lengkap" className={addressErrors.namaLengkap ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.namaLengkap ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none' }} onChange={() => setAddressErrors(prev => ({...prev, namaLengkap: false}))} />
-                  <input name="nomorTelp" placeholder="Nomor Telp" className={addressErrors.nomorTelp ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.nomorTelp ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none' }} onChange={() => setAddressErrors(prev => ({...prev, nomorTelp: false}))} />
+                  <input name="namaLengkap" defaultValue={savedAddress.namaLengkap || ''} placeholder="Nama Lengkap" className={addressErrors.namaLengkap ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.namaLengkap ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none' }} onChange={() => setAddressErrors(prev => ({...prev, namaLengkap: false}))} />
+                  <input name="nomorTelp" defaultValue={savedAddress.nomorTelp || ''} placeholder="Nomor Telp" className={addressErrors.nomorTelp ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.nomorTelp ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none' }} onChange={() => setAddressErrors(prev => ({...prev, nomorTelp: false}))} />
                 </div>
-                <input name="kota" placeholder="Kota" className={addressErrors.kota ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.kota ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, kota: false}))} />
-                <input name="kecamatan" placeholder="Kecamatan" className={addressErrors.kecamatan ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.kecamatan ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, kecamatan: false}))} />
-                <input name="alamatLengkap" placeholder="Masukkan Nama Jalan, Gedung, No.Rumah" className={addressErrors.alamatLengkap ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.alamatLengkap ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, alamatLengkap: false}))} />
-                <input name="kodePos" placeholder="Kode Pos" className={addressErrors.kodePos ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.kodePos ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, kodePos: false}))} />
-                <input name="detailLainnya" placeholder="Detail Lainnya (Cth: Blok/Unit No, Patokan)" style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1.5rem' }} />
+                <div style={{ marginBottom: '1rem', zIndex: 10 }}>
+                  <CustomSelect 
+                    value={selectedProvinsi}
+                    onChange={(val) => { setSelectedProvinsi(val); setAddressErrors(prev => ({...prev, provinsi: false})); }}
+                    options={['DKI Jakarta', 'Banten', 'Jawa Tengah', 'Jawa Barat', 'DI Yogyakarta', 'Jawa Timur'].map(p => ({ value: p, label: p }))}
+                    placeholder="Pilih Provinsi"
+                    error={addressErrors.provinsi}
+                    direction="down"
+                  />
+                </div>
+                <input name="kota" defaultValue={savedAddress.kota || ''} placeholder="Kota" className={addressErrors.kota ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.kota ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, kota: false}))} />
+                <input name="kecamatan" defaultValue={savedAddress.kecamatan || ''} placeholder="Kecamatan" className={addressErrors.kecamatan ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.kecamatan ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, kecamatan: false}))} />
+                <input name="alamatLengkap" defaultValue={savedAddress.alamatLengkap || ''} placeholder="Masukkan Nama Jalan, Gedung, No.Rumah" className={addressErrors.alamatLengkap ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.alamatLengkap ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, alamatLengkap: false}))} />
+                <input name="kodePos" defaultValue={savedAddress.kodePos || ''} inputMode="numeric" onInput={(e) => e.target.value = e.target.value.replace(/\D/g, '')} placeholder="Kode Pos" className={addressErrors.kodePos ? 'error-shake' : ''} style={{ width: '100%', padding: '0.75rem', border: addressErrors.kodePos ? '1px solid #EF4444' : '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1rem' }} onChange={() => setAddressErrors(prev => ({...prev, kodePos: false}))} />
+                <input name="detailLainnya" defaultValue={savedAddress.detailLainnya || ''} placeholder="Detail Lainnya (Cth: Blok/Unit No, Patokan)" style={{ width: '100%', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '8px', outline: 'none', marginBottom: '1.5rem' }} />
                 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
                   <button type="button" onClick={() => setIsAddressModalOpen(false)} style={{ padding: '0.75rem 2rem', background: '#F3F4F6', color: '#374151', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
