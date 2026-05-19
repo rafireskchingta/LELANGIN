@@ -22,7 +22,6 @@ function JelajahiContent() {
 
   // --- 1. STATE UI ---
   const [isFilterOpen, setIsFilterOpen] = useState(true);
-  const [isSortOpen, setIsSortOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalHistoryOpen, setIsModalHistoryOpen] = useState(false);
 
@@ -342,16 +341,15 @@ function JelajahiContent() {
 
           <div className="sort-bar">
             <label>Urutkan berdasarkan</label>
-            <div className="custom-select" onClick={() => setIsSortOpen(!isSortOpen)}>
-              <div className="custom-select-trigger" style={{ cursor: 'pointer' }}>
-                {sortOrder} <i className={`ph-bold ${isSortOpen ? 'ph-caret-up' : 'ph-caret-down'}`}></i>
-              </div>
-              {isSortOpen && (
-                <div className="custom-options smooth-fade">
-                  <div className={`custom-option ${sortOrder === 'Terbaru' ? 'selected' : ''}`} onClick={(e) => { e.stopPropagation(); setSortOrder('Terbaru'); setIsSortOpen(false); }}>Terbaru</div>
-                  <div className={`custom-option ${sortOrder === 'Terlama' ? 'selected' : ''}`} onClick={(e) => { e.stopPropagation(); setSortOrder('Terlama'); setIsSortOpen(false); }}>Terlama</div>
-                </div>
-              )}
+            <div style={{ minWidth: '180px' }}>
+              <CustomSelect
+                value={sortOrder}
+                onChange={(val) => setSortOrder(val)}
+                options={[
+                  { value: 'Terbaru', label: 'Terbaru' },
+                  { value: 'Terlama', label: 'Terlama' }
+                ]}
+              />
             </div>
           </div>
 
