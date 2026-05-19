@@ -887,7 +887,7 @@ body {
   flex-shrink: 0;
   border: 1px solid #E5E7EB;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+  overflow: visible;
   white-space: nowrap;
 }
 
@@ -898,7 +898,9 @@ body {
   opacity: 0;
   border: none;
   margin-right: -3rem;
-  /* Menghilangkan efek gap dari parent */
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .sidebar-toggle-btn {

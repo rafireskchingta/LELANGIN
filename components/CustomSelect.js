@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 
-export default function CustomSelect({ options, value, onChange, placeholder = "Pilih", disabled = false, error = false }) {
+export default function CustomSelect({ options, value, onChange, placeholder = "Pilih", disabled = false, error = false, direction = 'down', maxHeight = '200px' }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -27,6 +27,22 @@ export default function CustomSelect({ options, value, onChange, placeholder = "
 
   return (
     <div ref={dropdownRef} style={{ position: 'relative', width: '100%', fontFamily: 'inherit' }}>
+      <style>{`
+        .custom-scrollbar-dropdown::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar-dropdown::-webkit-scrollbar-track {
+          background: transparent;
+          margin: 8px 0; /* Prevents scrollbar from making corners sharp */
+        }
+        .custom-scrollbar-dropdown::-webkit-scrollbar-thumb {
+          background: #D1D5DB;
+          border-radius: 10px;
+        }
+        .custom-scrollbar-dropdown::-webkit-scrollbar-thumb:hover {
+          background: #9CA3AF;
+        }
+      `}</style>
       <div 
         className={error ? 'error-shake' : ''}
         onClick={() => { if (!disabled) setIsOpen(!isOpen); }}
@@ -53,25 +69,30 @@ export default function CustomSelect({ options, value, onChange, placeholder = "
         <i className={`ph-bold ph-caret-${isOpen ? 'up' : 'down'}`} style={{ color: '#6B7280', fontSize: '0.8rem', transition: 'transform 0.3s ease' }}></i>
       </div>
 
-      <div style={{
-        position: 'absolute',
-        top: 'calc(100% + 8px)',
-        left: 0,
-        width: '100%',
-        background: '#FFFFFF',
-        border: '1px solid #E5E7EB',
-        borderRadius: '12px',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-        zIndex: 50,
-        overflow: 'hidden',
-        opacity: isOpen ? 1 : 0,
-        visibility: isOpen ? 'visible' : 'hidden',
-        transform: isOpen ? 'translateY(0)' : 'translateY(-10px)',
-        transition: 'opacity 0.3s ease, transform 0.3s ease, visibility 0.3s',
-        maxHeight: '200px',
-        overflowY: 'auto',
-        fontFamily: 'inherit'
-      }}>
+      <div 
+        className="custom-scrollbar-dropdown"
+        style={{
+          position: 'absolute',
+          top: direction === 'down' ? 'calc(100% + 8px)' : 'auto',
+          bottom: direction === 'up' ? 'calc(100% + 8px)' : 'auto',
+          left: 0,
+          width: '100%',
+          background: '#FFFFFF',
+          border: '1px solid #E5E7EB',
+          borderRadius: '12px',
+          boxShadow: direction === 'down' ? '0 10px 25px rgba(0,0,0,0.1)' : '0 -10px 25px rgba(0,0,0,0.1)',
+          zIndex: 50,
+          opacity: isOpen ? 1 : 0,
+          visibility: isOpen ? 'visible' : 'hidden',
+          transform: isOpen 
+            ? 'translateY(0)' 
+            : (direction === 'down' ? 'translateY(-10px)' : 'translateY(10px)'),
+          transition: 'opacity 0.3s ease, transform 0.3s ease, visibility 0.3s',
+          maxHeight: maxHeight,
+          overflowY: 'auto',
+          fontFamily: 'inherit'
+        }}
+      >
         {options.map((opt, i) => (
           <div 
             key={i}

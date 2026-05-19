@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '../../src/lib/supabase';
+import CustomSelect from '../../components/CustomSelect';
 import { fetchProducts, fetchProductBids } from '../../src/services/productService';
 import { useAdminGuard } from '../../src/hooks/useAdminGuard';
 
@@ -296,14 +297,24 @@ function JelajahiContent() {
           <div className="filter-section mt-1">
             <label>Tahun Produksi</label>
             <div className="dua-kolom">
-              <select value={tahunMin} onChange={(e) => setTahunMin(e.target.value)}>
-                <option value="">Dari</option>
-                {years.map(y => <option key={`min-${y}`} value={y}>{y}</option>)}
-              </select>
-              <select value={tahunMax} onChange={(e) => setTahunMax(e.target.value)}>
-                <option value="">Sampai</option>
-                {years.map(y => <option key={`max-${y}`} value={y}>{y}</option>)}
-              </select>
+              <CustomSelect
+                value={tahunMin}
+                onChange={(val) => setTahunMin(val)}
+                maxHeight="110px"
+                placeholder="Dari"
+                options={[
+                  ...years.map(y => ({ value: y.toString(), label: y.toString() }))
+                ]}
+              />
+              <CustomSelect
+                value={tahunMax}
+                onChange={(val) => setTahunMax(val)}
+                maxHeight="110px"
+                placeholder="Sampai"
+                options={[
+                  ...years.map(y => ({ value: y.toString(), label: y.toString() }))
+                ]}
+              />
             </div>
           </div>
 
