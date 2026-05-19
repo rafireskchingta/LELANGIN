@@ -1,14 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { supabase } from '../../../../../src/lib/supabase';
 
 export default function AdminProdukTerhapusPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [productToRestore, setProductToRestore] = useState(null);
+  
+  const [isPermanentDeleteModalOpen, setIsPermanentDeleteModalOpen] = useState(false);
+  const [productToDeletePermanent, setProductToDeletePermanent] = useState(null);
 
   useEffect(() => {
+    setMounted(true);
     fetchDeletedProducts();
   }, []);
 
@@ -30,35 +39,69 @@ export default function AdminProdukTerhapusPage() {
     }
   };
 
-  const handleRestore = async (id) => {
-    if (!confirm('Anda yakin ingin mengembalikan produk ini?')) return;
+  const handleRestoreClick = (product) => {
+    setProductToRestore(product);
+    setIsRestoreModalOpen(true);
+  };
+
+  const confirmRestore = async () => {
+    if (!productToRestore) return;
+    const targetId = typeof productToRestore === 'object' ? productToRestore.id : productToRestore;
     try {
       const { error } = await supabase
         .from('products')
         .update({ deleted_at: null })
-        .eq('id', id);
+        .eq('id', targetId);
 
       if (error) throw error;
-      setProducts(products.filter(p => p.id !== id));
-      alert('Produk berhasil dikembalikan.');
+      setProducts(products.filter(p => p.id !== targetId));
+      if (typeof window !== 'undefined' && window.showToast) {
+        window.showToast('Produk berhasil dikembalikan.', 'success');
+      } else {
+        alert('Produk berhasil dikembalikan.');
+      }
     } catch (error) {
-      alert('Gagal mengembalikan produk: ' + error.message);
+      if (typeof window !== 'undefined' && window.showToast) {
+        window.showToast('Gagal mengembalikan produk: ' + error.message, 'error');
+      } else {
+        alert('Gagal mengembalikan produk: ' + error.message);
+      }
+    } finally {
+      setIsRestoreModalOpen(false);
+      setProductToRestore(null);
     }
   };
 
-  const handlePermanentDelete = async (id) => {
-    if (!confirm('PERINGATAN: Tindakan ini akan menghapus produk secara permanen. Lanjutkan?')) return;
+  const handlePermanentDeleteClick = (product) => {
+    setProductToDeletePermanent(product);
+    setIsPermanentDeleteModalOpen(true);
+  };
+
+  const confirmPermanentDelete = async () => {
+    if (!productToDeletePermanent) return;
+    const targetId = typeof productToDeletePermanent === 'object' ? productToDeletePermanent.id : productToDeletePermanent;
     try {
       const { error } = await supabase
         .from('products')
         .delete()
-        .eq('id', id);
+        .eq('id', targetId);
 
       if (error) throw error;
-      setProducts(products.filter(p => p.id !== id));
-      alert('Produk berhasil dihapus permanen.');
+      setProducts(products.filter(p => p.id !== targetId));
+      if (typeof window !== 'undefined' && window.showToast) {
+        window.showToast('Produk berhasil dihapus permanen.', 'success');
+      } else {
+        alert('Produk berhasil dihapus permanen.');
+      }
     } catch (error) {
-      alert('Gagal menghapus permanen: ' + error.message);
+      if (typeof window !== 'undefined' && window.showToast) {
+        window.showToast('Gagal menghapus permanen: ' + error.message, 'error');
+      } else {
+        alert('Gagal menghapus permanen: ' + error.message);
+      }
+    } finally {
+      setIsPermanentDeleteModalOpen(false);
+      setProductToDeletePermanent(null);
     }
   };
 
@@ -114,14 +157,78 @@ export default function AdminProdukTerhapusPage() {
                   </div>
                 </div>
                 <div className="product-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <button className="admin-badge-blue-text" onClick={() => handleRestore(product.id)}>Kembalikan</button>
-                  <button className="admin-badge-red-text" onClick={() => handlePermanentDelete(product.id)}>Hapus Permanen</button>
+                  <button className="admin-badge-blue-text" onClick={() => handleRestoreClick(product)}>Kembalikan</button>
+                  <button className="admin-badge-red-text" onClick={() => handlePermanentDeleteClick(product)}>Hapus Permanen</button>
                 </div>
               </div>
             );
           })
         )}
       </div>
+
+      {/* Restore Confirmation Modal */}
+      {mounted && createPortal(
+        <div className={`admin-modal-overlay ${isRestoreModalOpen ? 'active' : ''}`} onClick={(e) => { if (e.target.classList.contains('admin-modal-overlay')) setIsRestoreModalOpen(false) }}>
+          <div className="admin-modal" style={{ maxWidth: '420px', padding: '2rem 2rem' }}>
+            <button className="admin-modal-close" onClick={() => setIsRestoreModalOpen(false)} style={{ right: '1.5rem', top: '1.5rem' }}>
+              <i className="ph ph-x" style={{ fontSize: '1.25rem', color: '#6B7280' }}></i>
+            </button>
+            <h2 style={{ color: '#059669', fontSize: '1.35rem', marginBottom: '0.75rem', fontWeight: '800', textAlign: 'left' }}>
+              Kembalikan Produk?
+            </h2>
+            <p style={{ color: '#4B5563', marginBottom: '2rem', lineHeight: '1.6', fontSize: '0.95rem', textAlign: 'left', fontWeight: '500' }}>
+              Produk <strong style={{ color: '#374151' }}>{typeof productToRestore === 'object' ? (productToRestore?.nama_produk || productToRestore?.nama || productToRestore?.name) : products.find(p => p.id === productToRestore)?.nama_produk}</strong> akan dikembalikan ke daftar produk aktif dan dapat diakses kembali.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setIsRestoreModalOpen(false)}
+                style={{ flex: 1, padding: '0.85rem', borderRadius: '9999px', border: 'none', background: '#F3F4F6', color: '#1F2937', fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer', transition: 'all 0.2s' }}
+              >
+                Kembali
+              </button>
+              <button 
+                onClick={confirmRestore}
+                style={{ flex: 1, padding: '0.85rem', borderRadius: '9999px', border: 'none', background: '#D1FAE5', color: '#059669', fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer', transition: 'all 0.2s' }}
+              >
+                Ya, Kembalikan
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Permanent Delete Confirmation Modal */}
+      {mounted && createPortal(
+        <div className={`admin-modal-overlay ${isPermanentDeleteModalOpen ? 'active' : ''}`} onClick={(e) => { if (e.target.classList.contains('admin-modal-overlay')) setIsPermanentDeleteModalOpen(false) }}>
+          <div className="admin-modal" style={{ maxWidth: '420px', padding: '2rem 2rem' }}>
+            <button className="admin-modal-close" onClick={() => setIsPermanentDeleteModalOpen(false)} style={{ right: '1.5rem', top: '1.5rem' }}>
+              <i className="ph ph-x" style={{ fontSize: '1.25rem', color: '#6B7280' }}></i>
+            </button>
+            <h2 style={{ color: '#EF4444', fontSize: '1.35rem', marginBottom: '0.75rem', fontWeight: '800', textAlign: 'left' }}>
+              Hapus Permanen Produk?
+            </h2>
+            <p style={{ color: '#4B5563', marginBottom: '2rem', lineHeight: '1.6', fontSize: '0.95rem', textAlign: 'left', fontWeight: '500' }}>
+              Data produk <strong style={{ color: '#374151' }}>{typeof productToDeletePermanent === 'object' ? (productToDeletePermanent?.nama_produk || productToDeletePermanent?.nama || productToDeletePermanent?.name) : products.find(p => p.id === productToDeletePermanent)?.nama_produk}</strong> akan dihapus secara permanen dan <strong style={{ color: '#EF4444' }}>tidak dapat dikembalikan</strong>. Pastikan Anda yakin sebelum melanjutkan.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setIsPermanentDeleteModalOpen(false)}
+                style={{ flex: 1, padding: '0.85rem', borderRadius: '9999px', border: 'none', background: '#F3F4F6', color: '#1F2937', fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer', transition: 'all 0.2s' }}
+              >
+                Kembali
+              </button>
+              <button 
+                onClick={confirmPermanentDelete}
+                style={{ flex: 1, padding: '0.85rem', borderRadius: '9999px', border: 'none', background: '#FEE2E2', color: '#EF4444', fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer', transition: 'all 0.2s' }}
+              >
+                Hapus Permanen
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
