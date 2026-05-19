@@ -711,16 +711,17 @@ body {
   width: 90%;
   max-width: 480px;
   padding: 2rem 2.5rem;
-  position: relative;
+  position: absolute;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   transform: translateY(20px);
   opacity: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  visibility: hidden;
+  transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
   max-height: 90vh;
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .modal::-webkit-scrollbar {
@@ -728,8 +729,11 @@ body {
 }
 
 .modal-overlay.active .modal.active {
+  position: relative;
   transform: translateY(0);
   opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .modal-close {
