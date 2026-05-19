@@ -1,9 +1,43 @@
 "use client";
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../src/lib/supabase';
 
 export default function HomePage() {
   const [activeFaq, setActiveFaq] = useState(0);
+  const [activeAuctions, setActiveAuctions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchActiveAuctions = async () => {
+      try {
+        const now = new Date().toISOString();
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('status', 'aktif')
+          .gt('waktu_selesai', now)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+          .limit(2);
+
+        if (!error && data) {
+          setActiveAuctions(data);
+        }
+      } catch (err) {
+        console.error('Error fetching active auctions:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchActiveAuctions();
+  }, []);
+
+  const formatRupiah = (angka) => {
+    if (!angka) return 'Rp 0';
+    return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
 
   const toggleFaq = (index) => {
     setActiveFaq(activeFaq === index ? -1 : index);
@@ -65,25 +99,41 @@ export default function HomePage() {
             <Link href="/jelajahi" className="auctions-view-all">Lihat Semua <i className="ph ph-plus-circle"></i></Link>
           </div>
           <div className="auctions-list">
-            {/* Card 1 */}
-            <div className="auction-card">
-              <div className="auction-fav"><i className="ph ph-heart"></i></div>
-              <img src="/assets/tv.png" alt="TV Android" />
-              <div className="auction-price">Rp 5.000.000</div>
-              <div className="auction-price-old">Rp 7.299.000</div>
-              <div className="auction-title">TV Android POLYTRON Smart Android TV 32 inch PLD 32AG5759</div>
-              <div className="auction-location">Kalipancur, Semarang</div>
-            </div>
-
-            {/* Card 2 */}
-            <div className="auction-card">
-              <div className="auction-fav"><i className="ph ph-heart"></i></div>
-              <img src="/assets/bag.png" alt="Chanel Bag" />
-              <div className="auction-price">Rp 13.000.000</div>
-              <div className="auction-price-old">Rp 15.000.000</div>
-              <div className="auction-title">C25 Shopping Bag Shiny Lambskin Leather Black Ghw</div>
-              <div className="auction-location">Kedungmundu, Semarang</div>
-            </div>
+            {loading ? (
+              <div style={{ color: 'white', padding: '2rem 0' }}>Memuat lelang aktif...</div>
+            ) : activeAuctions.length === 0 ? (
+              <div style={{ color: 'white', padding: '2rem 0', fontStyle: 'italic', opacity: 0.8 }}>
+                Tidak ada lelang aktif...
+              </div>
+            ) : (
+              activeAuctions.map((auction) => (
+                <Link href={`/jelajahi/${auction.id}`} key={auction.id} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div className="auction-card">
+                    <div className="auction-fav"><i className="ph ph-heart"></i></div>
+                    <img 
+                      src={auction.image_urls?.[0] || '/assets/placeholder.png'} 
+                      alt={auction.nama_produk} 
+                      style={{ width: '100%', height: '200px', objectFit: 'cover' }}
+                    />
+                    <div className="auction-price">
+                      {formatRupiah(auction.current_price || auction.harga_awal)}
+                    </div>
+                    {/* The old design had auction-price-old, since it's dynamic we could either hide it or just show harga_awal if current_price > harga_awal */}
+                    <div className="auction-price-old" style={{ minHeight: '1.2rem' }}>
+                      {(auction.current_price && auction.current_price > auction.harga_awal) 
+                        ? formatRupiah(auction.harga_awal) 
+                        : ''}
+                    </div>
+                    <div className="auction-title" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {auction.nama_produk}
+                    </div>
+                    <div className="auction-location" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {auction.lokasi || '-'}
+                    </div>
+                  </div>
+                </Link>
+              ))
+            )}
           </div>
         </div>
       </section>
