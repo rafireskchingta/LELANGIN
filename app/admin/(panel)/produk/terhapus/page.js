@@ -141,16 +141,20 @@ export default function AdminProdukTerhapusPage() {
               }}>
                 <div className="product-icon" style={{
                   width: '48px', height: '48px', borderRadius: '8px', background: '#FEE2E2', border: '1px solid #FECACA',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#EF4444'
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: '#EF4444', overflow: 'hidden'
                 }}>
-                  <i className="ph ph-package"></i>
+                  {product.image_urls && product.image_urls.length > 0 ? (
+                    <img src={product.image_urls[0]} alt="Produk" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <i className="ph ph-package"></i>
+                  )}
                 </div>
                 <div className="product-info" style={{ flex: 1 }}>
                   <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1rem', fontWeight: 600, color: '#111827' }}>
-                    {product.nama || product.name || 'Nama Produk'}
+                    {product.nama_produk || '-'}
                   </h3>
                   <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem', color: '#4F46E5', fontWeight: 500 }}>
-                    {product.kategori || product.category || 'Kategori'} - {product.lokasi || product.location || 'Lokasi'}
+                    {product.kategori || '-'} - {product.lokasi || '-'}
                   </p>
                   <div style={{ color: '#EF4444', fontWeight: 600, fontSize: '0.75rem' }}>
                     Dihapus pada {deletedDate}
