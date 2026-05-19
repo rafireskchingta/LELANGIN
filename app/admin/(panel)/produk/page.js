@@ -22,6 +22,8 @@ function AdminProdukContent() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeImageUrl, setActiveImageUrl] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
 
@@ -55,19 +57,37 @@ function AdminProdukContent() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Anda yakin ingin menghapus produk ini? Produk akan masuk ke daftar Terhapus.')) return;
+  const handleDeleteClick = (product) => {
+    setProductToDelete(product);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!productToDelete) return;
+    const targetId = typeof productToDelete === 'object' ? productToDelete.id : productToDelete;
     try {
       const { error } = await supabase
         .from('products')
         .update({ deleted_at: new Date().toISOString() })
-        .eq('id', id);
+        .eq('id', targetId);
 
       if (error) throw error;
-      setProducts(products.filter(p => p.id !== id));
-      alert('Produk berhasil dihapus.');
+      setProducts(products.filter(p => p.id !== targetId));
+      
+      if (typeof window !== 'undefined' && window.showToast) {
+        window.showToast('Produk berhasil dihapus.', 'success');
+      } else {
+        alert('Produk berhasil dihapus.');
+      }
     } catch (error) {
-      alert('Gagal menghapus produk: ' + error.message);
+      if (typeof window !== 'undefined' && window.showToast) {
+        window.showToast('Gagal menghapus produk: ' + error.message, 'error');
+      } else {
+        alert('Gagal menghapus produk: ' + error.message);
+      }
+    } finally {
+      setIsDeleteModalOpen(false);
+      setProductToDelete(null);
     }
   };
 
@@ -257,7 +277,7 @@ function AdminProdukContent() {
                 <button className="admin-action-btn" onClick={() => router.push(`/admin/produk/edit/${product.id}`)} style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '8px', padding: '0.4rem', color: '#374151' }}>
                   <i className="ph ph-pencil-simple"></i>
                 </button>
-                <button className="admin-action-btn" onClick={() => handleDelete(product.id)} style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '8px', padding: '0.4rem', color: '#374151' }}>
+                <button className="admin-action-btn" onClick={() => handleDeleteClick(product)} style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '8px', padding: '0.4rem', color: '#374151' }}>
                   <i className="ph ph-trash"></i>
                 </button>
               </div>
@@ -392,6 +412,38 @@ function AdminProdukContent() {
                 </div>
               </div>
             )}
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {mounted && createPortal(
+        <div className={`admin-modal-overlay ${isDeleteModalOpen ? 'active' : ''}`} onClick={(e) => { if (e.target.classList.contains('admin-modal-overlay')) setIsDeleteModalOpen(false) }}>
+          <div className="admin-modal" style={{ maxWidth: '420px', padding: '2rem 2rem' }}>
+            <button className="admin-modal-close" onClick={() => setIsDeleteModalOpen(false)} style={{ right: '1.5rem', top: '1.5rem' }}>
+              <i className="ph ph-x" style={{ fontSize: '1.25rem', color: '#6B7280' }}></i>
+            </button>
+            <h2 style={{ color: '#EF4444', fontSize: '1.35rem', marginBottom: '0.75rem', fontWeight: '800', textAlign: 'left' }}>
+              Ingin Menghapus Produk?
+            </h2>
+            <p style={{ color: '#4B5563', marginBottom: '2rem', lineHeight: '1.6', fontSize: '0.95rem', textAlign: 'left', fontWeight: '500' }}>
+              Produk <strong style={{ color: '#374151' }}>{typeof productToDelete === 'object' ? productToDelete?.nama_produk : products.find(p => p.id === productToDelete)?.nama_produk}</strong> akan dipindahkan ke daftar Produk Terhapus dan dapat dikembalikan sewaktu-waktu.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setIsDeleteModalOpen(false)}
+                style={{ flex: 1, padding: '0.85rem', borderRadius: '9999px', border: 'none', background: '#F3F4F6', color: '#1F2937', fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer', transition: 'all 0.2s' }}
+              >
+                Kembali
+              </button>
+              <button 
+                onClick={confirmDelete}
+                style={{ flex: 1, padding: '0.85rem', borderRadius: '9999px', border: 'none', background: '#FEE2E2', color: '#EF4444', fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer', transition: 'all 0.2s' }}
+              >
+                Hapus Produk
+              </button>
+            </div>
           </div>
         </div>,
         document.body
