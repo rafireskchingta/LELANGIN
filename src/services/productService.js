@@ -134,7 +134,8 @@ export async function fetchProductDetail(productId) {
         kemasan_box,
         aksesoris_tambahan,
         kondisi,
-        created_at
+        created_at,
+        profiles:seller_id(full_name, username)
       `)
       .eq('id', productId)
       .filter('deleted_at', 'is', null)

@@ -14,9 +14,9 @@ export default function PembayaranPage() {
 
   const [product, setProduct] = useState(null);
   const [sellerBank, setSellerBank] = useState({
-    bankName: 'Mandiri',
-    accountName: 'Christian Anugrah',
-    accountNumber: '4674 45452 4324 3231'
+    bankName: '-',
+    accountName: 'Memuat...',
+    accountNumber: '-'
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,17 +30,25 @@ export default function PembayaranPage() {
           // Coba cari data bank dari seller_applications
           const { data: sellerApp } = await supabase
             .from('seller_applications')
-            .select('bank_name, bank_account_name, bank_account')
+            .select('nama_bank, nama_pemilik, no_rekening')
             .eq('user_id', productData.seller_id)
             .order('created_at', { ascending: false })
             .limit(1)
             .single();
 
-          if (sellerApp && sellerApp.bank_account) {
+          const sellerName = productData.profiles?.full_name || productData.profiles?.username || 'Penjual';
+
+          if (sellerApp && sellerApp.no_rekening) {
             setSellerBank({
-              bankName: sellerApp.bank_name || 'Bank',
-              accountName: sellerApp.bank_account_name || productData.profiles?.full_name || 'Penjual',
-              accountNumber: sellerApp.bank_account || '0000 0000 0000'
+              bankName: sellerApp.nama_bank || 'Bank Tidak Diketahui',
+              accountName: sellerApp.nama_pemilik || sellerName,
+              accountNumber: sellerApp.no_rekening || '-'
+            });
+          } else {
+            setSellerBank({
+              bankName: '(Belum diatur)',
+              accountName: sellerName,
+              accountNumber: '-'
             });
           }
         }
@@ -129,7 +137,7 @@ export default function PembayaranPage() {
     return <main className="page-container" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Produk tidak ditemukan.</main>;
   }
 
-  const productPrice = product.bids && product.bids.length > 0 ? product.bids[0].amount : product.harga_awal;
+  const productPrice = product.current_price || product.harga_awal;
   const shippingCost = 15000;
   const totalCost = productPrice + shippingCost;
 
