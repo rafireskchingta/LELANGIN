@@ -694,12 +694,15 @@ body {
   z-index: 99999;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
   padding: 1rem;
 }
 
 .modal-overlay.active {
   opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
 }
 
 .modal {
@@ -709,10 +712,10 @@ body {
   max-width: 480px;
   padding: 2rem 2.5rem;
   position: relative;
-  display: none;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   transform: translateY(20px);
-  transition: transform 0.3s ease;
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
   max-height: 90vh;
   overflow-y: auto;
   scrollbar-width: none;
@@ -725,8 +728,8 @@ body {
 }
 
 .modal-overlay.active .modal.active {
-  display: block;
   transform: translateY(0);
+  opacity: 1;
 }
 
 .modal-close {

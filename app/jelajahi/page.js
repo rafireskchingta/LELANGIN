@@ -164,6 +164,7 @@ function JelajahiContent() {
 
   // --- 8. OPEN MODAL & FETCH BIDS ---
   const openModal = async (product) => {
+    if (isModalOpen) return;
     setSelectedProduct(product);
     setActiveModalImage(product.image_urls?.[0] || '/assets/placeholder.png');
     setIsModalOpen(true);
