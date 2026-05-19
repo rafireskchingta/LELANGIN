@@ -78,12 +78,14 @@ import { supabase } from '../../../src/lib/supabase';
       {/* Sidebar */}
       <aside className="admin-sidebar">
         <div className="admin-sidebar-header">
-          <div className="admin-logo-small">
-            <div className="logo-icon admin-icon-small" style={{ background: 'transparent' }}>
-              <img src="/assets/logo.png" alt="Lelangin Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+          <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div className="admin-logo-small">
+              <div className="logo-icon admin-icon-small" style={{ background: 'transparent' }}>
+                <img src="/assets/logo.png" alt="Lelangin Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+              </div>
+              <h2>Lelangin<span>Admin</span></h2>
             </div>
-            <h2>Lelangin<span>Admin</span></h2>
-          </div>
+          </Link>
         </div>
 
         <nav className="admin-sidebar-nav">
