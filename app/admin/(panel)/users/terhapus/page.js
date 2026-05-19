@@ -212,8 +212,8 @@ export default function AdminAkunTerhapusPage() {
               </div>
 
               <div className="modal-reject-actions" style={{ marginTop: '0.5rem' }}>
-                <button className="btn-reject-cancel" onClick={() => { setIsRestoreModalOpen(false); setRestoreTarget(null); }}>Kembali</button>
-                <button className="btn-approve-confirm" onClick={handleRestore} disabled={restoring} style={{ borderRadius: '8px' }}>
+                <button className="btn-reject-cancel" onClick={() => { setIsRestoreModalOpen(false); setRestoreTarget(null); }} style={{ borderRadius: '999px' }}>Kembali</button>
+                <button className="btn-approve-confirm" onClick={handleRestore} disabled={restoring} style={{ borderRadius: '999px' }}>
                   {restoring ? 'Memproses...' : 'Ya, Kembalikan'}
                 </button>
               </div>
@@ -235,8 +235,8 @@ export default function AdminAkunTerhapusPage() {
               </div>
 
               <div className="modal-reject-actions" style={{ marginTop: '0.5rem' }}>
-                <button className="btn-reject-cancel" onClick={() => { setIsPermDeleteModalOpen(false); setPermDeleteTarget(null); }}>Kembali</button>
-                <button className="btn-reject-confirm" onClick={handlePermanentDelete} disabled={permDeleting}>
+                <button className="btn-reject-cancel" onClick={() => { setIsPermDeleteModalOpen(false); setPermDeleteTarget(null); }} style={{ borderRadius: '999px' }}>Kembali</button>
+                <button className="btn-reject-confirm" onClick={handlePermanentDelete} disabled={permDeleting} style={{ borderRadius: '999px' }}>
                   {permDeleting ? 'Menghapus...' : 'Hapus Permanen'}
                 </button>
               </div>
