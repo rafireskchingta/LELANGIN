@@ -3183,7 +3183,7 @@ body:has(.admin-layout-wrapper) {
 }
 
 .product-detail-left {
-  flex: 0 0 300px;
+  flex: 0 0 360px;
 }
 
 .product-detail-right {
@@ -3216,6 +3216,7 @@ body:has(.admin-layout-wrapper) {
   font-weight: 600;
   font-size: 0.85rem;
   margin-bottom: 0.5rem;
+  white-space: nowrap;
 }
 
 .product-id-badge i {

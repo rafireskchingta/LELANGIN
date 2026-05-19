@@ -305,7 +305,7 @@ function AdminProdukContent() {
               <div className="product-detail-layout">
                 <div className="product-detail-left">
                   <div className="product-id-badge">
-                    <i className="ph ph-package"></i> ID PRODUK : {selectedProduct.id.substring(0, 5).toUpperCase()}
+                    <i className="ph ph-package"></i> ID PRODUK : {selectedProduct.id.toUpperCase()}
                   </div>
                   <h2 className="product-detail-title">{selectedProduct.nama_produk || '-'}</h2>
                   <div className="product-detail-img-box">
