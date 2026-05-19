@@ -163,6 +163,12 @@ export default function AuthModals() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+
+    if (!regGender || !regTgl || !regBulan || !regTahun) {
+      showToast('Harap lengkapi Jenis Kelamin dan Tanggal Lahir Anda', 'error');
+      return;
+    }
+
     setRegLoading(true);
 
     try {
@@ -306,18 +312,36 @@ export default function AuthModals() {
           <div className="form-group">
             <label>Tanggal Lahir</label>
             <div className="date-group">
-              <select required value={regTgl} onChange={(e) => setRegTgl(e.target.value)}>
-                <option value="" disabled>Tanggal</option>
-                {Array.from({ length: 31 }, (_, i) => <option key={i}>{i + 1}</option>)}
-              </select>
-              <select required value={regBulan} onChange={(e) => setRegBulan(e.target.value)}>
-                <option value="" disabled>Bulan</option>
-                {['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].map(b => <option key={b}>{b}</option>)}
-              </select>
-              <select required value={regTahun} onChange={(e) => setRegTahun(e.target.value)}>
-                <option value="" disabled>Tahun</option>
-                {Array.from({ length: 30 }, (_, i) => <option key={i}>{1995 + i}</option>)}
-              </select>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <CustomSelect
+                  value={regTgl}
+                  onChange={(val) => setRegTgl(val)}
+                  placeholder="Tanggal"
+                  maxHeight="160px"
+                  direction="down"
+                  options={Array.from({ length: 31 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }))}
+                />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <CustomSelect
+                  value={regBulan}
+                  onChange={(val) => setRegBulan(val)}
+                  placeholder="Bulan"
+                  maxHeight="160px"
+                  direction="down"
+                  options={['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].map(b => ({ value: b, label: b }))}
+                />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <CustomSelect
+                  value={regTahun}
+                  onChange={(val) => setRegTahun(val)}
+                  placeholder="Tahun"
+                  maxHeight="160px"
+                  direction="down"
+                  options={Array.from({ length: 30 }, (_, i) => ({ value: String(1995 + i), label: String(1995 + i) }))}
+                />
+              </div>
             </div>
           </div>
           <div className="form-group">
