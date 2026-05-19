@@ -33,6 +33,7 @@ export default function AdminEditProdukPage({ params }) {
     kemasan: '',
     aksesoris: '',
     harga_awal: '',
+    harga_saat_ini: '',
     tglMulai: '',
     waktuMulai: '',
     tglSelesai: '',
@@ -60,7 +61,7 @@ export default function AdminEditProdukPage({ params }) {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('*, bids(amount)')
         .eq('id', id)
         .single();
 
@@ -101,6 +102,7 @@ export default function AdminEditProdukPage({ params }) {
           kemasan: data.kemasan_box || '',
           aksesoris: data.aksesoris_tambahan || '',
           harga_awal: data.harga_awal ? formatRibuan(data.harga_awal) : '',
+          harga_saat_ini: data.bids && data.bids.length > 0 ? formatRibuan(Math.max(...data.bids.map(b => b.amount))) : (data.harga_awal ? formatRibuan(data.harga_awal) : ''),
           lokasi: data.lokasi || '',
           status: data.status || 'aktif',
           tglMulai,
@@ -307,10 +309,15 @@ export default function AdminEditProdukPage({ params }) {
               <input type="text" name="nama_produk" value={formData.nama_produk} onChange={handleChange} />
             </div>
 
+            <div className="form-group-edit">
+              <label>ID PRODUK</label>
+              <input type="text" value={id.toUpperCase()} disabled style={{ background: '#F3F4F6', color: '#6B7280' }} />
+            </div>
+
             <div style={{ display: 'flex', gap: '1rem' }}>
               <div className="form-group-edit" style={{ flex: 1 }}>
-                <label>ID PRODUK</label>
-                <input type="text" value={id.substring(0, 5).toUpperCase()} disabled />
+                <label>KONDISI</label>
+                <CustomSelect options={[{value: 'Baru', label: 'Baru'}, {value: 'Bekas', label: 'Bekas'}]} value={formData.kondisi} onChange={(v) => handleSelectChange('kondisi', v)} placeholder="Pilih Kondisi" />
               </div>
               <div className="form-group-edit" style={{ flex: 1 }}>
                 <label>KATEGORI</label>
@@ -318,23 +325,20 @@ export default function AdminEditProdukPage({ params }) {
               </div>
             </div>
 
-            <div className="form-group-edit">
-              <label>KONDISI</label>
-              <div className="input-wrapper checkbox-list-inline" style={{ marginTop: '0.5rem' }}>
-                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginRight: '1rem', cursor: 'pointer' }}>
-                  <input type="radio" name="kondisi" value="Baru" checked={formData.kondisi === 'Baru'} onChange={handleChange} style={{ width: '16px', height: '16px', cursor: 'pointer' }} /> Baru
-                </label>
-                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                  <input type="radio" name="kondisi" value="Bekas" checked={formData.kondisi === 'Bekas'} onChange={handleChange} style={{ width: '16px', height: '16px', cursor: 'pointer' }} /> Bekas
-                </label>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <div className="form-group-edit" style={{ flex: 1 }}>
+                <label>HARGA AWAL (RP)</label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#6B7280', fontWeight: '500' }}>Rp</span>
+                  <input type="text" inputMode="numeric" value={formData.harga_awal} onChange={handleHargaChange} style={{ paddingLeft: '2.5rem' }} />
+                </div>
               </div>
-            </div>
-
-            <div className="form-group-edit" style={{ marginTop: '1rem' }}>
-              <label>HARGA TERAKHIR / AWAL (RP)</label>
-              <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#6B7280', fontWeight: '500' }}>Rp</span>
-                <input type="text" inputMode="numeric" value={formData.harga_awal} onChange={handleHargaChange} style={{ paddingLeft: '2.5rem' }} />
+              <div className="form-group-edit" style={{ flex: 1 }}>
+                <label>HARGA SAAT INI (RP)</label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#6B7280', fontWeight: '500' }}>Rp</span>
+                  <input type="text" value={formData.harga_saat_ini} disabled style={{ paddingLeft: '2.5rem', background: '#F3F4F6', color: '#6B7280' }} />
+                </div>
               </div>
             </div>
 
