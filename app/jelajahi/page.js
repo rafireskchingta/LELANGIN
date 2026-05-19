@@ -260,11 +260,23 @@ function JelajahiContent() {
             <label>Harga</label>
             <div className="input-with-icon">
               <span className="icon-rp">Rp</span>
-              <input type="number" placeholder="Harga Minimum" value={hargaMin} onChange={(e) => setHargaMin(e.target.value)} />
+              <input 
+                type="text" 
+                inputMode="numeric"
+                placeholder="Harga Minimum" 
+                value={hargaMin ? formatRupiah(hargaMin) : ''} 
+                onChange={(e) => setHargaMin(e.target.value.replace(/\D/g, ''))} 
+              />
             </div>
             <div className="input-with-icon">
               <span className="icon-rp">Rp</span>
-              <input type="number" placeholder="Harga Maksimum" value={hargaMax} onChange={(e) => setHargaMax(e.target.value)} />
+              <input 
+                type="text" 
+                inputMode="numeric"
+                placeholder="Harga Maksimum" 
+                value={hargaMax ? formatRupiah(hargaMax) : ''} 
+                onChange={(e) => setHargaMax(e.target.value.replace(/\D/g, ''))} 
+              />
             </div>
           </div>
 
