@@ -19,7 +19,7 @@ export default function HomePage() {
           .gt('waktu_selesai', now)
           .is('deleted_at', null)
           .order('created_at', { ascending: false })
-          .limit(2);
+          .limit(3);
 
         if (!error && data) {
           setActiveAuctions(data);
@@ -98,7 +98,7 @@ export default function HomePage() {
           <div className="auctions-view-all-container">
             <Link href="/jelajahi" className="auctions-view-all">Lihat Semua <i className="ph ph-plus-circle"></i></Link>
           </div>
-          <div className="auctions-list">
+          <div className="auctions-list" style={{ display: 'grid', gridTemplateColumns: `repeat(${activeAuctions.length === 2 ? 2 : 3}, minmax(0, 1fr))`, gap: '2rem' }}>
             {loading ? (
               <div style={{ color: 'white', padding: '2rem 0' }}>Memuat lelang aktif...</div>
             ) : activeAuctions.length === 0 ? (
@@ -107,28 +107,30 @@ export default function HomePage() {
               </div>
             ) : (
               activeAuctions.map((auction) => (
-                <Link href={`/jelajahi/${auction.id}`} key={auction.id} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className="auction-card">
+                <Link href={`/jelajahi/${auction.id}`} key={auction.id} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column' }}>
+                  <div className="auction-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <div className="auction-fav"><i className="ph ph-heart"></i></div>
                     <img 
                       src={auction.image_urls?.[0] || '/assets/placeholder.png'} 
                       alt={auction.nama_produk} 
                       style={{ width: '100%', height: '200px', objectFit: 'cover' }}
                     />
-                    <div className="auction-price">
-                      {formatRupiah(auction.current_price || auction.harga_awal)}
-                    </div>
-                    {/* The old design had auction-price-old, since it's dynamic we could either hide it or just show harga_awal if current_price > harga_awal */}
-                    <div className="auction-price-old" style={{ minHeight: '1.2rem' }}>
-                      {(auction.current_price && auction.current_price > auction.harga_awal) 
-                        ? formatRupiah(auction.harga_awal) 
-                        : ''}
-                    </div>
-                    <div className="auction-title" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {auction.nama_produk}
-                    </div>
-                    <div className="auction-location" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {auction.lokasi || '-'}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      <div className="auction-price">
+                        {formatRupiah(auction.current_price || auction.harga_awal)}
+                      </div>
+                      {/* The old design had auction-price-old, since it's dynamic we could either hide it or just show harga_awal if current_price > harga_awal */}
+                      <div className="auction-price-old" style={{ minHeight: '1.2rem' }}>
+                        {(auction.current_price && auction.current_price > auction.harga_awal) 
+                          ? formatRupiah(auction.harga_awal) 
+                          : ''}
+                      </div>
+                      <div className="auction-title" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {auction.nama_produk}
+                      </div>
+                      <div className="auction-location" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 'auto' }}>
+                        {auction.lokasi || '-'}
+                      </div>
                     </div>
                   </div>
                 </Link>
