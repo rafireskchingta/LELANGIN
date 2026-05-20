@@ -83,8 +83,13 @@ function JelajahiContent() {
     fetchUserAndFavs();
 
     const handleFavUpdate = () => fetchUserAndFavs();
+    const handleAuthChange = () => fetchUserAndFavs();
     window.addEventListener('favorites-updated', handleFavUpdate);
-    return () => window.removeEventListener('favorites-updated', handleFavUpdate);
+    window.addEventListener('auth-change', handleAuthChange);
+    return () => {
+      window.removeEventListener('favorites-updated', handleFavUpdate);
+      window.removeEventListener('auth-change', handleAuthChange);
+    };
   }, []);
 
   // --- 5. TOGGLE FAVORIT ---

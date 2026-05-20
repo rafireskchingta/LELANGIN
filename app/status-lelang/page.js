@@ -47,20 +47,44 @@ function StatusLelangContent() {
   useEffect(() => {
     setMounted(true);
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUser(user);
-      if (user) {
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-        if (profile) {
-          setUserRole(profile.role);
-          if (profile.role !== 'penjual' && activeRole === 'penjual') {
-            setActiveRole('pembeli');
+      if (typeof window === 'undefined') return;
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const isLoggedIn = localStorage.getItem('isLoggedIn');
+        const localUser = localStorage.getItem('lelangin_user');
+
+        if (!session && isLoggedIn !== 'true') {
+          // Pengguna belum login atau sudah logout -> redirect ke beranda
+          router.push('/');
+          return;
+        }
+
+        const user = session?.user || (localUser ? JSON.parse(localUser) : null);
+        setCurrentUser(user);
+
+        if (user) {
+          const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+          if (profile) {
+            setUserRole(profile.role);
+            if (profile.role !== 'penjual' && activeRole === 'penjual') {
+              setActiveRole('pembeli');
+            }
           }
         }
+      } catch (err) {
+        console.error('Failed to get user in status-lelang:', err);
       }
     };
+
     getUser();
-  }, [activeRole]);
+
+    // Dengarkan event 'auth-change' untuk instan redirect saat logout
+    window.addEventListener('auth-change', getUser);
+    return () => {
+      window.removeEventListener('auth-change', getUser);
+    };
+  }, [activeRole, router]);
 
   // TIMER REAL-TIME
   useEffect(() => {

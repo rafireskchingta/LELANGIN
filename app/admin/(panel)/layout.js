@@ -11,18 +11,20 @@ import { supabase } from '../../../src/lib/supabase';
     const searchParams = useSearchParams();
 
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+    // Sembunyikan seluruh konten admin sampai verifikasi sesi selesai
+    const [checking, setChecking] = useState(true);
 
     useEffect(() => {
       setSearchQuery(searchParams.get('q') || '');
     }, [pathname, searchParams]);
 
     useEffect(() => {
-      // FIX B-04: Verifikasi session Supabase + role admin, bukan hanya localStorage
+      // Verifikasi session Supabase + role admin sebelum render konten apapun
       const verifyAdmin = async () => {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (!session) {
-            router.push('/');
+            window.location.replace('/');
             return;
           }
           const { data: profile } = await supabase
@@ -31,22 +33,25 @@ import { supabase } from '../../../src/lib/supabase';
             .eq('id', session.user.id)
             .single();
           if (!profile || profile.role !== 'admin') {
-            router.push('/');
+            window.location.replace('/');
             return;
           }
-          // Simpan flag lokal hanya sebagai cache UI, bukan sumber kebenaran
+          // Sesi valid & role admin terkonfirmasi — tampilkan konten
           localStorage.setItem('isAdminLoggedIn', 'true');
+          setChecking(false);
         } catch {
-          router.push('/');
+          window.location.replace('/');
         }
       };
       verifyAdmin();
-    }, [router]);
+    }, []);
 
-    const handleLogout = (e) => {
+    const handleLogout = async (e) => {
       e.preventDefault();
+      setChecking(true); // Sembunyikan UI seketika saat tombol keluar ditekan
       localStorage.removeItem('isAdminLoggedIn');
-      window.location.href = '/';
+      await supabase.auth.signOut();
+      window.location.replace('/');
     };
 
   const navItems = [
@@ -72,6 +77,11 @@ import { supabase } from '../../../src/lib/supabase';
     }
     router.replace(`${pathname}?${params.toString()}`);
   };
+
+  // Jangan render apapun jika sedang verifikasi auth atau sedang proses logout
+  if (checking) {
+    return null;
+  }
 
   return (
     <div className="admin-layout-wrapper">

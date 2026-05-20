@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
+import { supabase } from '../src/lib/supabase';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -15,6 +16,55 @@ export default function Navbar() {
 
   useEffect(() => {
     if (isAdmin) return; // Skip untuk halaman admin
+
+    const syncAuth = async () => {
+      if (typeof window === 'undefined') return;
+      
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (!session && loggedInStatus) {
+          // Sesi di supabase sudah habis, tapi localStorage masih true -> sync logout
+          localStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('lelangin_user');
+          setIsLoggedIn(false);
+          window.dispatchEvent(new Event('auth-change'));
+        } else if (session && !loggedInStatus) {
+          // Sesi di supabase aktif, tapi localStorage false -> sync login
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+            
+          const userObj = {
+            id: session.user.id,
+            email: session.user.email,
+            nama: profile?.full_name || session.user.email.split('@')[0],
+            username: profile?.username || '',
+            jenisKelamin: profile?.gender || '',
+            noTelp: profile?.phone_number || '',
+            role: profile?.role || 'pembeli',
+            isPenjual: profile?.role === 'penjual',
+            avatar: (profile?.full_name || session.user.email).charAt(0).toUpperCase()
+          };
+          
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('lelangin_user', JSON.stringify(userObj));
+          setIsLoggedIn(true);
+          window.dispatchEvent(new Event('auth-change'));
+        } else {
+          setIsLoggedIn(loggedInStatus);
+        }
+      } catch (err) {
+        console.error('Failed to sync auth in Navbar:', err);
+      }
+    };
+
+    syncAuth();
+    
+    // Dengarkan event kustom 'auth-change' jika diloginkan
     const checkLogin = () => {
       if (typeof window !== 'undefined') {
         const loggedInStatus = localStorage.getItem('isLoggedIn');
@@ -22,11 +72,20 @@ export default function Navbar() {
       }
     };
     
-    checkLogin();
-    
-    // Dengarkan event kustom 'auth-change' jika diloginkan
     window.addEventListener('auth-change', checkLogin);
-    return () => window.removeEventListener('auth-change', checkLogin);
+    
+    // Tangani navigasi back/forward cache (Bfcache)
+    const handlePageShow = (event) => {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => {
+      window.removeEventListener('auth-change', checkLogin);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
   }, [isAdmin]);
 
   // Update sliding indicator kapanpun pathname berubah atau component di-mount
