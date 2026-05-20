@@ -7,6 +7,9 @@ import './globals.css';
 export const metadata = {
   title: 'Lelangin - Platform Lelang Online Terpercaya',
   description: 'Platform lelang barang koleksi online terpercaya di Indonesia. Menghubungkan para kolektor dengan barang-barang unik, langka, dan berharga.',
+  icons: {
+    icon: '/assets/logo.png',
+  },
 };
 
 export default function RootLayout({ children }) {
