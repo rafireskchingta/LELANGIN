@@ -49,9 +49,24 @@ import { supabase } from '../../../src/lib/supabase';
     const handleLogout = async (e) => {
       e.preventDefault();
       setChecking(true); // Sembunyikan UI seketika saat tombol keluar ditekan
+      
+      // Hapus data lokal kita terlebih dahulu
       localStorage.removeItem('isAdminLoggedIn');
-      await supabase.auth.signOut();
-      window.location.replace('/');
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('lelangin_user');
+
+      // Logout dari Supabase
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.error('Logout error:', err);
+      }
+      
+      // Beri sedikit jeda agar Supabase selesai menghapus cookie dan localStorage 
+      // sebelum browser melakukan navigasi penuh yang bisa menginterupsi prosesnya
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 200);
     };
 
   const navItems = [

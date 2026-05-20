@@ -28,8 +28,11 @@ export function useAdminGuard() {
         localStorage.removeItem('isLoggedIn');
         await supabase.auth.signOut();
 
-        if (typeof window !== 'undefined' && window.showToast) {
-          window.showToast('Akun admin tidak dapat mengakses halaman pengguna.', 'error');
+        if (typeof window !== 'undefined') {
+          if (window.showToast) {
+            window.showToast('Akun admin tidak dapat mengakses halaman pengguna.', 'error');
+          }
+          window.dispatchEvent(new Event('auth-change'));
         }
 
         router.push('/');
