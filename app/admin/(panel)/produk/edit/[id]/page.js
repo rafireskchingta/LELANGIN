@@ -46,6 +46,14 @@ export default function AdminEditProdukPage({ params }) {
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef(null);
 
+  const showNotification = (msg, type = 'success') => {
+    if (typeof window !== 'undefined' && window.showToast) {
+      window.showToast(msg, type);
+    } else {
+      alert(msg);
+    }
+  };
+
   const formatRibuan = (val) => {
     if (!val) return '';
     const num = val.toString().replace(/\D/g, '');
@@ -117,7 +125,7 @@ export default function AdminEditProdukPage({ params }) {
       }
     } catch (error) {
       console.error('Error in fetch:', error.message);
-      alert('Gagal mengambil data produk: ' + error.message);
+      showNotification('Gagal mengambil data produk: ' + error.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -158,7 +166,7 @@ export default function AdminEditProdukPage({ params }) {
 
       setImageUrls(prev => [...prev, publicUrl]);
     } catch (err) {
-      alert('Gagal mengunggah gambar: ' + err.message);
+      showNotification('Gagal mengunggah gambar: ' + err.message, 'error');
     } finally {
       setUploadingImage(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -213,10 +221,10 @@ export default function AdminEditProdukPage({ params }) {
 
       if (error) throw error;
 
-      alert('Informasi produk berhasil diperbarui!');
+      showNotification('Informasi produk berhasil diperbarui!', 'success');
       router.push('/admin/produk');
     } catch (error) {
-      alert('Gagal memperbarui produk: ' + error.message);
+      showNotification('Gagal memperbarui produk: ' + error.message, 'error');
     } finally {
       setSaving(false);
     }
