@@ -164,10 +164,41 @@ function AdminProdukContent() {
 
   return (
     <div className="admin-produk-page">
-      <div className="admin-page-header">
+      <div className="admin-page-header" style={{ marginBottom: '1rem' }}>
         <h1 className="admin-page-title" style={{ marginBottom: 0 }}>Daftar Lelang</h1>
-        <div className="admin-page-actions" style={{ alignItems: 'center' }}>
-          <div className="tabs-container" style={{ margin: 0, gap: '0.5rem' }}>
+      </div>
+
+      {/* --- KONTROL FILTER & SORT BARU --- */}
+      <div className="filter-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ minWidth: '200px' }}>
+            <CustomSelect
+              value={statusFilter}
+              onChange={(val) => setStatusFilter(val)}
+              options={[
+                { value: 'Semua', label: 'Semua Status' },
+                { value: 'menunggu', label: 'Menunggu' },
+                { value: 'aktif', label: 'Aktif' },
+                { value: 'selesai', label: 'Selesai' },
+                { value: 'dibatalkan', label: 'Dibatalkan' }
+              ]}
+            />
+          </div>
+
+          <div style={{ minWidth: '220px' }}>
+            <CustomSelect
+              value={sortOrder}
+              onChange={(val) => setSortOrder(val)}
+              options={[
+                { value: 'terbaru', label: 'Ditambahkan Terbaru' },
+                { value: 'terlama', label: 'Ditambahkan Terlama' }
+              ]}
+            />
+          </div>
+        </div>
+
+        <div className="admin-page-actions" style={{ alignItems: 'center', display: 'flex', gap: '1rem' }}>
+          <div className="tabs-container" style={{ margin: 0, gap: '0.5rem', display: 'flex' }}>
             {['Semua', 'Seni', 'Hobi', 'Elektronik'].map((tab) => (
               <button
                 key={tab}
@@ -183,37 +214,9 @@ function AdminProdukContent() {
               </button>
             ))}
           </div>
-          <Link href="/admin/produk/terhapus" className="btn-admin-outline" style={{ marginLeft: '1rem' }}>
+          <Link href="/admin/produk/terhapus" className="btn-admin-outline">
             <i className="ph ph-archive-box"></i> Produk Terhapus
           </Link>
-        </div>
-      </div>
-
-      {/* --- KONTROL FILTER & SORT BARU --- */}
-      <div className="filter-controls" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', marginTop: '1rem' }}>
-        <div style={{ minWidth: '200px' }}>
-          <CustomSelect
-            value={statusFilter}
-            onChange={(val) => setStatusFilter(val)}
-            options={[
-              { value: 'Semua', label: 'Semua Status' },
-              { value: 'menunggu', label: 'Menunggu' },
-              { value: 'aktif', label: 'Aktif' },
-              { value: 'selesai', label: 'Selesai' },
-              { value: 'dibatalkan', label: 'Dibatalkan' }
-            ]}
-          />
-        </div>
-
-        <div style={{ minWidth: '220px' }}>
-          <CustomSelect
-            value={sortOrder}
-            onChange={(val) => setSortOrder(val)}
-            options={[
-              { value: 'terbaru', label: 'Ditambahkan Terbaru' },
-              { value: 'terlama', label: 'Ditambahkan Terlama' }
-            ]}
-          />
         </div>
       </div>
 
