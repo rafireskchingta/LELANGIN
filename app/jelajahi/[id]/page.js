@@ -39,6 +39,7 @@ export default function DetailPage() {
   const [isSellerCancelModalOpen, setIsSellerCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [isShipped, setIsShipped] = useState(false);
+  const [isSelesai, setIsSelesai] = useState(false);
 
   // PERBAIKAN: Set mounted menjadi true setelah komponen masuk ke client-side
   useEffect(() => {
@@ -108,6 +109,7 @@ export default function DetailPage() {
       setIsPaid(status === 'menunggu_alamat' || status === 'diproses' || status === 'dikirim' || status === 'selesai');
       setIsAddressFilled(hasRecipient || status === 'diproses' || status === 'dikirim' || status === 'selesai');
       setIsShipped(status === 'dikirim' || status === 'selesai');
+      setIsSelesai(status === 'selesai');
     };
     checkTransactionStatus();
   }, [productId, timeLeft, bids]);
@@ -490,12 +492,19 @@ export default function DetailPage() {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
-                  {isShipped ? (
+                  {isSelesai ? (
+                    <button 
+                      disabled
+                      style={{ width: '100%', maxWidth: '300px', padding: '0.85rem', background: '#D1FAE5', color: '#047857', border: '1px solid #047857', borderRadius: '999px', fontWeight: 'bold', fontSize: '1.05rem', cursor: 'default' }}
+                    >
+                      ✓ Transaksi Selesai
+                    </button>
+                  ) : isShipped ? (
                     <button 
                       disabled
                       style={{ width: '100%', maxWidth: '300px', padding: '0.85rem', background: '#E5E7EB', color: '#9CA3AF', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1.05rem', cursor: 'not-allowed' }}
                     >
-                      Produk Sudah Terkirim
+                      Menunggu Konfirmasi Pembeli
                     </button>
                   ) : (
                     <>
@@ -609,13 +618,41 @@ export default function DetailPage() {
                 ) : (
                   <div style={{ marginTop: '2rem' }}>
                     {isWinning ? (
-                      isShipped ? (
+                      isSelesai ? (
                         <div style={{ display: 'flex', justifyContent: 'center' }}>
                           <button 
                             disabled
-                            style={{ width: '100%', maxWidth: '300px', padding: '0.85rem', background: '#E5E7EB', color: '#9CA3AF', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1.05rem', cursor: 'not-allowed' }}
+                            style={{ width: '100%', maxWidth: '300px', padding: '0.85rem', background: '#D1FAE5', color: '#047857', border: '1px solid #047857', borderRadius: '999px', fontWeight: 'bold', fontSize: '1.05rem', cursor: 'default' }}
+                          >
+                            ✓ Transaksi Selesai
+                          </button>
+                        </div>
+                      ) : isShipped ? (
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap', width: '100%' }}>
+                          <button 
+                            disabled
+                            style={{ flex: '1', minWidth: '200px', maxWidth: '300px', padding: '0.85rem', background: '#E5E7EB', color: '#9CA3AF', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1.05rem', cursor: 'not-allowed' }}
                           >
                             Produk Sudah Terkirim
+                          </button>
+                          <button 
+                            onClick={async () => {
+                              try {
+                                await supabase
+                                  .from('transactions')
+                                  .update({ status_transaksi: 'selesai' })
+                                  .eq('product_id', productId);
+                                window.showToast('Berhasil mengonfirmasi penerimaan!', 'success');
+                                window.location.reload();
+                              } catch(e) {
+                                console.error(e);
+                              }
+                            }}
+                            style={{ flex: '1', minWidth: '200px', maxWidth: '300px', padding: '0.85rem', background: '#10B981', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 'bold', fontSize: '1.05rem', cursor: 'pointer', transition: 'background 0.3s' }}
+                            onMouseOver={(e) => e.currentTarget.style.background = '#059669'}
+                            onMouseOut={(e) => e.currentTarget.style.background = '#10B981'}
+                          >
+                            Produk sudah diterima
                           </button>
                         </div>
                       ) : (
