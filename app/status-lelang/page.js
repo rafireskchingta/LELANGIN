@@ -55,8 +55,9 @@ function StatusLelangContent() {
         const localUser = localStorage.getItem('lelangin_user');
 
         if (!session && isLoggedIn !== 'true') {
-          // Pengguna belum login atau sudah logout -> redirect ke beranda
-          router.push('/');
+          // Pengguna belum login - tampilkan pesan, jangan redirect
+          setCurrentUser(null);
+          setLoading(false);
           return;
         }
 
@@ -570,7 +571,24 @@ function StatusLelangContent() {
 
       {/* List Content Grid */}
       <div style={{ minHeight: '400px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {loading ? (
+        {!currentUser && !loading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '5rem 2rem', textAlign: 'center', gap: '1rem' }}>
+            <i className="ph ph-lock-key" style={{ fontSize: '3rem', color: '#C4C9D4' }}></i>
+            <h3 style={{ fontWeight: 700, fontSize: '1.2rem', color: '#374151', margin: 0 }}>Anda Belum Login</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: '320px', margin: 0 }}>Silakan login terlebih dahulu untuk melihat status penawaran lelang Anda.</p>
+            <button className="btn-primary-full" style={{ marginTop: '0.5rem', width: 'auto', padding: '0.75rem 2rem' }} onClick={() => {
+                const modalOverlay = document.getElementById('modalOverlay');
+                const loginModal = document.getElementById('loginModal');
+                if (modalOverlay && loginModal) {
+                  modalOverlay.classList.add('active');
+                  modalOverlay.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+                  loginModal.classList.add('active');
+                }
+              }}>
+              Masuk
+            </button>
+          </div>
+        ) : loading ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Memuat status penawaran...</div>
         ) : items.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Tidak ada data lelang di tab {activeTab}.</div>
