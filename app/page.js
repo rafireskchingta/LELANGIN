@@ -30,7 +30,7 @@ export default function HomePage() {
         setLoading(false);
       }
     };
-    
+
     fetchActiveAuctions();
   }, []);
 
@@ -47,18 +47,30 @@ export default function HomePage() {
       {/* Hero Banner */}
       <section className="hero-container">
         <div className="hero">
-          <h1>Apa Itu Lelangin?</h1>
-          <p>Platform lelang barang koleksi online terpercaya di Indonesia. Kami menghubungkan para kolektor dengan
-            barang-barang unik, langka, dan berharga melalui proses yang transparan, aman, dan mudah.</p>
+          {/* SVG background shape from Figma */}
+          <svg className="hero-bg-shape" viewBox="0 0 2891 698" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2856 0C2875.33 4.50983e-07 2891 15.67 2891 35V479C2891 498.33 2875.33 514 2856 514H2453C2433.67 514 2418 529.67 2418 549C2418 563.359 2406.36 575 2392 575H2135C2115.67 575 2100 590.67 2100 610V663C2100 682.33 2084.33 698 2065 698H35C15.67 698 0 682.33 0 663V35C0 15.67 15.67 4.50982e-07 35 0H2856Z" fill="#3361D5" />
+          </svg>
 
-          <div className="hero-btn-container">
-            <Link href="/jelajahi" className="hero-btn" style={{ textDecoration: 'none' }}>
-              <div className="hero-btn-content">
-                <span className="small-text">Ingin Mulai Lelang Sekarang?</span>
+          {/* Content overlay */}
+          <div className="hero-content">
+            <h1>Apa Itu Lelangin?</h1>
+            <p>Platform lelang barang koleksi online terpercaya di Indonesia. Kami menghubungkan para kolektor dengan
+              barang-barang unik, langka, dan berharga melalui proses yang transparan, aman, dan mudah.</p>
+          </div>
+
+          {/* CTA button with SVG shape from Figma */}
+          <Link href="/jelajahi" className="hero-cta-link" style={{ textDecoration: 'none' }}>
+            <div className="hero-cta">
+              <svg className="hero-cta-shape" viewBox="0 0 774 168" xmlns="http://www.w3.org/2000/svg">
+                <path d="M738 0C757.33 0 773 15.67 773 35V82C773 84.0622 773.172 86.1248 773.514 88.1584C773.833 90.058 774 92.0095 774 94V133C774 152.33 758.33 168 739 168H35C15.67 168 1.77183e-07 152.33 0 133V94C0 74.67 15.67 59 35 59H288C301.255 59 312 48.2548 312 35C312 15.67 327.67 0 347 0H738Z" fill="#EAEAEA" />
+              </svg>
+              <div className="hero-cta-text">
+                <span className="small-text">Ingin mulai lelang sekarang?</span>
                 <span className="main-text">Jelajahi Lelang Sekarang</span>
               </div>
-            </Link>
-          </div>
+            </div>
+          </Link>
         </div>
       </section>
 
@@ -110,9 +122,9 @@ export default function HomePage() {
                 <Link href={`/jelajahi/${auction.id}`} key={auction.id} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column' }}>
                   <div className="auction-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <div className="auction-fav"><i className="ph ph-heart"></i></div>
-                    <img 
-                      src={auction.image_urls?.[0] || '/assets/placeholder.png'} 
-                      alt={auction.nama_produk} 
+                    <img
+                      src={auction.image_urls?.[0] || '/assets/placeholder.png'}
+                      alt={auction.nama_produk}
                       style={{ width: '100%', height: '200px', objectFit: 'cover' }}
                     />
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -121,8 +133,8 @@ export default function HomePage() {
                       </div>
                       {/* The old design had auction-price-old, since it's dynamic we could either hide it or just show harga_awal if current_price > harga_awal */}
                       <div className="auction-price-old" style={{ minHeight: '1.2rem' }}>
-                        {(auction.current_price && auction.current_price > auction.harga_awal) 
-                          ? formatRupiah(auction.harga_awal) 
+                        {(auction.current_price && auction.current_price > auction.harga_awal)
+                          ? formatRupiah(auction.harga_awal)
                           : ''}
                       </div>
                       <div className="auction-title" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

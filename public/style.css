@@ -156,71 +156,101 @@ body {
 
 /* Hero Section */
 .hero-container {
-  padding: 2.5rem 4rem;
+  padding: 1.5rem 4rem;
 }
 
 .hero {
-  background: linear-gradient(135deg, #7E86F7 0%, #5A62F3 100%);
-  border-radius: 24px;
-  padding: 4rem 4rem;
-  color: white;
   position: relative;
-  overflow: hidden;
-  box-shadow: 0 10px 25px rgba(90, 98, 243, 0.2);
+  overflow: visible;
+  container-type: inline-size;
 }
 
-.hero h1 {
-  font-size: 3.5rem;
-  font-weight: 800;
-  margin-bottom: 1rem;
+.hero-bg-shape {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
-.hero p {
-  font-size: 1.125rem;
-  max-width: 60%;
-  margin-bottom: 2.5rem;
-  opacity: 0.95;
-  line-height: 1.6;
-}
-
-.hero-btn-container {
+.hero-content {
   position: absolute;
-  bottom: -15px;
-  right: 4rem;
-  background: white;
-  padding: 1.5rem 2rem 2.5rem 2rem;
-  border-radius: 24px 24px 0 0;
-  display: inline-block;
+  top: 0;
+  left: 0;
+  padding: 2.5rem 3rem;
+  padding: 2.5cqi 3.5cqi;
+  color: white;
+  max-width: 85%;
 }
 
-.hero-btn {
-  background-color: var(--white);
-  color: var(--primary);
-  padding: 0.5rem 0rem;
-  text-decoration: none;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  border: none;
-  cursor: pointer;
+.hero-content h1 {
+  font-size: 4.5rem;
+  font-size: 4.5cqi;
+  font-weight: 800;
+  margin-bottom: 1.2rem;
+  margin-bottom: 1.5cqi;
 }
 
-.hero-btn-content {
-  text-align: center;
+.hero-content p {
+  font-size: 1.3rem;
+  font-size: 1.4cqi;
+  opacity: 0.95;
+  line-height: 1.7;
 }
 
-.hero-btn .small-text {
-  font-size: 0.75rem;
-  color: var(--primary-light);
+/* CTA button with SVG shape positioned in the hero notch area */
+.hero-cta-link {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 26.77%;
+  /* 774 / 2891 */
+  z-index: 5;
+  display: block;
+}
+
+.hero-cta-link:hover .hero-cta-shape path {
+  fill: #DEDEDE;
+  transition: fill 0.2s;
+}
+
+.hero-cta {
+  position: relative;
+}
+
+.hero-cta-shape {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.hero-cta-text {
+  position: absolute;
+  top: 0;
+  left: 35%;
+  right: 8%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.hero-cta-text .small-text {
+  font-size: 0.8rem;
+  font-size: 1cqi;
+  color: #555555;
   margin-bottom: 4px;
+  margin-bottom: 0.4cqi;
   font-weight: 500;
   display: block;
 }
 
-.hero-btn .main-text {
-  font-size: 1.125rem;
+.hero-cta-text .main-text {
+  font-size: 1.65rem;
+  font-size: 2cqi;
   font-weight: 700;
-  color: var(--primary);
+  color: #000000;
+  white-space: nowrap;
 }
 
 /* Categories */
@@ -2577,7 +2607,7 @@ body:has(.admin-layout-wrapper) {
 }
 
 /* Template wrapper fills container */
-.admin-content-container > .page-transition-enter {
+.admin-content-container>.page-transition-enter {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -2587,11 +2617,11 @@ body:has(.admin-layout-wrapper) {
 }
 
 /* Dashboard inside template: no scroll on parent, fill height */
-.admin-content-container > .page-transition-enter:has(.admin-dashboard) {
+.admin-content-container>.page-transition-enter:has(.admin-dashboard) {
   overflow: hidden;
 }
 
-.admin-content-container > .page-transition-enter > .admin-dashboard {
+.admin-content-container>.page-transition-enter>.admin-dashboard {
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -3838,9 +3868,19 @@ textarea {
 }
 
 @keyframes error-shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-5px);
+  }
+
+  75% {
+    transform: translateX(5px);
+  }
 }
 
 .error-shake {
@@ -3850,11 +3890,25 @@ textarea {
 }
 
 @keyframes slideUpToast {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideDownToast {
-  from { transform: translateY(-20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
